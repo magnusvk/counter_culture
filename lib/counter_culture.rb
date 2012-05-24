@@ -73,6 +73,7 @@ module CounterCulture
     # was: whether to get the current value or the old value of the
     #   first part of the relation
     def change_counter_cache(increment, hash, was = false)
+      puts "change_counter_cache(#{increment.inspect}, #{hash.inspect}, #{was.inspect})"
       # default to the current foreign key value
       id_to_change = foreign_key_value(hash[:relation], was)
       # allow overwriting of foreign key value by the caller

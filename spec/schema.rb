@@ -13,8 +13,40 @@
 
 ActiveRecord::Schema.define(:version => 20120522160158) do
 
-  create_table "testers", :force => true do |t|
+  create_table "companies", :force => true do |t|
     t.string   "name"
+    t.integer  "industry_id"
+    t.integer  "reviews_count",       :default => 0, :null => false
+    t.integer  "using_count",         :default => 0, :null => false
+    t.integer  "tried_count",         :default => 0, :null => false
+  end
+
+  create_table "industries", :force => true do |t|
+    t.string   "name"
+    t.integer  "reviews_count",       :default => 0, :null => false
+    t.integer  "rexiews_count",       :default => 0, :null => false
+    t.integer  "using_count",         :default => 0, :null => false
+    t.integer  "tried_count",         :default => 0, :null => false
+  end
+
+  create_table "products", :force => true do |t|
+    t.string   "name"
+    t.integer  "reviews_count",       :default => 0, :null => false
+    t.integer  "rexiews_count",       :default => 0, :null => false
+  end
+
+  create_table "reviews", :force => true do |t|
+    t.string   "type",                :default => "using", :null => false
+    t.integer  "user_id"
+    t.integer  "product_id"
+  end
+
+  create_table "users", :force => true do |t|
+    t.string   "name"
+    t.integer  "company_id"
+    t.integer  "reviews_count",       :default => 0, :null => false
+    t.integer  "using_count",         :default => 0, :null => false
+    t.integer  "tried_count",         :default => 0, :null => false
   end
 
 end

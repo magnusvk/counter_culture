@@ -8,6 +8,7 @@ source "http://rubygems.org"
 group :development, :test do
   gem "rails"
   gem "rspec", "~> 2.10.0"
+  gem "after_commit_action"
 end
 
 group :development do
