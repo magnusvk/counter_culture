@@ -14,7 +14,7 @@ module CounterCulture
       attr_reader :after_commit_counter_cache
 
       # called to configure counter caches
-      def counter_cache(relation, options = {})
+      def counter_culture(relation, options = {})
         unless @after_commit_counter_cache
           # initialize callbacks only once
           after_create :_update_counts_after_create
