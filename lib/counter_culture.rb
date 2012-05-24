@@ -1,3 +1,5 @@
+require 'after_commit_action'
+
 module CounterCulture
 
   module ActiveRecord
