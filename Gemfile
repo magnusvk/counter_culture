@@ -7,6 +7,7 @@ source "http://rubygems.org"
 # Include everything needed to run rake, tests, features, etc.
 group :development, :test do
   gem "rails"
+  gem "rspec", "~> 2.10.0"
 end
 
 group :development do
@@ -16,6 +17,5 @@ group :development do
 end
 
 group :test do
-  gem "rspec", "~> 2.10.0"
   gem "sqlite3"
 end
