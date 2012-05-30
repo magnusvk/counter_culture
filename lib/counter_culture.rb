@@ -20,18 +20,136 @@ module CounterCulture
           after_create :_update_counts_after_create
           after_destroy :_update_counts_after_destroy
           after_update :_update_counts_after_update
-        end
 
-        # we keep a list of all counter caches we must maintain
-        @after_commit_counter_cache ||= [] 
+          # we keep a list of all counter caches we must maintain
+          @after_commit_counter_cache = []
+        end
 
         # add the current information to our list
         @after_commit_counter_cache<< {
-          :relation => relation,
+          :relation => relation.is_a?(Enumerable) ? relation : [relation],
           :counter_cache_name => (options[:column_name] || "#{name.tableize}_count"),
+          :column_names => options[:column_names],
           :foreign_key_values => options[:foreign_key_values]
         }
       end
+
+      # checks all of the declared counter caches on this class for correctnes based
+      # on original data; if the counter cache is incorrect, sets it to the correct
+      # count
+      #
+      # returns: a list of fixed record as an array of hashes of the form:
+      #   { :entity => which model the count was fixed on,
+      #     :id => the id of the model that had the incorrect count,
+      #     :what => which column contained the incorrect count,
+      #     :wrong => the previously saved, incorrect count,
+      #     :right => the newly fixed, correct count }
+      #
+      def counter_culture_fix_counts
+        fixed = []
+        @after_commit_counter_cache.map do |hash|
+          # which class does this relation ultimately point to? that's where we have to start
+          klass = relation_klass(hash[:relation])
+
+          # we are only interested in the id and the count of related objects (that's this class itself)
+          query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id) AS count")
+          query = query.group("#{klass.table_name}.id")
+
+          # if we're provided a custom set of column names with conditions, use them; just use the
+          # column name otherwise
+          raise "Must provide :column_names option for relation #{hash[:relation].inspect} when :counter_cache_name is a Proc" if hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]
+          column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
+          raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
+
+          # iterate over all the possible counter cache column names
+          column_names.each do |where, column_name|
+            # if there are additional conditions, add them here
+            counts = query.where(where)
+
+            # we need to work our way back from the end-point of the relation to this class itself;
+            # make a list of arrays pointing to the second-to-last, third-to-last, etc.
+            reverse_relation = []
+            (1..hash[:relation].length).to_a.reverse.each {|i| reverse_relation<< hash[:relation][0,i] }
+
+            # we need to join together tables until we get back to the table this class itself
+            # lives in
+            reverse_relation.each do |cur_relation|
+              reflect = relation_reflect(cur_relation)
+              counts = counts.joins("JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
+            end
+            # and then we collect the counts in an id => count hash
+            counts = counts.inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
+
+            # now that we know what the correct counts are, we need to iterate over all instances
+            # and check whether the count is correct; if not, we correct it
+            klass.find_each do |model|
+              if model.send(column_name) != counts[model.id].to_i
+                # keep track of what we fixed, e.g. for a notification email
+                fixed<< {
+                  :entity => klass.name,
+                  :id => model.id,
+                  :what => column_name,
+                  :wrong => model.send(column_name),
+                  :right => counts[model.id]
+                }
+                # use update_all because it's faster and because a fixed counter-cache shouldn't
+                # update the timestamp
+                klass.update_all "#{column_name} = #{counts[model.id].to_i}", "id = #{model.id}"
+              end
+            end
+          end
+        end
+
+        return fixed
+      end
+
+      private
+      # gets the reflect object on the given relation
+      #
+      # relation: a symbol or array of symbols; specifies the relation
+      #   that has the counter cache column
+      def relation_reflect(relation)
+        relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
+
+        # go from one relation to the next until we hit the last reflect object
+        klass = self
+        while relation.size > 0
+          cur_relation = relation.shift
+          reflect = klass.reflect_on_association(cur_relation)
+          raise "No relation #{cur_relation} on #{klass.name}" if reflect.nil?
+          klass = reflect.klass
+        end
+
+        return reflect
+      end
+
+      # gets the class of the given relation
+      #
+      # relation: a symbol or array of symbols; specifies the relation
+      #   that has the counter cache column
+      def relation_klass(relation)
+        relation_reflect(relation).klass
+      end
+
+      # gets the foreign key name of the given relation
+      #
+      # relation: a symbol or array of symbols; specifies the relation
+      #   that has the counter cache column
+      def relation_foreign_key(relation)
+        relation_reflect(relation).foreign_key
+      end
+      
+      # gets the foreign key name of the relation. will look at the first
+      # level only -- i.e., if passed an array will consider only its
+      # first element
+      #
+      # relation: a symbol or array of symbols; specifies the relation
+      #   that has the counter cache column
+      def first_level_relation_foreign_key(relation)
+        relation = relation.first if relation.is_a?(Enumerable)
+        relation_reflect(relation).foreign_key
+      end
+        
     end
 
     private
@@ -120,51 +238,22 @@ module CounterCulture
       return value.try(:id)
     end
 
-    # gets the reflect object on the given relation
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
-    def relation_reflect(relation)
-      relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
-
-      # go from one relation to the next until we hit the last reflect object
-      klass = self.class
-      while relation.size > 0
-        cur_relation = relation.shift
-        reflect = klass.reflect_on_association(cur_relation)
-        raise "No relation #{cur_relation} on #{klass.name}" if reflect.nil?
-        klass = reflect.klass
-      end
-
-      return reflect
-    end
-
-    # gets the class of the given relation
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
     def relation_klass(relation)
-      relation_reflect(relation).klass
+      self.class.send :relation_klass, relation
     end
 
-    # gets the foreign key name of the given relation
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
-    def relation_foreign_key(relation)
-      relation_reflect(relation).foreign_key
+    def relation_reflect(relation)
+      self.class.send :relation_reflect, relation
     end
     
-    # gets the foreign key name of the relation. will look at the first
-    # level only -- i.e., if passed an array will consider only its
-    # first element
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
-    def first_level_relation_foreign_key(relation)
-      relation = relation.first if relation.is_a?(Enumerable)
-      relation_reflect(relation).foreign_key
+    def relation_foreign_key(relation)
+      self.class.send :relation_foreign_key, relation
     end
+
+    def first_level_relation_foreign_key(relation)
+      self.class.send :first_level_relation_foreign_key, relation
+    end
+
   end
 
   # extend ActiveRecord with our own code here
