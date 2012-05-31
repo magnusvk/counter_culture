@@ -34,6 +34,26 @@ end
 
 Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table.
 
+### Multi-level counter-cache
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :sub_category
+  counter_culture [:sub_category, :category]
+end
+
+class SubCategory < ActiveRecord::Base
+  has_many :products
+  belongs_to :category
+end
+
+class SubCategory < ActiveRecord::Base
+  has_many :sub_categories
+end
+```
+
+Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
