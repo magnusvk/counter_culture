@@ -154,7 +154,7 @@ class Product < ActiveRecord::Base
       :column_name => Proc.new {|model| "#{model.product_type}_count" },
       :column_names => {
           ["products.product_type = ?", 'awesome'] => 'awesome_count',
-          ["reviews.review_type = ?", 'sucky'] => 'sucky_count'
+          ["products.product_type = ?", 'sucky'] => 'sucky_count'
       }
   # attribute product_type may be one of ['awesome', 'sucky']
 end
