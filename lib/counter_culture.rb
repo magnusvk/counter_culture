@@ -96,7 +96,7 @@ module CounterCulture
             # now that we know what the correct counts are, we need to iterate over all instances
             # and check whether the count is correct; if not, we correct it
             klass.find_each do |model|
-              if model.send(column_name) != counts[model.id].to_i
+              if model.read_attribute(column_name) != counts[model.id].to_i
                 # keep track of what we fixed, e.g. for a notification email
                 fixed<< {
                   :entity => klass.name,
