@@ -70,7 +70,7 @@ module CounterCulture
 
           # if we're provided a custom set of column names with conditions, use them; just use the
           # column name otherwise
-          raise "Must provide :column_names option for relation #{hash[:relation].inspect} when :counter_cache_name is a Proc" if hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]
+          raise "Must provide :column_names option for relation #{hash[:relation].inspect} when :column_name is a Proc" if hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]
           column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
           raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
 
