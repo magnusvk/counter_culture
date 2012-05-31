@@ -131,6 +131,18 @@ Product.counter_culture_fix_counts :only => :category
 # :except and :only also accept arrays
 ```
 
+```counter_culture_fix_counts``` returns an array of hashes of all incorrect values for debugging purposes. The hashes have the following format:
+
+```ruby
+{ :entity => which model the count was fixed on,
+  :id => the id of the model that had the incorrect count,
+  :what => which column contained the incorrect count,
+  :wrong => the previously saved, incorrect count,
+  :right => the newly fixed, correct count }
+```
+
+```counter_culture_fix_counts``` is optimized to minimize the number of queries and runs very quickly.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
