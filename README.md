@@ -7,6 +7,33 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Executes counter updates after the commit, avoiding [deadlocks](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html)
 
+## Installation
+
+Add counter_culture to your Gemfile:
+
+```ruby
+gem 'counter_culture', '~> 0.1.4'
+```
+
+Then run ```bundle update ```
+
+## Usage
+
+### Simple counter-cache
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+```
+
+Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
