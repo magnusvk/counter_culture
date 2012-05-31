@@ -17,6 +17,16 @@ gem 'counter_culture', '~> 0.1.4'
 
 Then run ```bundle update ```
 
+## Database Schema
+
+You will need to manually create the necessary columns for all counter caches. Use code like the following in your migration:
+
+```ruby
+add_column :categories, :products_count, :integer, :null => false, :default => 0
+```
+
+It is important to make the column ```NOT NULL``` and set a default of zero for this gem to work correctly.
+
 ## Usage
 
 ### Simple counter-cache
