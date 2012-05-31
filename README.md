@@ -143,6 +143,27 @@ Product.counter_culture_fix_counts :only => :category
 
 ```counter_culture_fix_counts``` is optimized to minimize the number of queries and runs very quickly.
 
+#### Handling dynamic column names
+
+Manually populating counter caches with dynammic column names requires additional configuration:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, 
+      :column_name => Proc.new {|model| "#{model.product_type}_count" },
+      :column_names => {
+          ["products.product_type = ?", 'awesome'] => 'awesome_count',
+          ["reviews.review_type = ?", 'sucky'] => 'sucky_count'
+      }
+  # attribute product_type may be one of ['awesome', 'sucky']
+end
+```
+
+#### Handling over-written, dynamic foreign keys
+
+Manually populating counter caches with dynamicall over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
