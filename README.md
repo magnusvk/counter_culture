@@ -69,6 +69,22 @@ end
 
 Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_counter_cache``` column of the ```categories``` table. This will also work with multi-level counter caches.
 
+### Dynamic column name
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, :column_name => Proc.new {|model| "#{model.product_type}_count" }
+  # attribute product_type may be one of ['awesome', 'sucky']
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+```
+
+Now, the ```Category``` model will keep two up-to-date counter-caches in the ```awesome_count``` and ```sucky_count``` columns of the ```categories``` table. Products with type ```'awesome'``` will affect only the ```awesome_count```, while products with type ```'sucky'``` will affect only the ```sucky_count```. This will also work with multi-level counter caches.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
