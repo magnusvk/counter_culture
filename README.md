@@ -20,12 +20,12 @@ Then run ```bundle update ```
 ## Database Schema
 
 You will need to manually create the necessary columns for all counter caches. Use code like the following in your migration:
-
 ```ruby
 add_column :categories, :products_count, :integer, :null => false, :default => 0
 ```
-
 It is important to make the column ```NOT NULL``` and set a default of zero for this gem to work correctly.
+
+If you are adding counter caches to existing data, you must [manually populate their values](#manually-populating-counter-cache-values).
 
 ## Usage
 
