@@ -85,6 +85,25 @@ end
 
 Now, the ```Category``` model will keep two up-to-date counter-caches in the ```awesome_count``` and ```sucky_count``` columns of the ```categories``` table. Products with type ```'awesome'``` will affect only the ```awesome_count```, while products with type ```'sucky'``` will affect only the ```sucky_count```. This will also work with multi-level counter caches.
 
+### Dynamically over-writing affected foreign keys
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, :foreign_key_values => 
+      Proc.new {|category_id| [category_id, Category.find_by_id(category_id).try(:parent_category).try(:id)] }
+end
+
+class Category < ActiveRecord::Base
+  belongs_to :parent_category, :class_name => 'Category', :foreign_key => 'parent_id'
+  has_many :children, :class_name => 'Category', :foreign_key => 'parent_id'
+  
+  has_many :products
+end
+```
+
+Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table. Each product will affect the counts of both its immediate category and that category's parent. This will work with any number of levels.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
