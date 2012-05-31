@@ -114,6 +114,23 @@ end
 
 Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table. Each product will affect the counts of both its immediate category and that category's parent. This will work with any number of levels.
 
+### Manually populating counter cache values
+
+You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
+
+```ruby
+Product.counter_culture_fix_counts
+# will automatically fix counts for all counter caches defined on Product
+
+Product.counter_culture_fix_counts :except => :category
+# will automatically fix counts for all counter caches defined on Product, except for the :category relation
+
+Product.counter_culture_fix_counts :only => :category
+# will automatically fix counts only on the :category relation on Product
+
+# :except and :only also accept arrays
+```
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
