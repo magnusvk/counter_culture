@@ -57,7 +57,7 @@ class SubCategory < ActiveRecord::Base
   belongs_to :category
 end
 
-class SubCategory < ActiveRecord::Base
+class Category < ActiveRecord::Base
   has_many :sub_categories
 end
 ```
