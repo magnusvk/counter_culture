@@ -38,6 +38,9 @@ module CounterCulture
       # on original data; if the counter cache is incorrect, sets it to the correct
       # count
       #
+      # options:
+      #   { :exclude => list of relations to skip when fixing counts,
+      #     :only => only these relations will have their counts fixed }
       # returns: a list of fixed record as an array of hashes of the form:
       #   { :entity => which model the count was fixed on,
       #     :id => the id of the model that had the incorrect count,
@@ -45,15 +48,25 @@ module CounterCulture
       #     :wrong => the previously saved, incorrect count,
       #     :right => the newly fixed, correct count }
       #
-      def counter_culture_fix_counts
+      def counter_culture_fix_counts(options = {})
+        options[:exclude] = [options[:exclude]] if options[:exclude] && !options[:exclude].is_a?(Enumerable)
+        options[:exclude] = options[:exclude].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
+        options[:only] = [options[:only]] if options[:only] && !options[:only].is_a?(Enumerable)
+        options[:only] = options[:only].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
+
         fixed = []
-        @after_commit_counter_cache.map do |hash|
+        @after_commit_counter_cache.each do |hash|
+          next if options[:exclude] && options[:exclude].include?(hash[:relation])
+          next if options[:only] && !options[:only].include?(hash[:relation])
+
           # which class does this relation ultimately point to? that's where we have to start
           klass = relation_klass(hash[:relation])
 
           # we are only interested in the id and the count of related objects (that's this class itself)
           query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id) AS count")
           query = query.group("#{klass.table_name}.id")
+
+          raise "Fixing counter caches is not supported when using :foreign_key_values" if hash[:foreign_key_values]
 
           # if we're provided a custom set of column names with conditions, use them; just use the
           # column name otherwise
