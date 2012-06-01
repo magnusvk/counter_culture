@@ -610,4 +610,125 @@ describe "CounterCulture" do
     Category.all {|category| category.products_count.should == 0 }
   end
 
+
+  it "should fix a simple counter cache correctly" do
+    user = User.create
+    product = Product.create
+
+    user.reviews_count.should == 0
+    product.reviews_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id
+    
+    user.reload
+    product.reload
+
+    user.reviews_count.should == 1
+    product.reviews_count.should == 1
+
+    user.reviews_count = 0
+    product.reviews_count = 2
+    user.save!
+    product.save!
+
+    fixed = Review.counter_culture_fix_counts :skip_unsupported => true
+    fixed.length.should == 2
+
+    user.reload
+    product.reload
+
+    user.reviews_count.should == 1
+    product.reviews_count.should == 1
+  end
+
+  it "should fix a second-level counter cache correctly" do
+    company = Company.create
+    user = User.create :company_id => company.id
+    product = Product.create
+
+    company.reviews_count.should == 0
+    user.reviews_count.should == 0
+    product.reviews_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id
+    
+    company.reload
+    user.reload
+    product.reload
+
+    company.reviews_count.should == 1
+    user.reviews_count.should == 1
+    product.reviews_count.should == 1
+
+    company.reviews_count = 2
+    user.reviews_count = 3
+    product.reviews_count = 4
+    company.save!
+    user.save!
+    product.save!
+
+    Review.counter_culture_fix_counts :skip_unsupported => true
+    company.reload
+    user.reload
+    product.reload
+
+    company.reviews_count.should == 1
+    user.reviews_count.should == 1
+    product.reviews_count.should == 1
+  end
+
+  it "should fix a custom counter cache correctly" do
+    user = User.create
+    product = Product.create
+
+    product.rexiews_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id
+    
+    product.reload
+
+    product.rexiews_count.should == 1
+
+    product.rexiews_count = 2
+    product.save!
+
+    Review.counter_culture_fix_counts :skip_unsupported => true
+
+    product.reload
+    product.rexiews_count.should == 1
+  end
+
+  it "should fix a dynamic counter cache correctly" do
+    user = User.create
+    product = Product.create
+    
+    user.using_count.should == 0
+    user.tried_count.should == 0
+
+    review_using = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'using'
+
+    user.reload
+
+    user.using_count.should == 1
+    user.tried_count.should == 0
+
+    review_tried = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'tried'
+
+    user.reload
+
+    user.using_count.should == 1
+    user.tried_count.should == 1
+
+    user.using_count = 2
+    user.tried_count = 3
+    user.save!
+
+    Review.counter_culture_fix_counts :skip_unsupported => true
+
+    user.reload
+
+    user.using_count.should == 1
+    user.tried_count.should == 1
+  end
+
 end
