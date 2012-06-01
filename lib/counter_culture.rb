@@ -59,6 +59,15 @@ module CounterCulture
           next if options[:exclude] && options[:exclude].include?(hash[:relation])
           next if options[:only] && !options[:only].include?(hash[:relation])
 
+          if options[:skip_unsupported]
+            next if (hash[:foreign_key_values] || (hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]))
+          else
+            raise "Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true" if hash[:foreign_key_values]
+            raise "Must provide :column_names option for relation #{hash[:relation].inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]
+          end
+
+          # if we're provided a custom set of column names with conditions, use them; just use the
+          # column name otherwise
           # which class does this relation ultimately point to? that's where we have to start
           klass = relation_klass(hash[:relation])
 
@@ -66,11 +75,6 @@ module CounterCulture
           query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id) AS count")
           query = query.group("#{klass.table_name}.id")
 
-          raise "Fixing counter caches is not supported when using :foreign_key_values" if hash[:foreign_key_values]
-
-          # if we're provided a custom set of column names with conditions, use them; just use the
-          # column name otherwise
-          raise "Must provide :column_names option for relation #{hash[:relation].inspect} when :column_name is a Proc" if hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]
           column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
           raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
 
