@@ -230,6 +230,75 @@ describe "CounterCulture" do
     product2.rexiews_count.should == 1
   end
 
+  it "handles nil column name in custom counter cache on create" do
+    user = User.create
+    product = Product.create
+
+    user.using_count.should == 0
+    user.tried_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
+    
+    user.reload
+
+    user.using_count.should == 0
+    user.tried_count.should == 0
+  end
+
+  it "handles nil column name in custom counter cache on destroy" do
+    user = User.create
+    product = Product.create
+
+    user.using_count.should == 0
+    user.tried_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
+    
+    product.reload
+
+    user.using_count.should == 0
+    user.tried_count.should == 0
+
+    review.destroy
+
+    product.reload
+
+    user.using_count.should == 0
+    user.tried_count.should == 0
+  end
+
+  it "handles nil column name in custom counter cache on update" do
+    product = Product.create
+    user1 = User.create
+    user2 = User.create
+
+    user1.using_count.should == 0
+    user1.tried_count.should == 0
+    user2.using_count.should == 0
+    user2.tried_count.should == 0
+
+    review = Review.create :user_id => user1.id, :product_id => product.id, :review_type => nil
+    
+    user1.reload
+    user2.reload
+
+    user1.using_count.should == 0
+    user1.tried_count.should == 0
+    user2.using_count.should == 0
+    user2.tried_count.should == 0
+
+    review.user = user2
+    review.save!
+
+    user1.reload
+    user2.reload
+
+    user1.using_count.should == 0
+    user1.tried_count.should == 0
+    user2.using_count.should == 0
+    user2.tried_count.should == 0
+  end
+
   it "increments third-level counter cache on create" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id

@@ -212,19 +212,20 @@ module CounterCulture
       id_to_change = foreign_key_value(hash[:relation], was)
       # allow overwriting of foreign key value by the caller
       id_to_change = hash[:foreign_key_values].call(id_to_change) if hash[:foreign_key_values]
-      if id_to_change
+
+      # figure out what the column name is
+      if hash[:counter_cache_name].is_a? Proc
+        # dynamic column name -- call the Proc
+        counter_cache_name = hash[:counter_cache_name].call(self) 
+      else
+        # static column name
+        counter_cache_name = hash[:counter_cache_name]
+      end
+
+      if id_to_change && counter_cache_name
         execute_after_commit do
           # increment or decrement?
           method = increment ? :increment_counter : :decrement_counter
-
-          # figure out what the column name is
-          if hash[:counter_cache_name].is_a? Proc
-            # dynamic column name -- call the Proc
-            counter_cache_name = hash[:counter_cache_name].call(self) 
-          else
-            # static column name
-            counter_cache_name = hash[:counter_cache_name]
-          end
 
           # do it!
           relation_klass(hash[:relation]).send(method, counter_cache_name, id_to_change)
