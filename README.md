@@ -12,7 +12,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 0.1.4'
+gem 'counter_culture', '~> 0.1.6'
 ```
 
 Then run ```bundle update ```
@@ -94,6 +94,21 @@ end
 ```
 
 Now, the ```Category``` model will keep two up-to-date counter-caches in the ```awesome_count``` and ```sucky_count``` columns of the ```categories``` table. Products with type ```'awesome'``` will affect only the ```awesome_count```, while products with type ```'sucky'``` will affect only the ```sucky_count```. This will also work with multi-level counter caches.
+
+### Conditional counter cache
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, :column_name => Proc.new {|model| model.special? ? 'special_count' : nil }
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+```
+
+Now, the ```Category``` model will keep the counter cache in ```special_count``` up-to-date. Only products where ```special?``` returns true will affect the special_count.
 
 ### Dynamically over-writing affected foreign keys
 
