@@ -861,5 +861,21 @@ describe "CounterCulture" do
     user.using_count.should == 1
     user.tried_count.should == 1
   end
+  
+  describe "#previous_model" do
+    let(:user){User.create :name => "John Smith", :company_id => 1}
+    
+    it "should return a copy of the original model" do
+      user.name = "Joe Smith"
+      user.company_id = 2
+      prev = user.send(:previous_model)
+      
+      prev.name.should == "John Smith"
+      prev.company_id.should == 1
+      
+      user.name.should =="Joe Smith"
+      user.company_id.should == 2
+    end
+  end
 
 end
