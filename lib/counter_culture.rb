@@ -189,13 +189,10 @@ module CounterCulture
     # called by after_update callback
     def _update_counts_after_update
       self.class.after_commit_counter_cache.each do |hash|
-        # only update counter caches if the foreign key changed
-        if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?")
-          # increment the counter cache of the new value
-          change_counter_cache(true, hash)
-          # decrement the counter cache of the old value
-          change_counter_cache(false, hash, true)
-        end
+        # increment the counter cache of the new value
+        change_counter_cache(true, hash)
+        # decrement the counter cache of the old value
+        change_counter_cache(false, hash, true)
       end
     end
 
@@ -213,14 +210,9 @@ module CounterCulture
       # allow overwriting of foreign key value by the caller
       id_to_change = hash[:foreign_key_values].call(id_to_change) if hash[:foreign_key_values]
 
-      # figure out what the column name is
-      if hash[:counter_cache_name].is_a? Proc
-        # dynamic column name -- call the Proc
-        counter_cache_name = hash[:counter_cache_name].call(self) 
-      else
-        # static column name
-        counter_cache_name = hash[:counter_cache_name]
-      end
+      #If using was option, get the counter cache for the previous model
+      counter_cache_name = counter_cache_name_for(was ? previous_model : self,
+         hash[:counter_cache_name])
 
       if id_to_change && counter_cache_name
         execute_after_commit do
@@ -231,6 +223,32 @@ module CounterCulture
           relation_klass(hash[:relation]).send(method, counter_cache_name, id_to_change)
         end
       end
+    end
+
+    # Gets the name of the counter cache for a specific object
+    # 
+    # obj: object to calculate the counter cache name for
+    # cache_name_finder: object used to calculate the cache name
+    def counter_cache_name_for(obj, cache_name_finder)
+      # figure out what the column name is
+      if cache_name_finder.is_a? Proc
+        # dynamic column name -- call the Proc
+        cache_name_finder.call(obj) 
+      else
+        # static column name
+        cache_name_finder
+      end
+    end
+
+    # Creates a copy of the current model with changes rolled back
+    def previous_model
+      prev = self.dup
+      
+      self.changed_attributes.each_pair do |key, value|
+        prev.send("#{key}=".to_sym, value)
+      end
+      
+      prev
     end
 
     # gets the value of the foreign key on the given relation
