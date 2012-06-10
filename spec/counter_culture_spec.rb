@@ -298,6 +298,68 @@ describe "CounterCulture" do
     user2.using_count.should == 0
     user2.tried_count.should == 0
   end
+  
+  describe "conditional counts on update" do
+    let(:product) {Product.create!}
+    let(:user) {User.create!}
+    
+    it "should increment and decrement if changing column name" do
+      user.using_count.should == 0
+      user.tried_count.should == 0
+      
+      review = Review.create :user_id => user.id, :product_id => product.id, :review_type => "using"
+      user.reload
+      
+      user.using_count.should == 1
+      user.tried_count.should == 0
+      
+      review.review_type = "tried"
+      review.save!
+      
+      user.reload
+      
+      user.using_count.should == 0
+      user.tried_count.should == 1
+    end
+    
+    it "should increment if changing from a nil column name" do
+      user.using_count.should == 0
+      user.tried_count.should == 0
+      
+      review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
+      user.reload
+      
+      user.using_count.should == 0
+      user.tried_count.should == 0
+      
+      review.review_type = "tried"
+      review.save!
+      
+      user.reload
+      
+      user.using_count.should == 0
+      user.tried_count.should == 1
+    end
+    
+    it "should decrement if changing column name to nil" do
+      user.using_count.should == 0
+      user.tried_count.should == 0
+      
+      review = Review.create :user_id => user.id, :product_id => product.id, :review_type => "using"
+      user.reload
+      
+      user.using_count.should == 1
+      user.tried_count.should == 0
+      
+      review.review_type = nil
+      review.save!
+      
+      user.reload
+      
+      user.using_count.should == 0
+      user.tried_count.should == 0
+    end
+  end
 
   it "increments third-level counter cache on create" do
     industry = Industry.create
