@@ -174,7 +174,7 @@ module CounterCulture
     def _update_counts_after_create
       self.class.after_commit_counter_cache.each do |hash|
         # increment counter cache
-        change_counter_cache(true, hash)
+        change_counter_cache(hash.merge(:increment => true))
       end
     end
 
@@ -182,45 +182,51 @@ module CounterCulture
     def _update_counts_after_destroy
       self.class.after_commit_counter_cache.each do |hash|
         # decrement counter cache
-        change_counter_cache(false, hash)
+        change_counter_cache(hash.merge(:increment => false))
       end
     end
 
     # called by after_update callback
     def _update_counts_after_update
       self.class.after_commit_counter_cache.each do |hash|
-        # increment the counter cache of the new value
-        change_counter_cache(true, hash)
-        # decrement the counter cache of the old value
-        change_counter_cache(false, hash, true)
+        # figure out whether the applicable counter cache changed (this can happen
+        # with dynamic column names)
+        counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
+        counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
+
+        if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
+          # increment the counter cache of the new value
+          change_counter_cache(hash.merge(:increment => true, :counter_column => counter_cache_name))
+          # decrement the counter cache of the old value
+          change_counter_cache(hash.merge(:increment => false, :was => true, :counter_column => counter_cache_name_was))
+        end
       end
     end
 
     # increments or decrements a counter cache
     #
-    # increment: true to increment, false to decrement
-    # hash:
+    # options:
+    #   :increment => true to increment, false to decrement
     #   :relation => which relation to increment the count on, 
     #   :counter_cache_name => the column name of the counter cache
-    # was: whether to get the current value or the old value of the
-    #   first part of the relation
-    def change_counter_cache(increment, hash, was = false)
+    #   :counter_column => overrides :counter_cache_name
+    #   :was => whether to get the current value or the old value of the
+    #      first part of the relation
+    def change_counter_cache(options)
+      options[:counter_column] = counter_cache_name_for(self, options[:counter_cache_name]) unless options.has_key?(:counter_column)
+      
       # default to the current foreign key value
-      id_to_change = foreign_key_value(hash[:relation], was)
+      id_to_change = foreign_key_value(options[:relation], options[:was])
       # allow overwriting of foreign key value by the caller
-      id_to_change = hash[:foreign_key_values].call(id_to_change) if hash[:foreign_key_values]
+      id_to_change = options[:foreign_key_values].call(id_to_change) if options[:foreign_key_values]
 
-      #If using was option, get the counter cache for the previous model
-      counter_cache_name = counter_cache_name_for(was ? previous_model : self,
-         hash[:counter_cache_name])
-
-      if id_to_change && counter_cache_name
+      if id_to_change && options[:counter_column]
         execute_after_commit do
           # increment or decrement?
-          method = increment ? :increment_counter : :decrement_counter
+          method = options[:increment] ? :increment_counter : :decrement_counter
 
           # do it!
-          relation_klass(hash[:relation]).send(method, counter_cache_name, id_to_change)
+          relation_klass(options[:relation]).send(method, options[:counter_column], id_to_change)
         end
       end
     end

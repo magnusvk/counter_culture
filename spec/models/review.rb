@@ -9,5 +9,5 @@ class Review < ActiveRecord::Base
   counter_culture [:user, :company]
   counter_culture [:user, :company, :industry]
   counter_culture [:user, :company, :industry], :column_name => 'rexiews_count'
-  counter_culture [:user, :company, :industry], :column_name => Proc.new { |model| "#{model.review_type}_count" }
+  counter_culture [:user, :company, :industry], :column_name => Proc.new { |model| model.review_type ? "#{model.review_type}_count" : nil }
 end
