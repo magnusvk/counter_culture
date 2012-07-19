@@ -19,4 +19,5 @@ end
 
 group :test do
   gem "sqlite3"
+  gem "rspec-extra-formatters"
 end
