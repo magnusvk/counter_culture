@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Magnus von Koeller"]
-  s.date = "2012-06-11"
+  s.date = "2012-09-17"
   s.description = "counter_culture provides turbo-charged counter caches that are kept up-to-date not just on create and destroy, that support multiple levels of indirection through relationships, allow dynamic column names and that avoid deadlocks by updating in the after_commit callback."
   s.email = "magnus@vonkoeller.de"
   s.extra_rdoc_files = [
@@ -26,6 +26,7 @@ Gem::Specification.new do |s|
     "README.md",
     "Rakefile",
     "VERSION",
+    "circle.yml",
     "counter_culture.gemspec",
     "lib/counter_culture.rb",
     "spec/counter_culture_spec.rb",
@@ -89,7 +90,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/bestvendor/counter_culture"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.21"
+  s.rubygems_version = "1.8.24"
   s.summary = "Turbo-charged counter caches for your Rails app."
 
   if s.respond_to? :specification_version then
