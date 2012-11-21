@@ -143,6 +143,12 @@ Product.counter_culture_fix_counts :except => :category
 Product.counter_culture_fix_counts :only => :category
 # will automatically fix counts only on the :category relation on Product
 
+# :except and :only also accept arrays of one level relations
+# if you want to fix counts on a more than one level relation you need to use convention below:
+
+Product.counter_culture_fix_counts :only => [[:subcategory, :category]]
+# will automatically fix counts only on the two-level [:subcategory, :category] relation on Product
+
 # :except and :only also accept arrays
 ```
 
