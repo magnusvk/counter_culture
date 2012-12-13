@@ -74,6 +74,8 @@ module CounterCulture
           # we are only interested in the id and the count of related objects (that's this class itself)
           query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id) AS count")
           query = query.group("#{klass.table_name}.id")
+          # respect the deleted_at column if it exists
+          query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
 
           column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
           raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
