@@ -19,6 +19,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "reviews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
+    t.integer  "managers_count",      :default => 0, :null => false
   end
 
   create_table "industries", :force => true do |t|
@@ -45,6 +46,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "users", :force => true do |t|
     t.string   "name"
     t.integer  "company_id"
+    t.integer  "manages_company_id"
     t.integer  "reviews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false

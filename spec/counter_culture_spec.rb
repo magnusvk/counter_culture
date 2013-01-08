@@ -861,6 +861,31 @@ describe "CounterCulture" do
     user.using_count.should == 1
     user.tried_count.should == 1
   end
+
+  it "should work correctly for relationships with custom names" do
+    company = Company.create
+    user1 = User.create :manages_company_id => company.id
+
+    company.reload
+    company.managers_count.should == 1
+
+    user2 = User.create :manages_company_id => company.id
+
+    company.reload
+    company.managers_count.should == 2
+
+    user2.destroy
+
+    company.reload
+    company.managers_count.should == 1
+
+    company2 = Company.create
+    user1.manages_company_id = company2.id
+    user1.save!
+
+    company.reload
+    company.managers_count.should == 0
+  end
   
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :company_id => 1}
