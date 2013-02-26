@@ -185,6 +185,10 @@ end
 
 Manually populating counter caches with dynamicall over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
 
+#### Polymorphic associations
+
+counter_culture currently does *not* support polymorphic associations. Check [this issue](https://github.com/bestvendor/counter_culture/issues/4) for progress and alternatives.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
