@@ -81,7 +81,7 @@ describe "CounterCulture" do
 
   it "increments second-level counter cache on create" do
     company = Company.create
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     company.reviews_count.should == 0
@@ -101,7 +101,7 @@ describe "CounterCulture" do
 
   it "decrements second-level counter cache on destroy" do
     company = Company.create
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     company.reviews_count.should == 0
@@ -132,8 +132,8 @@ describe "CounterCulture" do
   it "updates second-level counter cache on update" do
     company1 = Company.create
     company2 = Company.create
-    user1 = User.create :company_id => company1.id
-    user2 = User.create :company_id => company2.id
+    user1 = User.create :manages_company_id => company1.id
+    user2 = User.create :manages_company_id => company2.id
     product = Product.create
 
     user1.reviews_count.should == 0
@@ -364,7 +364,7 @@ describe "CounterCulture" do
   it "increments third-level counter cache on create" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     industry.reviews_count.should == 0
@@ -388,7 +388,7 @@ describe "CounterCulture" do
   it "decrements third-level counter cache on destroy" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     industry.reviews_count.should == 0
@@ -426,8 +426,8 @@ describe "CounterCulture" do
     industry2 = Industry.create
     company1 = Company.create :industry_id => industry1.id
     company2 = Company.create :industry_id => industry2.id
-    user1 = User.create :company_id => company1.id
-    user2 = User.create :company_id => company2.id
+    user1 = User.create :manages_company_id => company1.id
+    user2 = User.create :manages_company_id => company2.id
     product = Product.create
 
     industry1.reviews_count.should == 0
@@ -474,7 +474,7 @@ describe "CounterCulture" do
   it "increments third-level custom counter cache on create" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     industry.rexiews_count.should == 0
@@ -489,7 +489,7 @@ describe "CounterCulture" do
   it "decrements third-level custom counter cache on destroy" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     industry.rexiews_count.should == 0
@@ -510,8 +510,8 @@ describe "CounterCulture" do
     industry2 = Industry.create
     company1 = Company.create :industry_id => industry1.id
     company2 = Company.create :industry_id => industry2.id
-    user1 = User.create :company_id => company1.id
-    user2 = User.create :company_id => company2.id
+    user1 = User.create :manages_company_id => company1.id
+    user2 = User.create :manages_company_id => company2.id
     product = Product.create
 
     industry1.rexiews_count.should == 0
@@ -594,7 +594,7 @@ describe "CounterCulture" do
   it "increments third-level dynamic counter cache on create" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     industry.using_count.should == 0
@@ -618,7 +618,7 @@ describe "CounterCulture" do
   it "decrements third-level custom counter cache on destroy" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     industry.using_count.should == 0
@@ -658,8 +658,8 @@ describe "CounterCulture" do
     industry2 = Industry.create
     company1 = Company.create :industry_id => industry1.id
     company2 = Company.create :industry_id => industry2.id
-    user1 = User.create :company_id => company1.id
-    user2 = User.create :company_id => company2.id
+    user1 = User.create :manages_company_id => company1.id
+    user2 = User.create :manages_company_id => company2.id
     product = Product.create
 
     industry1.using_count.should == 0
@@ -774,7 +774,7 @@ describe "CounterCulture" do
 
   it "should fix a second-level counter cache correctly" do
     company = Company.create
-    user = User.create :company_id => company.id
+    user = User.create :manages_company_id => company.id
     product = Product.create
 
     company.reviews_count.should == 0
@@ -888,18 +888,18 @@ describe "CounterCulture" do
   end
   
   describe "#previous_model" do
-    let(:user){User.create :name => "John Smith", :company_id => 1}
+    let(:user){User.create :name => "John Smith", :manages_company_id => 1}
     
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
-      user.company_id = 2
+      user.manages_company_id = 2
       prev = user.send(:previous_model)
       
       prev.name.should == "John Smith"
-      prev.company_id.should == 1
+      prev.manages_company_id.should == 1
       
       user.name.should =="Joe Smith"
-      user.company_id.should == 2
+      user.manages_company_id.should == 2
     end
   end
 
