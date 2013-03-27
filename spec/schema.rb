@@ -39,6 +39,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
 
   create_table "reviews", :force => true do |t|
     t.string   "review_type",                :default => "using"
+    t.string   "some_text"
     t.integer  "user_id"
     t.integer  "product_id"
   end

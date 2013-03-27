@@ -10,4 +10,10 @@ class Review < ActiveRecord::Base
   counter_culture [:user, :manages_company, :industry]
   counter_culture [:user, :manages_company, :industry], :column_name => 'rexiews_count'
   counter_culture [:user, :manages_company, :industry], :column_name => Proc.new { |model| model.review_type ? "#{model.review_type}_count" : nil }
+
+  after_create :update_some_text
+
+  def update_some_text
+    update_attribute(:some_text, rand(36**12).to_s(36))
+  end
 end

@@ -172,35 +172,55 @@ module CounterCulture
     end
 
     private
+    # need to make sure counter_culture is only activated once
+    # per commit; otherwise, if we do an update in an after_create,
+    # we would be triggered twice within the same transaction -- once
+    # for the create, once for the update
+    def _wrap_in_counter_culture_active(&block)
+      if @_counter_culture_active
+        # don't do anything; we are already active for this transaction
+      else
+        @_counter_culture_active = true
+        block.call
+        execute_after_commit { @_counter_culture_active = false}
+      end
+    end
+
     # called by after_create callback
     def _update_counts_after_create
-      self.class.after_commit_counter_cache.each do |hash|
-        # increment counter cache
-        change_counter_cache(hash.merge(:increment => true))
+      _wrap_in_counter_culture_active do
+        self.class.after_commit_counter_cache.each do |hash|
+          # increment counter cache
+          change_counter_cache(hash.merge(:increment => true))
+        end
       end
     end
 
     # called by after_destroy callback
     def _update_counts_after_destroy
-      self.class.after_commit_counter_cache.each do |hash|
-        # decrement counter cache
-        change_counter_cache(hash.merge(:increment => false))
+      _wrap_in_counter_culture_active do
+        self.class.after_commit_counter_cache.each do |hash|
+          # decrement counter cache
+          change_counter_cache(hash.merge(:increment => false))
+        end
       end
     end
 
     # called by after_update callback
     def _update_counts_after_update
-      self.class.after_commit_counter_cache.each do |hash|
-        # figure out whether the applicable counter cache changed (this can happen
-        # with dynamic column names)
-        counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
-        counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
+      _wrap_in_counter_culture_active do
+        self.class.after_commit_counter_cache.each do |hash|
+          # figure out whether the applicable counter cache changed (this can happen
+          # with dynamic column names)
+          counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
+          counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
 
-        if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
-          # increment the counter cache of the new value
-          change_counter_cache(hash.merge(:increment => true, :counter_column => counter_cache_name))
-          # decrement the counter cache of the old value
-          change_counter_cache(hash.merge(:increment => false, :was => true, :counter_column => counter_cache_name_was))
+          if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
+            # increment the counter cache of the new value
+            change_counter_cache(hash.merge(:increment => true, :counter_column => counter_cache_name))
+            # decrement the counter cache of the old value
+            change_counter_cache(hash.merge(:increment => false, :was => true, :counter_column => counter_cache_name_was))
+          end
         end
       end
     end
