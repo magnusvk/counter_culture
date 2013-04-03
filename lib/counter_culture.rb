@@ -113,7 +113,7 @@ module CounterCulture
                 }
                 # use update_all because it's faster and because a fixed counter-cache shouldn't
                 # update the timestamp
-                klass.update_all "#{column_name} = #{counts[model.id].to_i}", "id = #{model.id}"
+                klass.update_all "#{column_name} = #{counts[model.id].to_i}", "id = #{klass.connection.quote(model.id)}"
               end
             end
           end
