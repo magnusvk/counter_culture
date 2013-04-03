@@ -51,11 +51,19 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "reviews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
+    t.string   "has_string_id_id"
   end
 
   create_table "categories", :force => true do |t|
     t.string   "name"
     t.integer  "products_count",       :default => 0, :null => false
   end
+
+  create_table "has_string_ids", :force => true, :id => false do |t|
+    t.string   "id", :default => '', :null => false
+    t.string   "something"
+    t.integer  "users_count",        :null => false, :default => 0
+  end
+  add_index "has_string_ids", :id, :unique => true
 
 end

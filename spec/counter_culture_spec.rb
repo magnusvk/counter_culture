@@ -6,6 +6,7 @@ require 'models/product'
 require 'models/review'
 require 'models/user'
 require 'models/category'
+require 'models/has_string_id'
 
 describe "CounterCulture" do
   it "increments counter cache on create" do
@@ -885,6 +886,44 @@ describe "CounterCulture" do
 
     company.reload
     company.managers_count.should == 0
+  end
+
+  it "should work correctly with string keys" do
+    puts HasStringId.all.inspect
+    string_id = HasStringId.create({:id => "1"}, :without_protection => true)
+    puts HasStringId.all.inspect
+    string_id2 = HasStringId.create({:id => "abc"}, :without_protection => true)
+    puts HasStringId.all.inspect
+
+    user = User.create :has_string_id_id => string_id.id
+
+    string_id.reload
+    string_id.users_count.should == 1
+
+    user2 = User.create :has_string_id_id => string_id.id
+
+    string_id.reload
+    string_id.users_count.should == 2
+
+    user2.has_string_id_id = string_id2.id
+    user2.save!
+
+    string_id.reload
+    string_id2.reload
+    string_id.users_count.should == 1
+    string_id2.users_count.should == 1
+
+    user2.destroy
+    string_id.reload
+    string_id2.reload
+    string_id.users_count.should == 1
+    string_id2.users_count.should == 0
+
+    user.destroy
+    string_id.reload
+    string_id2.reload
+    string_id.users_count.should == 0
+    string_id2.users_count.should == 0
   end
   
   describe "#previous_model" do
