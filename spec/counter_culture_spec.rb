@@ -863,6 +863,31 @@ describe "CounterCulture" do
     user.tried_count.should == 1
   end
 
+  it "should fix a string counter cache correctly" do
+    string_id = HasStringId.create({:id => "bbb"}, :without_protection => true)
+
+    user = User.create :has_string_id_id => string_id.id
+
+    string_id.reload
+    string_id.users_count.should == 1
+
+    user2 = User.create :has_string_id_id => string_id.id
+
+    string_id.reload
+    string_id.users_count.should == 2
+
+    string_id.users_count = 123
+    string_id.save!
+
+    string_id.reload
+    string_id.users_count.should == 123
+
+    User.counter_culture_fix_counts
+    
+    string_id.reload
+    string_id.users_count.should == 2
+  end
+
   it "should work correctly for relationships with custom names" do
     company = Company.create
     user1 = User.create :manages_company_id => company.id
@@ -889,11 +914,8 @@ describe "CounterCulture" do
   end
 
   it "should work correctly with string keys" do
-    puts HasStringId.all.inspect
     string_id = HasStringId.create({:id => "1"}, :without_protection => true)
-    puts HasStringId.all.inspect
     string_id2 = HasStringId.create({:id => "abc"}, :without_protection => true)
-    puts HasStringId.all.inspect
 
     user = User.create :has_string_id_id => string_id.id
 
