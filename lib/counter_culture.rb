@@ -208,14 +208,14 @@ module CounterCulture
 
     # called by after_update callback
     def _update_counts_after_update
-      _wrap_in_counter_culture_active do
-        self.class.after_commit_counter_cache.each do |hash|
-          # figure out whether the applicable counter cache changed (this can happen
-          # with dynamic column names)
-          counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
-          counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
+      self.class.after_commit_counter_cache.each do |hash|
+        # figure out whether the applicable counter cache changed (this can happen
+        # with dynamic column names)
+        counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
+        counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
 
-          if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
+        if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
+          _wrap_in_counter_culture_active do
             # increment the counter cache of the new value
             change_counter_cache(hash.merge(:increment => true, :counter_column => counter_cache_name))
             # decrement the counter cache of the old value

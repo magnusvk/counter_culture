@@ -47,3 +47,4 @@ pkg
 
 # For rubinius:
 #*.rbc
+.project
