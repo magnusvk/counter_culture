@@ -947,6 +947,10 @@ describe "CounterCulture" do
     string_id.users_count.should == 0
     string_id2.users_count.should == 0
   end
+
+  it "should raise a good error message when calling fix_counts with no caches defined" do
+    expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
+  end
   
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}

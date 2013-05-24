@@ -49,6 +49,8 @@ module CounterCulture
       #     :right => the newly fixed, correct count }
       #
       def counter_culture_fix_counts(options = {})
+        raise "No counter cache defined on #{self.name}" unless @after_commit_counter_cache
+
         options[:exclude] = [options[:exclude]] if options[:exclude] && !options[:exclude].is_a?(Enumerable)
         options[:exclude] = options[:exclude].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
         options[:only] = [options[:only]] if options[:only] && !options[:only].is_a?(Enumerable)
