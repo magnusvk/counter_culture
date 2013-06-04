@@ -64,6 +64,16 @@ end
 
 Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table. This will work with any number of levels.
 
+If you want to have a counter-cache for each level of your hierarchy, then you must add a separate counter cache for each level.  In the above example, if you wanted a count of products for each category and sub_category you would change the Product class to:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :sub_category
+  counter_culture [:sub_category, :category]
+  counter_culture [:sub_category]
+end
+```
+
 ### Customizing the column name
 
 ```ruby
