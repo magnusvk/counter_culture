@@ -115,7 +115,7 @@ module CounterCulture
                 }
                 # use update_all because it's faster and because a fixed counter-cache shouldn't
                 # update the timestamp
-                klass.where(:id => model.id).update_all(column_name => counts[model.id])
+                klass.where(:id => model.id).update_all(column_name => counts[model.id].to_i)
               end
             end
           end
