@@ -773,6 +773,24 @@ describe "CounterCulture" do
     product.reviews_count.should == 1
   end
 
+  it "should fix where the count should go back to zero correctly" do
+    user = User.create
+    product = Product.create
+
+    user.reviews_count.should == 0
+
+    user.reviews_count = -1
+    user.save!
+
+    fixed = Review.counter_culture_fix_counts :skip_unsupported => true
+    fixed.length.should == 1
+
+    user.reload
+
+    user.reviews_count.should == 0
+
+  end
+
   it "should fix a second-level counter cache correctly" do
     company = Company.create
     user = User.create :manages_company_id => company.id
