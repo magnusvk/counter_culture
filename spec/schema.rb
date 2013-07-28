@@ -20,6 +20,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "managers_count",      :default => 0, :null => false
+    t.integer  "review_approvals_count",      :default => 0, :null => false
   end
 
   create_table "industries", :force => true do |t|
@@ -28,6 +29,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "rexiews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
+    t.integer  "review_approvals_count",      :default => 0, :null => false
   end
 
   create_table "products", :force => true do |t|
@@ -42,6 +44,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "some_text"
     t.integer  "user_id"
     t.integer  "product_id"
+    t.integer  "approvals"
   end
 
   create_table "users", :force => true do |t|
@@ -51,6 +54,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "reviews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
+    t.integer  "review_approvals_count",      :default => 0, :null => false
     t.string   "has_string_id_id"
   end
 
