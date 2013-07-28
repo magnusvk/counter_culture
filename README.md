@@ -127,12 +127,12 @@ Instead of keeping a running count, you may want to automatically track a runnin
 In that case, the target counter will change by the value in the totaled field instead of changing by exactly 1 each time.
 Use the ```:delta_column``` option to specify that the counter should change by the value of a specific field in the counted object.
 For example, suppose the Product model has a table field named ```number_of_reviews```, and you want to keep a running
-total of the number of reviews for all the products in the Category model's ```number_of_product_reviews``` field:
+total of the number of reviews for all the products in the Category model's ```product_reviews_count``` field:
 
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => 'number_of_product_reviews', :delta_column => 'number_of_reviews'
+  counter_culture :category, :column_name => 'product_reviews_count', :delta_column => 'number_of_reviews'
 end
 
 class Category < ActiveRecord::Base
@@ -140,7 +140,7 @@ class Category < ActiveRecord::Base
 end
 ```
 
-Now, the ```Category``` model will keep the counter cache in ```number_of_product_reviews``` up-to-date.
+Now, the ```Category``` model will keep the counter cache in ```product_reviews_count``` up-to-date.
 The value in the counter cache will be the sum of the ```number_of_reviews``` values in each of the associated Product records.
 
 ### Dynamically over-writing affected foreign keys
