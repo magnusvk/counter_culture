@@ -246,11 +246,12 @@ module CounterCulture
 
       if id_to_change && options[:counter_column]
         execute_after_commit do
+          delta_magnitude = 1
           # increment or decrement?
-          method = options[:increment] ? :increment_counter : :decrement_counter
+          delta = options[:increment] ? delta_magnitude : -delta_magnitude
 
           # do it!
-          relation_klass(options[:relation]).send(method, options[:counter_column], id_to_change)
+          relation_klass(options[:relation]).update_counters(id_to_change, options[:counter_column] => delta)
         end
       end
     end
