@@ -6,10 +6,13 @@ class Review < ActiveRecord::Base
   counter_culture :product, :column_name => 'rexiews_count'
   counter_culture :user
   counter_culture :user, :column_name => Proc.new { |model| model.review_type ? "#{model.review_type}_count" : nil }, :column_names => {"reviews.review_type = 'using'" => 'using_count', "reviews.review_type = 'tried'" => 'tried_count'}
+  counter_culture :user, :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture [:user, :manages_company]
+  counter_culture [:user, :manages_company], :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture [:user, :manages_company, :industry]
   counter_culture [:user, :manages_company, :industry], :column_name => 'rexiews_count'
   counter_culture [:user, :manages_company, :industry], :column_name => Proc.new { |model| model.review_type ? "#{model.review_type}_count" : nil }
+  counter_culture [:user, :manages_company, :industry], :column_name => 'review_approvals_count', :delta_column => 'approvals'
 
   after_create :update_some_text
 
