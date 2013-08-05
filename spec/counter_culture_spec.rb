@@ -16,7 +16,7 @@ describe "CounterCulture" do
     user.reviews_count.should == 0
     product.reviews_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    user.reviews.create :product_id => product.id
     
     user.reload
     product.reload
