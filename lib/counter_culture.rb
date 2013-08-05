@@ -221,6 +221,7 @@ module CounterCulture
           counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
 
           if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") ||
+            (hash[:delta_column] && send("#{hash[:delta_column]}_changed?")) ||
             counter_cache_name != counter_cache_name_was
 
             # increment the counter cache of the new value
@@ -251,9 +252,9 @@ module CounterCulture
       id_to_change = options[:foreign_key_values].call(id_to_change) if options[:foreign_key_values]
 
       if id_to_change && options[:counter_column]
-        delta_magnitude = options[:delta_column] ? self.send(options[:delta_column]).to_i : 1
         delta_magnitude = if options[:delta_column]
-                            self.send(options[:delta_column]).to_i
+                            delta_attr_name = options[:was] ? "#{options[:delta_column]}_was" : options[:delta_column]
+                            self.send(delta_attr_name).to_i
                           else
                             1
                           end

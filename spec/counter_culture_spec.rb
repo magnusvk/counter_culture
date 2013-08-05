@@ -89,6 +89,9 @@ describe "CounterCulture" do
     product.reviews_count.should == 1
     user1.review_approvals_count.should == 0
     user2.review_approvals_count.should == 42
+
+    review.update_attribute(:approvals, 69)
+    user2.reload.review_approvals_count.should == 69
   end
 
   it "treats null delta column values as 0" do
@@ -211,6 +214,9 @@ describe "CounterCulture" do
     product.reviews_count.should == 1
     company1.review_approvals_count.should == 0
     company2.review_approvals_count.should == 69
+
+    review.update_attribute(:approvals, 42)
+    company2.reload.review_approvals_count.should == 42
   end
 
   it "increments custom counter cache column on create" do
@@ -521,6 +527,9 @@ describe "CounterCulture" do
     user2.reviews_count.should == 1
     industry1.review_approvals_count.should == 0
     industry2.review_approvals_count.should == 42
+
+    review.update_attribute(:approvals, 69)
+    industry2.reload.review_approvals_count.should == 69
   end
 
   it "increments third-level custom counter cache on create" do
