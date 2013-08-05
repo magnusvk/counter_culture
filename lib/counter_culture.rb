@@ -220,7 +220,9 @@ module CounterCulture
           counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
           counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
 
-          if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
+          if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") ||
+            counter_cache_name != counter_cache_name_was
+
             # increment the counter cache of the new value
             change_counter_cache(hash.merge(:increment => true, :counter_column => counter_cache_name))
             # decrement the counter cache of the old value
@@ -249,8 +251,13 @@ module CounterCulture
       id_to_change = options[:foreign_key_values].call(id_to_change) if options[:foreign_key_values]
 
       if id_to_change && options[:counter_column]
+        delta_magnitude = options[:delta_column] ? self.send(options[:delta_column]).to_i : 1
+        delta_magnitude = if options[:delta_column]
+                            self.send(options[:delta_column]).to_i
+                          else
+                            1
+                          end
         execute_after_commit do
-          delta_magnitude = options[:delta_column] ? self.send(options[:delta_column]).to_i : 1
           # increment or decrement?
           delta = options[:increment] ? delta_magnitude : -delta_magnitude
 
