@@ -15,13 +15,15 @@ describe "CounterCulture" do
 
     user.reviews_count.should == 0
     product.reviews_count.should == 0
+    user.review_approvals_count.should == 0
 
-    user.reviews.create :product_id => product.id
+    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
     
     user.reload
     product.reload
 
     user.reviews_count.should == 1
+    user.review_approvals_count.should == 13
     product.reviews_count.should == 1
   end
 
@@ -31,14 +33,16 @@ describe "CounterCulture" do
 
     user.reviews_count.should == 0
     product.reviews_count.should == 0
+    user.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 69
     
     user.reload
     product.reload
 
     user.reviews_count.should == 1
     product.reviews_count.should == 1
+    user.review_approvals_count.should == 69
 
     review.destroy
 
@@ -46,6 +50,7 @@ describe "CounterCulture" do
     product.reload
 
     user.reviews_count.should == 0
+    user.review_approvals_count.should == 0
     product.reviews_count.should == 0
   end
 
@@ -57,8 +62,10 @@ describe "CounterCulture" do
     user1.reviews_count.should == 0
     user2.reviews_count.should == 0
     product.reviews_count.should == 0
+    user1.review_approvals_count.should == 0
+    user2.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user1.id, :product_id => product.id
+    review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 42
     
     user1.reload
     user2.reload
@@ -67,6 +74,8 @@ describe "CounterCulture" do
     user1.reviews_count.should == 1
     user2.reviews_count.should == 0
     product.reviews_count.should == 1
+    user1.review_approvals_count.should == 42
+    user2.review_approvals_count.should == 0
 
     review.user = user2
     review.save!
@@ -78,6 +87,29 @@ describe "CounterCulture" do
     user1.reviews_count.should == 0
     user2.reviews_count.should == 1
     product.reviews_count.should == 1
+    user1.review_approvals_count.should == 0
+    user2.review_approvals_count.should == 42
+
+    review.update_attribute(:approvals, 69)
+    user2.reload.review_approvals_count.should == 69
+  end
+
+  it "treats null delta column values as 0" do
+    user = User.create
+    product = Product.create
+
+    user.reviews_count.should == 0
+    product.reviews_count.should == 0
+    user.review_approvals_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => nil
+
+    user.reload
+    product.reload
+
+    user.reviews_count.should == 1
+    user.review_approvals_count.should == 0
+    product.reviews_count.should == 1
   end
 
   it "increments second-level counter cache on create" do
@@ -88,14 +120,16 @@ describe "CounterCulture" do
     company.reviews_count.should == 0
     user.reviews_count.should == 0
     product.reviews_count.should == 0
+    company.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
     
     company.reload
     user.reload
     product.reload
 
     company.reviews_count.should == 1
+    company.review_approvals_count.should == 314
     user.reviews_count.should == 1
     product.reviews_count.should == 1
   end
@@ -108,8 +142,9 @@ describe "CounterCulture" do
     company.reviews_count.should == 0
     user.reviews_count.should == 0
     product.reviews_count.should == 0
+    company.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
     
     user.reload
     product.reload
@@ -118,6 +153,7 @@ describe "CounterCulture" do
     user.reviews_count.should == 1
     product.reviews_count.should == 1
     company.reviews_count.should == 1
+    company.review_approvals_count.should == 314
 
     review.destroy
 
@@ -128,6 +164,7 @@ describe "CounterCulture" do
     user.reviews_count.should == 0
     product.reviews_count.should == 0
     company.reviews_count.should == 0
+    company.review_approvals_count.should == 0
   end
 
   it "updates second-level counter cache on update" do
@@ -142,8 +179,10 @@ describe "CounterCulture" do
     company1.reviews_count.should == 0
     company2.reviews_count.should == 0
     product.reviews_count.should == 0
+    company1.review_approvals_count.should == 0
+    company2.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user1.id, :product_id => product.id
+    review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 69
     
     user1.reload
     user2.reload
@@ -156,6 +195,8 @@ describe "CounterCulture" do
     company1.reviews_count.should == 1
     company2.reviews_count.should == 0
     product.reviews_count.should == 1
+    company1.review_approvals_count.should == 69
+    company2.review_approvals_count.should == 0
 
     review.user = user2
     review.save!
@@ -171,6 +212,11 @@ describe "CounterCulture" do
     company1.reviews_count.should == 0
     company2.reviews_count.should == 1
     product.reviews_count.should == 1
+    company1.review_approvals_count.should == 0
+    company2.review_approvals_count.should == 69
+
+    review.update_attribute(:approvals, 42)
+    company2.reload.review_approvals_count.should == 42
   end
 
   it "increments custom counter cache column on create" do
@@ -369,11 +415,12 @@ describe "CounterCulture" do
     product = Product.create
 
     industry.reviews_count.should == 0
+    industry.review_approvals_count.should == 0
     company.reviews_count.should == 0
     user.reviews_count.should == 0
     product.reviews_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
     
     industry.reload
     company.reload
@@ -381,6 +428,7 @@ describe "CounterCulture" do
     product.reload
 
     industry.reviews_count.should == 1
+    industry.review_approvals_count.should == 42
     company.reviews_count.should == 1
     user.reviews_count.should == 1
     product.reviews_count.should == 1
@@ -393,11 +441,12 @@ describe "CounterCulture" do
     product = Product.create
 
     industry.reviews_count.should == 0
+    industry.review_approvals_count.should == 0
     company.reviews_count.should == 0
     user.reviews_count.should == 0
     product.reviews_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
     
     industry.reload
     company.reload
@@ -405,6 +454,7 @@ describe "CounterCulture" do
     product.reload
 
     industry.reviews_count.should == 1
+    industry.review_approvals_count.should == 42
     company.reviews_count.should == 1
     user.reviews_count.should == 1
     product.reviews_count.should == 1
@@ -417,6 +467,7 @@ describe "CounterCulture" do
     product.reload
 
     industry.reviews_count.should == 0
+    industry.review_approvals_count.should == 0
     company.reviews_count.should == 0
     user.reviews_count.should == 0
     product.reviews_count.should == 0
@@ -437,8 +488,10 @@ describe "CounterCulture" do
     company2.reviews_count.should == 0
     user1.reviews_count.should == 0
     user2.reviews_count.should == 0
+    industry1.review_approvals_count.should == 0
+    industry2.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user1.id, :product_id => product.id
+    review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 42
     
     industry1.reload
     industry2.reload
@@ -453,6 +506,8 @@ describe "CounterCulture" do
     company2.reviews_count.should == 0
     user1.reviews_count.should == 1
     user2.reviews_count.should == 0
+    industry1.review_approvals_count.should == 42
+    industry2.review_approvals_count.should == 0
 
     review.user = user2
     review.save!
@@ -470,6 +525,11 @@ describe "CounterCulture" do
     company2.reviews_count.should == 1
     user1.reviews_count.should == 0
     user2.reviews_count.should == 1
+    industry1.review_approvals_count.should == 0
+    industry2.review_approvals_count.should == 42
+
+    review.update_attribute(:approvals, 69)
+    industry2.reload.review_approvals_count.should == 69
   end
 
   it "increments third-level custom counter cache on create" do
@@ -749,28 +809,32 @@ describe "CounterCulture" do
 
     user.reviews_count.should == 0
     product.reviews_count.should == 0
+    user.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 69
     
     user.reload
     product.reload
 
     user.reviews_count.should == 1
     product.reviews_count.should == 1
+    user.review_approvals_count.should == 69
 
     user.reviews_count = 0
     product.reviews_count = 2
+    user.review_approvals_count = 7
     user.save!
     product.save!
 
     fixed = Review.counter_culture_fix_counts :skip_unsupported => true
-    fixed.length.should == 2
+    fixed.length.should == 3
 
     user.reload
     product.reload
 
     user.reviews_count.should == 1
     product.reviews_count.should == 1
+    user.review_approvals_count.should == 69
   end
 
   it "should fix where the count should go back to zero correctly" do
@@ -799,8 +863,9 @@ describe "CounterCulture" do
     company.reviews_count.should == 0
     user.reviews_count.should == 0
     product.reviews_count.should == 0
+    company.review_approvals_count.should == 0
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
     
     company.reload
     user.reload
@@ -809,8 +874,10 @@ describe "CounterCulture" do
     company.reviews_count.should == 1
     user.reviews_count.should == 1
     product.reviews_count.should == 1
+    company.review_approvals_count.should == 42
 
     company.reviews_count = 2
+    company.review_approvals_count = 7
     user.reviews_count = 3
     product.reviews_count = 4
     company.save!
@@ -825,6 +892,7 @@ describe "CounterCulture" do
     company.reviews_count.should == 1
     user.reviews_count.should == 1
     product.reviews_count.should == 1
+    company.review_approvals_count.should == 42
   end
 
   it "should fix a custom counter cache correctly" do

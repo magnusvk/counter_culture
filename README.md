@@ -6,6 +6,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Supports counter caches through multiple levels of relations
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Executes counter updates after the commit, avoiding [deadlocks](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html)
+* Can keep a running count, or a running total
 
 ## Installation
 
@@ -119,6 +120,28 @@ end
 ```
 
 Now, the ```Category``` model will keep the counter cache in ```special_count``` up-to-date. Only products where ```special?``` returns true will affect the special_count.
+
+### Totaling instead of counting
+
+Instead of keeping a running count, you may want to automatically track a running total.
+In that case, the target counter will change by the value in the totaled field instead of changing by exactly 1 each time.
+Use the ```:delta_column``` option to specify that the counter should change by the value of a specific field in the counted object.
+For example, suppose the Product model table has a field named ```weight_ounces```, and you want to keep a running
+total of the weight for all the products in the Category model's ```product_weight_ounces``` field:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, :column_name => 'product_weight_ounces', :delta_column => 'weight_ounces'
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+```
+
+Now, the ```Category``` model will keep the counter cache in ```product_weight_ounces``` up-to-date.
+The value in the counter cache will be the sum of the ```weight_ounces``` values in each of the associated Product records.
 
 ### Dynamically over-writing affected foreign keys
 

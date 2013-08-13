@@ -30,6 +30,7 @@ module CounterCulture
           :relation => relation.is_a?(Enumerable) ? relation : [relation],
           :counter_cache_name => (options[:column_name] || "#{name.tableize}_count"),
           :column_names => options[:column_names],
+          :delta_column => options[:delta_column],
           :foreign_key_values => options[:foreign_key_values]
         }
       end
@@ -74,7 +75,9 @@ module CounterCulture
           klass = relation_klass(hash[:relation])
 
           # we are only interested in the id and the count of related objects (that's this class itself)
-          query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id) AS count")
+          query = hash[:delta_column] \
+            ? klass.select("#{klass.table_name}.id, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count") \
+            : klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id                              ) AS count")
           query = query.group("#{klass.table_name}.id")
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
@@ -217,7 +220,10 @@ module CounterCulture
           counter_cache_name_was = counter_cache_name_for(previous_model, hash[:counter_cache_name])
           counter_cache_name = counter_cache_name_for(self, hash[:counter_cache_name])
 
-          if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") || counter_cache_name != counter_cache_name_was
+          if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") ||
+            (hash[:delta_column] && send("#{hash[:delta_column]}_changed?")) ||
+            counter_cache_name != counter_cache_name_was
+
             # increment the counter cache of the new value
             change_counter_cache(hash.merge(:increment => true, :counter_column => counter_cache_name))
             # decrement the counter cache of the old value
@@ -234,6 +240,7 @@ module CounterCulture
     #   :relation => which relation to increment the count on, 
     #   :counter_cache_name => the column name of the counter cache
     #   :counter_column => overrides :counter_cache_name
+    #   :delta_column => override the default count delta (1) with the value of this column in the counted record
     #   :was => whether to get the current value or the old value of the
     #      first part of the relation
     def change_counter_cache(options)
@@ -245,12 +252,18 @@ module CounterCulture
       id_to_change = options[:foreign_key_values].call(id_to_change) if options[:foreign_key_values]
 
       if id_to_change && options[:counter_column]
+        delta_magnitude = if options[:delta_column]
+                            delta_attr_name = options[:was] ? "#{options[:delta_column]}_was" : options[:delta_column]
+                            self.send(delta_attr_name).to_i
+                          else
+                            1
+                          end
         execute_after_commit do
           # increment or decrement?
-          method = options[:increment] ? :increment_counter : :decrement_counter
+          delta = options[:increment] ? delta_magnitude : -delta_magnitude
 
           # do it!
-          relation_klass(options[:relation]).send(method, options[:counter_column], id_to_change)
+          relation_klass(options[:relation]).update_counters(id_to_change, options[:counter_column] => delta)
         end
       end
     end
