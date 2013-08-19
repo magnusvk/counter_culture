@@ -222,6 +222,12 @@ Manually populating counter caches with dynamicall over-written foreign keys (``
 
 counter_culture currently does *not* support polymorphic associations. Check [this issue](https://github.com/bestvendor/counter_culture/issues/4) for progress and alternatives.
 
+## A note on testing
+
+counter_culture will not update counters in your automated tests *if* you use transactional fixtures. That's because transactional fixtures roll back all your database transactions and they are never committed. But counter_culture will only update its counters in the ```after_commit``` callback, which in this case will never run.
+
+counter_culture itself has extensive automated tests so there should not be a need to test counter caches in your own tests. I therefore recommend removing any checks of counter caches as that will avoid this issue. If that is not an option for you, you will have to turn off transactional fixtures and use something like [database_cleaner](https://github.com/bmabey/database_cleaner) instead to clean your database between tests.
+
 ## Contributing to counter_culture
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
