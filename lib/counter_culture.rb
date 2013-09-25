@@ -75,10 +75,11 @@ module CounterCulture
           klass = relation_klass(hash[:relation])
 
           # we are only interested in the id and the count of related objects (that's this class itself)
-          query = hash[:delta_column] \
-            ? klass.select("#{klass.table_name}.id, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count") \
-            : klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id                              ) AS count")
-          query = query.group("#{klass.table_name}.id")
+          if hash[:delta_column]
+            query = klass.select("#{klass.table_name}.id, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count")
+          else
+            query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id                              ) AS count")
+          end
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
 
