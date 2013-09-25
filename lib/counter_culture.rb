@@ -88,7 +88,7 @@ module CounterCulture
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
             # if there are additional conditions, add them here
-            counts = query.where(where)
+            counts_query = query.where(where)
 
             # we need to work our way back from the end-point of the relation to this class itself;
             # make a list of arrays pointing to the second-to-last, third-to-last, etc.
@@ -99,27 +99,36 @@ module CounterCulture
             # lives in
             reverse_relation.each do |cur_relation|
               reflect = relation_reflect(cur_relation)
-              counts = counts.joins("JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
+              counts_query = counts_query.joins("JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
             end
-            # and then we collect the counts in an id => count hash
-            counts = counts.inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
 
-            # now that we know what the correct counts are, we need to iterate over all instances
-            # and check whether the count is correct; if not, we correct it
-            klass.find_each do |model|
-              if model.read_attribute(column_name) != counts[model.id].to_i
-                # keep track of what we fixed, e.g. for a notification email
-                fixed<< {
-                  :entity => klass.name,
-                  :id => model.id,
-                  :what => column_name,
-                  :wrong => model.send(column_name),
-                  :right => counts[model.id]
-                }
-                # use update_all because it's faster and because a fixed counter-cache shouldn't
-                # update the timestamp
-                klass.where(:id => model.id).update_all(column_name => counts[model.id].to_i)
+            # iterate in batches; otherwise we might run out of memory when there's a lot of
+            # instances and we try to load all their counts at once
+            start = 0
+            batch_size = options[:batch_size] || 1000
+            while (records = klass.reorder(batch_order(klass)).offset(start).limit(batch_size)).any?
+              # collect the counts for this batch in an id => count hash; this saves time relative
+              # to running one query per record
+              counts = counts_query.reorder(batch_order(klass)).offset(start).limit(batch_size).inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
+
+              # now iterate over all the models and see whether their counts are right
+              records.each do |model|
+                if model.read_attribute(column_name) != counts[model.id].to_i
+                  # keep track of what we fixed, e.g. for a notification email
+                  fixed<< {
+                    :entity => klass.name,
+                    :id => model.id,
+                    :what => column_name,
+                    :wrong => model.send(column_name),
+                    :right => counts[model.id]
+                  }
+                  # use update_all because it's faster and because a fixed counter-cache shouldn't
+                  # update the timestamp
+                  klass.where(:id => model.id).update_all(column_name => counts[model.id].to_i)
+                end
               end
+
+              start += batch_size
             end
           end
         end
@@ -128,6 +137,11 @@ module CounterCulture
       end
 
       private
+      # the string to pass to order() in order to sort by primary key
+      def batch_order(klass)
+        "#{klass.quoted_table_name}.#{klass.quoted_primary_key} ASC"
+      end
+
       # gets the reflect object on the given relation
       #
       # relation: a symbol or array of symbols; specifies the relation

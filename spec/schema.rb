@@ -70,4 +70,12 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   end
   add_index "has_string_ids", :id, :unique => true
 
+  create_table "simple_mains", :force => true do |t|
+    t.integer "simple_dependents_count", :null => false, :default => 0
+  end
+  
+  create_table "simple_dependents", :force => true do |t|
+    t.integer "simple_main_id"
+  end
+
 end

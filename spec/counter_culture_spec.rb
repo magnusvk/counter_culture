@@ -7,6 +7,8 @@ require 'models/review'
 require 'models/user'
 require 'models/category'
 require 'models/has_string_id'
+require 'models/simple_main'
+require 'models/simple_dependent'
 
 describe "CounterCulture" do
   it "increments counter cache on create" do
@@ -950,7 +952,7 @@ describe "CounterCulture" do
   end
 
   it "should fix a string counter cache correctly" do
-    string_id = HasStringId.create({:id => "bbb"}, :without_protection => true)
+    string_id = HasStringId.create({:id => "bbb"})
 
     user = User.create :has_string_id_id => string_id.id
 
@@ -1000,8 +1002,8 @@ describe "CounterCulture" do
   end
 
   it "should work correctly with string keys" do
-    string_id = HasStringId.create({:id => "1"}, :without_protection => true)
-    string_id2 = HasStringId.create({:id => "abc"}, :without_protection => true)
+    string_id = HasStringId.create(id: "1")
+    string_id2 = HasStringId.create(id: "abc")
 
     user = User.create :has_string_id_id => string_id.id
 
@@ -1036,6 +1038,24 @@ describe "CounterCulture" do
 
   it "should raise a good error message when calling fix_counts with no caches defined" do
     expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
+  end
+
+  it "should correctly fix the counter caches with thousands of records" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+    
+    10000.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
+
+    SimpleMain.order('random()').limit(50).update_all simple_dependents_count: 1
+    SimpleDependent.counter_culture_fix_counts
+
+    SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
   end
   
   describe "#previous_model" do
