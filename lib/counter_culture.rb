@@ -107,10 +107,10 @@ module CounterCulture
             # instances and we try to load all their counts at once
             start = 0
             batch_size = options[:batch_size] || 1000
-            while (records = klass.reorder(batch_order(klass)).offset(start).limit(batch_size)).any?
+            while (records = klass.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size)).any?
               # collect the counts for this batch in an id => count hash; this saves time relative
               # to running one query per record
-              counts = counts_query.reorder(batch_order(klass)).offset(start).limit(batch_size).inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
+              counts = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass)).inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
 
               # now iterate over all the models and see whether their counts are right
               records.each do |model|
@@ -139,8 +139,8 @@ module CounterCulture
 
       private
       # the string to pass to order() in order to sort by primary key
-      def batch_order(klass)
-        "#{klass.quoted_table_name}.#{klass.quoted_primary_key} ASC"
+      def full_primary_key(klass)
+        "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
       end
 
       # gets the reflect object on the given relation

@@ -9,6 +9,7 @@ group :development, :test do
   gem "rails", '>= 3.1.0'
   gem "rspec", "~> 2.10.0"
   gem "after_commit_action"
+  gem "awesome_print"
 end
 
 group :development do
@@ -20,4 +21,5 @@ end
 group :test do
   gem "sqlite3"
   gem "rspec-extra-formatters"
+  gem "database_cleaner", ">= 1.1.1"
 end

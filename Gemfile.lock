@@ -30,7 +30,9 @@ GEM
       activerecord (>= 3.0.0)
     arel (4.0.0)
     atomic (1.1.14)
+    awesome_print (1.2.0)
     builder (3.1.4)
+    database_cleaner (1.1.1)
     diff-lcs (1.1.3)
     erubis (2.7.0)
     faraday (0.8.8)
@@ -129,7 +131,9 @@ PLATFORMS
 
 DEPENDENCIES
   after_commit_action
+  awesome_print
   bundler (>= 1.2.0.pre)
+  database_cleaner (>= 1.1.1)
   jeweler (~> 1.8.3)
   rails (>= 3.1.0)
   rdoc (~> 3.12)

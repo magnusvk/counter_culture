@@ -10,7 +10,14 @@ require 'models/has_string_id'
 require 'models/simple_main'
 require 'models/simple_dependent'
 
+require 'database_cleaner'
+DatabaseCleaner.strategy = :deletion
+
 describe "CounterCulture" do
+  before(:each) do
+    DatabaseCleaner.clean
+  end
+
   it "increments counter cache on create" do
     user = User.create
     product = Product.create
