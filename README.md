@@ -220,7 +220,7 @@ Manually populating counter caches with dynamicall over-written foreign keys (``
 
 #### Polymorphic associations
 
-counter_culture currently does *not* support polymorphic associations. Check [this issue](https://github.com/bestvendor/counter_culture/issues/4) for progress and alternatives.
+counter_culture currently does *not* support polymorphic associations. Check [this issue](https://github.com/magnusvk/counter_culture/issues/4) for progress and alternatives.
 
 ## A note on testing
 
@@ -240,4 +240,4 @@ counter_culture itself has extensive automated tests so there should not be a ne
 
 ## Copyright
 
-Copyright (c) 2012 BestVendor. See LICENSE.txt for further details.
+Copyright (c) 2012-2013 BestVendor, Magnus von Koeller. See LICENSE.txt for further details.
