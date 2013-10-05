@@ -170,6 +170,15 @@ end
 
 Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table. Each product will affect the counts of both its immediate category and that category's parent. This will work with any number of levels.
 
+### Updating timestamps when counts change
+
+By default, counter_culture does not update the timestamp of models when it updates their counter caches. If you would like every change in the counter cache column to result in an updated timestamp, simply set the touch option to true like so:
+```ruby
+  counter_culture :category, :touch => true
+```
+
+This can be useful when you use Rails' caching mechanism and display a counter cache's value in the cached fragment.
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
@@ -224,7 +233,7 @@ end
 
 #### Handling over-written, dynamic foreign keys
 
-Manually populating counter caches with dynamicall over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
+Manually populating counter caches with dynamically over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
 
 #### Polymorphic associations
 

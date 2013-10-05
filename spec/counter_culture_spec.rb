@@ -1098,6 +1098,20 @@ describe "CounterCulture" do
     user.reload
     user.review_value_sum.round(1).should == 0
   end
+
+  it "should update the timestamp if touch: true is set" do
+    user = User.create
+    product = Product.create
+
+    sleep 1
+
+    review = Review.create :user_id => user.id, :product_id => product.id
+
+    user.reload; product.reload
+
+    user.created_at.to_i.should == user.updated_at.to_i
+    product.created_at.to_i.should < product.updated_at.to_i
+  end
   
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}

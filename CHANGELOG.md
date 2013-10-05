@@ -1,3 +1,8 @@
+## 0.1.16 (October 5, 2013)
+
+Features:
+  - Added support for touch option that updates timestamps when updating counter caches
+
 ## 0.1.15 (October 5, 2013)
 
 Features:

@@ -31,7 +31,8 @@ module CounterCulture
           :counter_cache_name => (options[:column_name] || "#{name.tableize}_count"),
           :column_names => options[:column_names],
           :delta_column => options[:delta_column],
-          :foreign_key_values => options[:foreign_key_values]
+          :foreign_key_values => options[:foreign_key_values],
+          :touch => options[:touch]
         }
       end
 
@@ -275,10 +276,23 @@ module CounterCulture
                           end
         execute_after_commit do
           # increment or decrement?
-          delta = options[:increment] ? delta_magnitude : -delta_magnitude
+          operator = options[:increment] ? '+' : '-'
 
-          # do it!
-          relation_klass(options[:relation]).update_counters(id_to_change, options[:counter_column] => delta)
+          # we don't use Rails' update_counters because we support changing the timestamp
+          quoted_column = connection.quote_column_name(options[:counter_column])
+
+          updates = []
+          # this updates the actual counter
+          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+          # and here we update the timestamp, if so desired
+          if options[:touch]
+            current_time = current_time_from_proper_timezone
+            timestamp_attributes_for_update_in_model.each do |timestamp_column|
+              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:sql)}'"
+            end
+          end
+
+          relation_klass(options[:relation]).where(self.class.primary_key => id_to_change).update_all updates.join(', ')
         end
       end
     end
