@@ -7,6 +7,7 @@ class Review < ActiveRecord::Base
   counter_culture :user
   counter_culture :user, :column_name => Proc.new { |model| model.review_type ? "#{model.review_type}_count" : nil }, :column_names => {"reviews.review_type = 'using'" => 'using_count', "reviews.review_type = 'tried'" => 'tried_count'}
   counter_culture :user, :column_name => 'review_approvals_count', :delta_column => 'approvals'
+  counter_culture :user, :column_name => 'review_value_sum', :delta_column => 'value'
   counter_culture [:user, :manages_company]
   counter_culture [:user, :manages_company], :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture [:user, :manages_company, :industry]

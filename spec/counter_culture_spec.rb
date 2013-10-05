@@ -1064,6 +1064,40 @@ describe "CounterCulture" do
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
   end
+
+  it "should correctly sum up flaot values" do
+    user = User.create
+
+    r1 = Review.create :user_id => user.id, :value => 3.4
+
+    user.reload
+    user.review_value_sum.round(1).should == 3.4
+
+    r2 = Review.create :user_id => user.id, :value => 7.2
+
+    user.reload
+    user.review_value_sum.round(1).should == 10.6
+
+    r3 = Review.create :user_id => user.id, :value => 5
+
+    user.reload
+    user.review_value_sum.round(1).should == 15.6
+
+    r2.destroy
+
+    user.reload
+    user.review_value_sum.round(1).should == 8.4
+
+    r3.destroy
+
+    user.reload
+    user.review_value_sum.round(1).should == 3.4
+
+    r1.destroy
+
+    user.reload
+    user.review_value_sum.round(1).should == 0
+  end
   
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}

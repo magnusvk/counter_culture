@@ -269,7 +269,7 @@ module CounterCulture
       if id_to_change && options[:counter_column]
         delta_magnitude = if options[:delta_column]
                             delta_attr_name = options[:was] ? "#{options[:delta_column]}_was" : options[:delta_column]
-                            self.send(delta_attr_name).to_i
+                            self.send(delta_attr_name) || 0
                           else
                             1
                           end

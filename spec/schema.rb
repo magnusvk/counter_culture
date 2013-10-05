@@ -45,6 +45,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "user_id"
     t.integer  "product_id"
     t.integer  "approvals"
+    t.float    "value"
   end
 
   create_table "users", :force => true do |t|
@@ -56,6 +57,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
     t.string   "has_string_id_id"
+    t.float    "review_value_sum",    :default => 0.0, :null => false
   end
 
   create_table "categories", :force => true do |t|
