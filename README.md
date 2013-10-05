@@ -149,6 +149,8 @@ end
 Now, the ```Category``` model will keep the counter cache in ```product_weight_ounces``` up-to-date.
 The value in the counter cache will be the sum of the ```weight_ounces``` values in each of the associated Product records.
 
+The ```:delta_column``` option supports all numeric column types, not just ```:integer```. Specifically, ```:float``` is supported and tested.
+
 ### Dynamically over-writing affected foreign keys
 
 ```ruby
