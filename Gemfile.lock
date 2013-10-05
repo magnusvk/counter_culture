@@ -132,7 +132,7 @@ PLATFORMS
 DEPENDENCIES
   after_commit_action
   awesome_print
-  bundler (>= 1.2.0.pre)
+  bundler (>= 1.2.0)
   database_cleaner (>= 1.1.1)
   jeweler (~> 1.8.3)
   rails (>= 3.1.0)
