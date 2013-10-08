@@ -1,3 +1,8 @@
+## 0.1.17 (October 7, 2013)
+
+Bugfixes:
+  - Avoid Rails 4 deprecation warning
+
 ## 0.1.16 (October 5, 2013)
 
 Features:
@@ -12,5 +17,4 @@ Improvements:
   - delta_column now supports float values
 
 Bugfixes:
-
   - Prevent running out of memory when running counter_culture_fix_counts in large tables
