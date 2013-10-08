@@ -279,7 +279,7 @@ module CounterCulture
           operator = options[:increment] ? '+' : '-'
 
           # we don't use Rails' update_counters because we support changing the timestamp
-          quoted_column = connection.quote_column_name(options[:counter_column])
+          quoted_column = self.class.connection.quote_column_name(options[:counter_column])
 
           updates = []
           # this updates the actual counter
