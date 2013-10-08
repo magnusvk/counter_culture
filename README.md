@@ -13,7 +13,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 0.1.7'
+gem 'counter_culture', '~> 0.1.17'
 ```
 
 Then run ```bundle update ```
