@@ -1052,7 +1052,7 @@ describe "CounterCulture" do
     SimpleDependent.delete_all
     SimpleMain.delete_all
     
-    10000.times do |i|
+    1000.times do |i|
       main = SimpleMain.create
       3.times { main.simple_dependents.create }
     end
@@ -1060,7 +1060,7 @@ describe "CounterCulture" do
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
 
     SimpleMain.order('random()').limit(50).update_all simple_dependents_count: 1
-    SimpleDependent.counter_culture_fix_counts
+    SimpleDependent.counter_culture_fix_counts :batch_size => 100
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
   end
