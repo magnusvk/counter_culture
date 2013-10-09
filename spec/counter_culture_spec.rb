@@ -1065,6 +1065,24 @@ describe "CounterCulture" do
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
   end
 
+  it "should correctly fix the counter caches when no dependent record exists for some of main records" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    1000.times do |i|
+      main = SimpleMain.create
+      (main.id % 4).times { main.simple_dependents.create }
+    end
+
+    SimpleMain.find_each { |main| main.simple_dependents_count.should == main.id % 4 }
+
+    SimpleMain.order('random()').limit(50).update_all simple_dependents_count: 1
+    SimpleDependent.counter_culture_fix_counts :batch_size => 100
+
+    SimpleMain.find_each { |main| main.simple_dependents_count.should == main.id % 4 }
+  end
+
   it "should correctly sum up flaot values" do
     user = User.create
 
