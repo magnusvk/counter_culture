@@ -1,3 +1,8 @@
+## 0.1.18 (October 16, 2013)
+
+Bugfixes:
+  - Correctly fix counter caches, even when there are no dependent records
+
 ## 0.1.17 (October 7, 2013)
 
 Bugfixes:
