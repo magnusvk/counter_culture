@@ -101,7 +101,7 @@ module CounterCulture
             # lives in
             reverse_relation.each do |cur_relation|
               reflect = relation_reflect(cur_relation)
-              counts_query = counts_query.joins("JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
+              counts_query = counts_query.joins("LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
             end
 
             # iterate in batches; otherwise we might run out of memory when there's a lot of
