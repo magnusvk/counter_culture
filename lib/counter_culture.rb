@@ -288,7 +288,7 @@ module CounterCulture
           if options[:touch]
             current_time = current_time_from_proper_timezone
             timestamp_attributes_for_update_in_model.each do |timestamp_column|
-              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:sql)}'"
+              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
             end
           end
 
