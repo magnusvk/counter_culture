@@ -9,6 +9,8 @@ require 'models/category'
 require 'models/has_string_id'
 require 'models/simple_main'
 require 'models/simple_dependent'
+require 'models/nested_main'
+require 'models/nested_dependent'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -101,6 +103,30 @@ describe "CounterCulture" do
 
     review.update_attribute(:approvals, 69)
     user2.reload.review_approvals_count.should == 69
+  end
+
+  it "decrements counter cache on update with _destroy = 1" do
+    nested_main = NestedMain.create
+
+    nested_main.nested_dependents_count.should == 0
+
+    nested_main.nested_dependents.create
+    nested_main.reload
+
+    nested_main.nested_dependents_count.should == 1
+
+    nested_dependent = nested_main.nested_dependents.first
+    params = {
+      :nested_dependents_attributes =>
+        { :id => nested_dependent.id, :_destroy => 1 }
+    }
+
+    nested_main.update(params)
+    nested_main.reload
+
+    nested_main.nested_dependents.count.should == 0
+    nested_main.nested_dependents_count.should == 0
+
   end
 
   it "treats null delta column values as 0" do
