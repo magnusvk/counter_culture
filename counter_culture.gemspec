@@ -38,6 +38,8 @@ Gem::Specification.new do |s|
     "spec/models/company.rb",
     "spec/models/has_string_id.rb",
     "spec/models/industry.rb",
+    "spec/models/nested_dependent.rb",
+    "spec/models/nested_main.rb",
     "spec/models/product.rb",
     "spec/models/review.rb",
     "spec/models/simple_dependent.rb",

@@ -98,4 +98,16 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "updated_at"
   end
 
+  create_table "nested_mains", :force => true do |t|
+    t.integer "nested_dependents_count", :null => false, :default => 0
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "nested_dependents", :force => true do |t|
+    t.integer "nested_main_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
 end
