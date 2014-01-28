@@ -136,6 +136,7 @@ DEPENDENCIES
   database_cleaner (>= 1.1.1)
   jeweler (~> 1.8.3)
   rails (>= 3.1.0)
+  rake
   rdoc (~> 3.12)
   rspec (~> 2.10.0)
   rspec-extra-formatters

@@ -12,7 +12,11 @@ load "#{File.dirname(__FILE__)}/schema.rb"
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
-ActiveRecord::Base.logger = Logger.new(STDOUT)
+if !ENV['TRAVIS']
+  ActiveRecord::Base.logger = Logger.new(STDOUT)
+else
+  ActiveRecord::Base.logger = nil
+end
 
 RSpec.configure do |config|
   config.fail_fast = true
