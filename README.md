@@ -255,6 +255,8 @@ counter_culture itself has extensive automated tests so there should not be a ne
 * Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
 * Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
+[![Build Status](https://travis-ci.org/magnusvk/counter_culture.png)](https://travis-ci.org/magnusvk/counter_culture)
+
 ## Copyright
 
 Copyright (c) 2012-2013 BestVendor, Magnus von Koeller. See LICENSE.txt for further details.
