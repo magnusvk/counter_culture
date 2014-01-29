@@ -1,3 +1,8 @@
+## 0.1.19 (January 29, 2014)
+
+Bugfixes:
+  - Use correct date / time formatting for touch option (fixes a problem with MySQL databases)
+
 ## 0.1.18 (October 16, 2013)
 
 Bugfixes:
