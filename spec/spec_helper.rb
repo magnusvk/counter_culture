@@ -1,3 +1,5 @@
+ENV['RAILS_ENV'] = 'test'
+
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
@@ -13,6 +15,7 @@ load "#{File.dirname(__FILE__)}/schema.rb"
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
 ActiveRecord::Base.logger = Logger.new(STDOUT)
+ActiveRecord::Base.logger.level = 1
 
 RSpec.configure do |config|
   config.fail_fast = true
