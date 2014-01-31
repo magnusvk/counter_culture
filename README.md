@@ -8,7 +8,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Executes counter updates after the commit, avoiding [deadlocks](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html)
 * Can keep a running count, or a running total
 
-+[![Build Status](https://travis-ci.org/magnusvk/counter_culture.png)](https://travis-ci.org/magnusvk/counter_culture)
+[![Build Status](https://travis-ci.org/magnusvk/counter_culture.png)](https://travis-ci.org/magnusvk/counter_culture)
 
 ## Installation
 
