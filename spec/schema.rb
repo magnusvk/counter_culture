@@ -21,6 +21,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "managers_count",      :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
+    t.integer  "review_text_approvals_count", :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -32,6 +33,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
+    t.integer  "review_text_approvals_count", :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -54,6 +56,8 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.float    "value"
     t.datetime "created_at"
     t.datetime "updated_at"
+    # Used to test :delta.
+    t.string   "review_text"
   end
 
   create_table "users", :force => true do |t|
@@ -64,6 +68,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
+    t.integer  "review_text_approvals_count",      :default => 0, :null => false
     t.string   "has_string_id_id"
     t.float    "review_value_sum",    :default => 0.0, :null => false
     t.datetime "created_at"

@@ -2,11 +2,11 @@
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
-* Updates counter cache when values change, not just when creating and destroying 
+* Updates counter cache when values change, not just when creating and destroying
 * Supports counter caches through multiple levels of relations
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Executes counter updates after the commit, avoiding [deadlocks](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html)
-* Can keep a running count, or a running total
+* Can keep a running count, a running total, or a running total of an arbitrary Ruby function of each row.
 
 ## Installation
 
@@ -151,19 +151,40 @@ The value in the counter cache will be the sum of the ```weight_ounces``` values
 
 The ```:delta_column``` option supports all numeric column types, not just ```:integer```. Specifically, ```:float``` is supported and tested.
 
+### Totaling by an arbritary function of each row
+
+The ```:delta``` option is similar to the ```delta_column``` option but it is more genearal because instead of using the value of a single column as the contribution of an entry, it uses an arbritrary function of the entire row object:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, :column_name => 'product_density', :delta => Proc.new{|product| product.weight / product.volume}
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+```
+
+Therefore, it can have the same behaviour as the ```:delta_column``` if you use:
+
+    :delta => Proc.new{|product| product.column_name || 0}
+
+However, for performance reasons, don't do that if you can use the ```:delta_column``` option, since all calculations for the ```:delta_column``` counter cache are done directly inside the database, which may be faster.
+
 ### Dynamically over-writing affected foreign keys
 
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :foreign_key_values => 
+  counter_culture :category, :foreign_key_values =>
       Proc.new {|category_id| [category_id, Category.find_by_id(category_id).try(:parent_category).try(:id)] }
 end
 
 class Category < ActiveRecord::Base
   belongs_to :parent_category, :class_name => 'Category', :foreign_key => 'parent_id'
   has_many :children, :class_name => 'Category', :foreign_key => 'parent_id'
-  
+
   has_many :products
 end
 ```
@@ -221,7 +242,7 @@ Manually populating counter caches with dynammic column names requires additiona
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, 
+  counter_culture :category,
       :column_name => Proc.new {|model| "#{model.product_type}_count" },
       :column_names => {
           ["products.product_type = ?", 'awesome'] => 'awesome_count',
@@ -246,7 +267,7 @@ counter_culture will not update counters in your automated tests *if* you use tr
 counter_culture itself has extensive automated tests so there should not be a need to test counter caches in your own tests. I therefore recommend removing any checks of counter caches as that will avoid this issue. If that is not an option for you, you will have to turn off transactional fixtures and use something like [database_cleaner](https://github.com/bmabey/database_cleaner) instead to clean your database between tests.
 
 ## Contributing to counter_culture
- 
+
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it.
 * Fork the project.

@@ -31,6 +31,7 @@ module CounterCulture
           :counter_cache_name => (options[:column_name] || "#{name.tableize}_count"),
           :column_names => options[:column_names],
           :delta_column => options[:delta_column],
+          :delta => options[:delta],
           :foreign_key_values => options[:foreign_key_values],
           :touch => options[:touch]
         }
@@ -43,6 +44,9 @@ module CounterCulture
       # options:
       #   { :exclude => list of relations to skip when fixing counts,
       #     :only => only these relations will have their counts fixed }
+      #     :batch_size => how many has_many objects will be processed per loop.
+      #         The larger the faster this runs, but may oveflow memory if too large.
+      #         Default value: 1000.
       # returns: a list of fixed record as an array of hashes of the form:
       #   { :entity => which model the count was fixed on,
       #     :id => the id of the model that had the incorrect count,
@@ -52,85 +56,132 @@ module CounterCulture
       #
       def counter_culture_fix_counts(options = {})
         raise "No counter cache defined on #{self.name}" unless @after_commit_counter_cache
-
         options[:exclude] = [options[:exclude]] if options[:exclude] && !options[:exclude].is_a?(Enumerable)
         options[:exclude] = options[:exclude].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
         options[:only] = [options[:only]] if options[:only] && !options[:only].is_a?(Enumerable)
         options[:only] = options[:only].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
+        batch_size = options[:batch_size] || 1000
 
         fixed = []
         @after_commit_counter_cache.each do |hash|
           next if options[:exclude] && options[:exclude].include?(hash[:relation])
           next if options[:only] && !options[:only].include?(hash[:relation])
-
           if options[:skip_unsupported]
             next if (hash[:foreign_key_values] || (hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]))
           else
             raise "Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true" if hash[:foreign_key_values]
             raise "Must provide :column_names option for relation #{hash[:relation].inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if hash[:counter_cache_name].is_a?(Proc) && !hash[:column_names]
           end
+          column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
+          raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
 
           # if we're provided a custom set of column names with conditions, use them; just use the
           # column name otherwise
           # which class does this relation ultimately point to? that's where we have to start
           klass = relation_klass(hash[:relation])
-
-          # we are only interested in the id and the count of related objects (that's this class itself)
-          if hash[:delta_column]
-            query = klass.select("#{klass.table_name}.id, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count")
+          full_primary_key = full_primary_key(klass)
+          if hash[:delta]
+            # What we want to do in the end is loop over [has_many_id, belongs_to_object(self)].
+            # This has to be ordered by has_many_id to limit the memory usage.
+            # Therefore the end table we want is: "has_many.id, belongs_to.*", since we need
+            # all fields of the belongs to object to reconstruct it.
+            #
+            # Since we want to get belongs_to objects, the query must start from the belongs_to side (self).
+            #
+            # RIGHT JOIN would be ideal to simplify the case of a has_many without any belongs_to,
+            # but it is not very DB portable, so we stick to JOIN as furnished by `.joins`.
+            has_many_id_col_name = "has_many_id"
+            query = self.select("#{full_primary_key} AS #{has_many_id_col_name}, #{self.table_name}.*").limit(batch_size).order(full_primary_key)
+            query = query.joins(hash[:relation].reverse.inject{|memo, obj| memo = {obj => memo}})
           else
-            query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id                              ) AS count")
+            # we are only interested in the id and the count of related objects (that's this class itself)
+            if hash[:delta_column]
+              query = klass.select("#{full_primary_key}, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count")
+            else
+              query = klass.select("#{full_primary_key}, COUNT(#{self.table_name}.id                              ) AS count")
+            end
+            query = query.group(full_primary_key)
+            # we need to work our way back from the end-point of the relation to this class itself;
+            # make a list of arrays pointing to the second-to-last, third-to-last, etc.
+            relation = []
+            (1..hash[:relation].length).to_a.reverse.each {|i| relation<< hash[:relation][0,i] }
+            # we need to join together tables until we get back to the table this class itself
+            # lives in
+            relation.each do |cur_relation|
+              reflect = relation_reflect(cur_relation)
+              # `LEFT JOIN` so that there will always be one entry with non NULL id on the has many side.
+              # If that entry has no corresponding belongs to, then belongs_to it will be NULL,
+              # in which case that entry is required to correctly fix the count to `0`.
+              query = query.joins("LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
+            end
           end
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
 
-          column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
-          raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
+          klass_query = klass.order(full_primary_key + " ASC").limit(batch_size)
 
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
             # if there are additional conditions, add them here
             counts_query = query.where(where)
-
-            # we need to work our way back from the end-point of the relation to this class itself;
-            # make a list of arrays pointing to the second-to-last, third-to-last, etc.
-            reverse_relation = []
-            (1..hash[:relation].length).to_a.reverse.each {|i| reverse_relation<< hash[:relation][0,i] }
-
-            # we need to join together tables until we get back to the table this class itself
-            # lives in
-            reverse_relation.each do |cur_relation|
-              reflect = relation_reflect(cur_relation)
-              counts_query = counts_query.joins("LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
-            end
+            offset = 0
 
             # iterate in batches; otherwise we might run out of memory when there's a lot of
             # instances and we try to load all their counts at once
-            start = 0
-            batch_size = options[:batch_size] || 1000
-            while (records = klass.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size)).any?
-              # collect the counts for this batch in an id => count hash; this saves time relative
-              # to running one query per record
-              counts = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass)).inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
+            if hash[:delta]
+              last_has_many_id = nil
+              last_has_many_count = nil
+              updated_counts = {}
+              has_many_ids_uniq = []
 
-              # now iterate over all the models and see whether their counts are right
-              records.each do |model|
-                if model.read_attribute(column_name) != counts[model.id].to_i
-                  # keep track of what we fixed, e.g. for a notification email
-                  fixed<< {
-                    :entity => klass.name,
-                    :id => model.id,
-                    :what => column_name,
-                    :wrong => model.send(column_name),
-                    :right => counts[model.id]
-                  }
-                  # use update_all because it's faster and because a fixed counter-cache shouldn't
-                  # update the timestamp
-                  klass.where(:id => model.id).update_all(column_name => counts[model.id].to_i)
+              # Iterate through belongs_to_has_many id ordered by has_many primary key, pairs and sum up counts.
+              # Cannot use find_in_batches because it only accepts primary key order, and we need to order by `has_many_id`.
+              while (belongs_tos = counts_query.offset(offset).to_a).any?
+                has_many_ids_uniq = belongs_tos.map{|x| x.send(has_many_id_col_name)}.uniq
+                updated_counts = Hash[has_many_ids_uniq.collect{|id| [id, 0]}]
+                updated_counts[last_has_many_id] = last_has_many_count
+                belongs_tos.each do |belongs_to|
+                  updated_counts[belongs_to.send(has_many_id_col_name)] += hash[:delta].call(belongs_to)
                 end
+                # Don't fix the last one yet as it may have more contributions on next batch.
+                ids_records_to_fix = klass.where(id: has_many_ids_uniq[0..-2]) \
+                    .inject({}){|memo, record| memo[record.id] = record; memo}
+                ids_records_to_fix.each do |id, record|
+                  fix_count(klass, column_name, record, updated_counts[id], fixed)
+                end
+                # Set to zero all the have manys we skipped because they don't have any belongs to.
+                klass.where(id: (has_many_ids_uniq[0] .. has_many_ids_uniq[-1] - 1)) \
+                    .where.not(id: has_many_ids_uniq).each do |record_to_fix|
+                  fix_count(klass, column_name, record_to_fix, 0, fixed)
+                end
+                offset += batch_size
+                last_has_many_id = has_many_ids_uniq.last
+                last_has_many_count = updated_counts[last_has_many_id]
               end
-
-              start += batch_size
+              # Fix the very last has many with a belongs to and the ones ahead of it to 0.
+              if last_has_many_id
+                # There is at least one belongs to.
+                record_to_fix = klass.find_by(id: last_has_many_id)
+                fix_count(klass, column_name, record_to_fix, updated_counts[last_has_many_id], fixed)
+                last_query = klass.where('id > ?', last_has_many_id)
+              else
+                # There were no belongs to. Set every has_many to 0.
+                last_query = klass.all
+              end
+              last_query.find_each(batch_size: batch_size) do |record_to_fix|
+                fix_count(klass, column_name, record_to_fix, 0, fixed)
+              end
+            else
+              klass_query.find_in_batches(batch_size: batch_size) do |records_to_fix|
+                # collect the counts for this batch in an id => count hash; this saves time relative
+                # to running one query per record
+                counts = counts_query.offset(offset).inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
+                # now iterate over all the models and see whether their counts are right
+                records_to_fix.each do |record_to_fix|
+                  fix_count(klass, column_name, record_to_fix, counts[record_to_fix.id].to_i, fixed)
+                end
+                offset += batch_size
+              end
             end
           end
         end
@@ -178,7 +229,7 @@ module CounterCulture
       def relation_foreign_key(relation)
         relation_reflect(relation).foreign_key
       end
-      
+
       # gets the foreign key name of the relation. will look at the first
       # level only -- i.e., if passed an array will consider only its
       # first element
@@ -189,7 +240,33 @@ module CounterCulture
         relation = relation.first if relation.is_a?(Enumerable)
         relation_reflect(relation).foreign_key
       end
-        
+
+      # Fix a single record if its count is not correctly updated.
+      #
+      # If not, updates the counts, and updates fixed with a summary of the updates inside fixed.
+      #
+      # - klass:          the class that contains the counter cache column.
+      # - column_name:    a String with the name of the counter cache column.
+      # - record:         an object klass representing the current (possibly wrong) database state.
+      # - updated_count:  a vaule of `column_name` type with the correct count for each record_to_fix.
+      # - fixed:          an Array that will be updated to contain information about the fix done if any.
+      #
+      def fix_count(klass, column_name, record, updated_count, fixed)
+        if record.read_attribute(column_name) != updated_count
+          # keep track of what we fixed, e.g. for a notification email
+          fixed<< {
+            :entity => klass.name,
+            :id => record.id,
+            :what => column_name,
+            :wrong => record.send(column_name),
+            :right => updated_count
+          }
+          # use update_all because it's faster and because a fixed counter-cache shouldn't
+          # update the timestamp
+          klass.where(:id => record.id).update_all(column_name => updated_count)
+        end
+      end
+
     end
 
     private
@@ -238,6 +315,7 @@ module CounterCulture
 
           if send("#{first_level_relation_foreign_key(hash[:relation])}_changed?") ||
             (hash[:delta_column] && send("#{hash[:delta_column]}_changed?")) ||
+            (hash[:delta] && self.changed?) ||
             counter_cache_name != counter_cache_name_was
 
             # increment the counter cache of the new value
@@ -253,7 +331,7 @@ module CounterCulture
     #
     # options:
     #   :increment => true to increment, false to decrement
-    #   :relation => which relation to increment the count on, 
+    #   :relation => which relation to increment the count on,
     #   :counter_cache_name => the column name of the counter cache
     #   :counter_column => overrides :counter_cache_name
     #   :delta_column => override the default count delta (1) with the value of this column in the counted record
@@ -261,7 +339,7 @@ module CounterCulture
     #      first part of the relation
     def change_counter_cache(options)
       options[:counter_column] = counter_cache_name_for(self, options[:counter_cache_name]) unless options.has_key?(:counter_column)
-      
+
       # default to the current foreign key value
       id_to_change = foreign_key_value(options[:relation], options[:was])
       # allow overwriting of foreign key value by the caller
@@ -271,6 +349,12 @@ module CounterCulture
         delta_magnitude = if options[:delta_column]
                             delta_attr_name = options[:was] ? "#{options[:delta_column]}_was" : options[:delta_column]
                             self.send(delta_attr_name) || 0
+                          elsif options[:delta]
+                            if options[:was]
+                              options[:delta].call(previous_model)
+                            else
+                              options[:delta].call(self)
+                            end
                           else
                             1
                           end
@@ -298,14 +382,14 @@ module CounterCulture
     end
 
     # Gets the name of the counter cache for a specific object
-    # 
+    #
     # obj: object to calculate the counter cache name for
     # cache_name_finder: object used to calculate the cache name
     def counter_cache_name_for(obj, cache_name_finder)
       # figure out what the column name is
       if cache_name_finder.is_a? Proc
         # dynamic column name -- call the Proc
-        cache_name_finder.call(obj) 
+        cache_name_finder.call(obj)
       else
         # static column name
         cache_name_finder
@@ -315,11 +399,11 @@ module CounterCulture
     # Creates a copy of the current model with changes rolled back
     def previous_model
       prev = self.dup
-      
+
       self.changed_attributes.each_pair do |key, value|
         prev.send("#{key}=".to_sym, value)
       end
-      
+
       prev
     end
 
@@ -352,7 +436,7 @@ module CounterCulture
     def relation_reflect(relation)
       self.class.send :relation_reflect, relation
     end
-    
+
     def relation_foreign_key(relation)
       self.class.send :relation_foreign_key, relation
     end
