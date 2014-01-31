@@ -95,7 +95,7 @@ Gem::Specification.new do |s|
     "spec/schema.rb",
     "spec/spec_helper.rb"
   ]
-  s.homepage = "http://github.com/bestvendor/counter_culture"
+  s.homepage = "https://github.com/magnusvk/counter_culture"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = "2.1.11"
