@@ -102,6 +102,7 @@ module CounterCulture
             reverse_relation.each do |cur_relation|
               reflect = relation_reflect(cur_relation)
               joins_query = "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
+              # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
               joins_query = "#{joins_query} AND #{reflect.active_record.table_name}.type IN ('#{self}')" if self.column_names.include?('type') and not(self.descends_from_active_record?)
               counts_query = counts_query.joins(joins_query)
             end
