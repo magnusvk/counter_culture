@@ -40,6 +40,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "name"
     t.integer  "reviews_count",       :default => 0, :null => false
     t.integer  "rexiews_count",       :default => 0, :null => false
+    t.integer  "twitter_reviews_count",       :default => 0, :null => false
     t.integer  "category_id"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -52,6 +53,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "product_id"
     t.integer  "approvals"
     t.float    "value"
+    t.string   "type"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
