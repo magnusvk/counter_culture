@@ -837,7 +837,6 @@ describe "CounterCulture" do
     product.save!
 
     fixed = Review.counter_culture_fix_counts :skip_unsupported => true
-    puts fixed.inspect
     fixed.length.should == 3
 
     user.reload
