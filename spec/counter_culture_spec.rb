@@ -1079,7 +1079,7 @@ describe "CounterCulture" do
 
     ConditionalMain.find_each { |main| main.conditional_dependents_count.should == (main.id % 2 == 0 ? 3 : 0) }
 
-    ConditionalMain.order('random()').limit(50).update_all :conditional_dependents_count => 0
+    ConditionalMain.order('random()').limit(50).update_all :conditional_dependents_count => 1
     ConditionalDependent.counter_culture_fix_counts :batch_size => 100
 
     ConditionalMain.find_each { |main| main.conditional_dependents_count.should == (main.id % 2 == 0 ? 3 : 0) }
