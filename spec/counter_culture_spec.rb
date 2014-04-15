@@ -9,6 +9,8 @@ require 'models/category'
 require 'models/has_string_id'
 require 'models/simple_main'
 require 'models/simple_dependent'
+require 'models/conditional_main'
+require 'models/conditional_dependent'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1063,6 +1065,24 @@ describe "CounterCulture" do
     SimpleDependent.counter_culture_fix_counts :batch_size => 100
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
+  end
+
+  it "should correctly fix the counter caches for thousands of records when counter is conditional" do
+    # first, clean up
+    ConditionalDependent.delete_all
+    ConditionalMain.delete_all
+
+    1000.times do |i|
+      main = ConditionalMain.create
+      3.times { main.conditional_dependents.create(:condition => main.id % 2 == 0) }
+    end
+
+    ConditionalMain.find_each { |main| main.conditional_dependents_count.should == (main.id % 2 == 0 ? 3 : 0) }
+
+    ConditionalMain.order('random()').limit(50).update_all :conditional_dependents_count => 0
+    ConditionalDependent.counter_culture_fix_counts :batch_size => 100
+
+    ConditionalMain.find_each { |main| main.conditional_dependents_count.should == (main.id % 2 == 0 ? 3 : 0) }
   end
 
   it "should correctly fix the counter caches when no dependent record exists for some of main records" do
