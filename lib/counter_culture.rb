@@ -77,7 +77,7 @@ module CounterCulture
           query = klass
 
           # if a delta column is provided use SUM, otherwise use COUNT
-          count = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.id)"
+          count_select = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.id)"
 
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
@@ -98,7 +98,7 @@ module CounterCulture
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
             # select id and count (from above) as well as cache column ('column_name') for later comparison
-            counts_query = query.select("#{klass.table_name}.id, #{count} AS count, #{klass.table_name}.#{column_name}")
+            counts_query = query.select("#{klass.table_name}.id, #{count_select} AS count, #{klass.table_name}.#{column_name}")
 
             # we need to join together tables until we get back to the table this class itself lives in
             # conditions must also be applied to the join on which we are counting
@@ -107,8 +107,31 @@ module CounterCulture
               counts_query = counts_query.joins(join)
             end
 
-            # iterate and compare/fix counts
-            fixed += compare_and_fix_counts(counts_query, klass, column_name, options[:batch_size])
+            # iterate in batches; otherwise we might run out of memory when there's a lot of
+            # instances and we try to load all their counts at once
+            start = 0
+            batch_size = options[:batch_size] || 1000
+            while (records = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass))).any?
+              # now iterate over all the models and see whether their counts are right
+              records.each do |model|
+                count = model.read_attribute('count').to_i
+                if model.read_attribute(column_name) != count
+                  # keep track of what we fixed, e.g. for a notification email
+                  fixed<< {
+                    :entity => klass.name,
+                    :id => model.id,
+                    :what => column_name,
+                    :wrong => model.send(column_name),
+                    :right => count
+                  }
+                  # use update_all because it's faster and because a fixed counter-cache shouldn't
+                  # update the timestamp
+                  klass.where(:id => model.id).update_all(column_name => count)
+                end
+              end
+
+              start += batch_size
+            end
           end
         end
 
@@ -116,36 +139,6 @@ module CounterCulture
       end
 
       private
-
-      def compare_and_fix_counts(query, klass, column_name, batch_size)
-        batch_size ||= 1000
-        # iterate in batches; otherwise we might run out of memory when there's a lot of
-        # instances and we try to load all their counts at once
-        start = 0
-        fixed = []
-        while (records = query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass))).any?
-          # now iterate over all the models and see whether their counts are right
-          records.each do |model|
-            count = model.read_attribute('count').to_i
-            if model.read_attribute(column_name) != count
-              # keep track of what we fixed, e.g. for a notification email
-              fixed<< {
-                :entity => klass.name,
-                :id => model.id,
-                :what => column_name,
-                :wrong => model.send(column_name),
-                :right => count
-              }
-              # use update_all because it's faster and because a fixed counter-cache shouldn't
-              # update the timestamp
-              klass.where(:id => model.id).update_all(column_name => count)
-            end
-          end
-          start += batch_size
-        end
-        return fixed
-      end
-
       # the string to pass to order() in order to sort by primary key
       def full_primary_key(klass)
         "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
