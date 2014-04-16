@@ -76,46 +76,39 @@ module CounterCulture
           klass = relation_klass(hash[:relation])
           query = klass
 
-          # we are only interested in the id and the count of related objects (that's this class itself)
-          if hash[:delta_column]
-            select = "#{klass.table_name}.id, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count"
-          else
-            select = "#{klass.table_name}.id, COUNT(#{self.table_name}.id                              ) AS count"
-          end
+          # if a delta column is provided use SUM, otherwise use COUNT
+          count = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.id)"
+
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
 
           column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
           raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
 
+          # we need to work our way back from the end-point of the relation to this class itself;
+          # make a list of arrays pointing to the second-to-last, third-to-last, etc.
+          reverse_relation = (1..hash[:relation].length).to_a.reverse.inject([]) {|a,i| a << hash[:relation][0,i]; a }
+
+          # store joins in an array so that we can later apply column-specific conditions
+          joins = reverse_relation.map do |cur_relation|
+            reflect = relation_reflect(cur_relation)
+            "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
+          end
+
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
-            # if there are additional conditions, add them here
-            counts_query = query.where(where)
-
-            # we need to work our way back from the end-point of the relation to this class itself;
-            # make a list of arrays pointing to the second-to-last, third-to-last, etc.
-            reverse_relation = []
-            (1..hash[:relation].length).to_a.reverse.each {|i| reverse_relation<< hash[:relation][0,i] }
-
-            # we need to join together tables until we get back to the table this class itself
-            # lives in
-            reverse_relation.each do |cur_relation|
-              reflect = relation_reflect(cur_relation)
-              counts_query = counts_query.joins("LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}")
-            end
-
-            # because conditions may remove rows (where there are no matches), inverse the query
-            inverse_query = klass.select("#{klass.table_name}.id, 0 AS count, #{klass.table_name}.#{column_name}").where("#{klass.table_name}.id NOT IN ("+counts_query.select("#{klass.table_name}.id").to_sql+')')
-
             # select id and count (from above) as well as cache column ('column_name') for later comparison
-            counts_query = counts_query.select("#{select}, #{klass.table_name}.#{column_name}")
+            counts_query = query.select("#{klass.table_name}.id, #{count} AS count, #{klass.table_name}.#{column_name}")
 
-            # iterate and compare/fix counts on each query
-            [counts_query, inverse_query].each do |query|
-              fixed += compare_and_fix_counts(query, klass, column_name, options[:batch_size])
+            # we need to join together tables until we get back to the table this class itself lives in
+            # conditions must also be applied to the join on which we are counting
+            joins.each_with_index do |join,index|
+              join += " AND (#{sanitize_sql_for_conditions(where)})" if index == joins.size - 1 && where
+              counts_query = counts_query.joins(join)
             end
 
+            # iterate and compare/fix counts
+            fixed += compare_and_fix_counts(counts_query, klass, column_name, options[:batch_size])
           end
         end
 
