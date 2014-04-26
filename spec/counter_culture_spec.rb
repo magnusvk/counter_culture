@@ -9,6 +9,8 @@ require 'models/category'
 require 'models/has_string_id'
 require 'models/simple_main'
 require 'models/simple_dependent'
+require 'models/game'
+require 'models/player'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1144,6 +1146,32 @@ describe "CounterCulture" do
       
       user.name.should =="Joe Smith"
       user.manages_company_id.should == 2
+    end
+  end
+  
+  describe "updates from callbacks" do
+    it "should update when score is modified directly" do
+      game = Game.create
+      player = Player.create game_id: game.id, raw_score: 1
+      player.update(score: 6)
+      
+      game.reload.total_score.should == 6
+    end
+    
+    it "should update when score is modified by after_create" do
+      game = Game.create
+      player = Player.create game_id: game.id, raw_score: 1
+      
+      game.reload.total_score.should == 2
+    end
+    
+    it "should update when parent method is called directly" do
+      game = Game.create
+      player = Player.create game_id: game.id, raw_score: 5
+      player.update(raw_score: 6)
+      game.modify_player_scores
+      
+      game.reload.total_score.should == 12
     end
   end
 
