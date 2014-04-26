@@ -97,5 +97,19 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+  
+  create_table "players", :force => true do |t|
+    t.integer  "game_id"
+    t.integer  "raw_score"
+    t.integer  "score"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+  
+  create_table "games", :force => true do |t|
+    t.integer  "total_score"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
 end
