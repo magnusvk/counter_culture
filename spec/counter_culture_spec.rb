@@ -1117,6 +1117,44 @@ describe "CounterCulture" do
     user.review_value_sum.round(1).should == 0
   end
 
+  it "should correctly fix float values that came out of sync" do
+    user = User.create
+
+    r1 = Review.create :user_id => user.id, :value => 3.4
+    r2 = Review.create :user_id => user.id, :value => 7.2
+    r3 = Review.create :user_id => user.id, :value => 5
+
+    user.update_column(:review_value_sum, 0)
+    Review.counter_culture_fix_counts skip_unsupported: true
+
+    user.reload
+    user.review_value_sum.round(1).should == 15.6
+
+    r2.destroy
+
+    user.update_column(:review_value_sum, 0)
+    Review.counter_culture_fix_counts skip_unsupported: true
+
+    user.reload
+    user.review_value_sum.round(1).should == 8.4
+
+    r3.destroy
+
+    user.update_column(:review_value_sum, 0)
+    Review.counter_culture_fix_counts skip_unsupported: true
+
+    user.reload
+    user.review_value_sum.round(1).should == 3.4
+
+    r1.destroy
+
+    user.update_column(:review_value_sum, 0)
+    Review.counter_culture_fix_counts skip_unsupported: true
+
+    user.reload
+    user.review_value_sum.round(1).should == 0
+  end
+
   it "should update the timestamp if touch: true is set" do
     user = User.create
     product = Product.create

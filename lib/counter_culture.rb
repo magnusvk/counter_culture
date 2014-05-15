@@ -111,11 +111,11 @@ module CounterCulture
             while (records = klass.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size)).any?
               # collect the counts for this batch in an id => count hash; this saves time relative
               # to running one query per record
-              counts = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass)).inject({}){|memo, model| memo[model.id] = model.count.to_i; memo}
+              counts = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass)).inject({}){|memo, model| memo[model.id] = model.count || 0; memo}
 
               # now iterate over all the models and see whether their counts are right
               records.each do |model|
-                if model.read_attribute(column_name) != counts[model.id].to_i
+                if model.read_attribute(column_name) != (counts[model.id] || 0)
                   # keep track of what we fixed, e.g. for a notification email
                   fixed<< {
                     :entity => klass.name,
@@ -126,7 +126,7 @@ module CounterCulture
                   }
                   # use update_all because it's faster and because a fixed counter-cache shouldn't
                   # update the timestamp
-                  klass.where(:id => model.id).update_all(column_name => counts[model.id].to_i)
+                  klass.where(:id => model.id).update_all(column_name => counts[model.id] || 0)
                 end
               end
 
