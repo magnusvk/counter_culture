@@ -1,3 +1,8 @@
+## 0.1.20 (May 14, 2014)
+
+Bugfixes:
+  - counter_culture_fix counts now supports float values, where it forced integer values previously
+
 ## 0.1.19 (January 29, 2014)
 
 Bugfixes:
