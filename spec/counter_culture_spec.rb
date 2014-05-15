@@ -1083,7 +1083,7 @@ describe "CounterCulture" do
     SimpleMain.find_each { |main| main.simple_dependents_count.should == main.id % 4 }
   end
 
-  it "should correctly sum up flaot values" do
+  it "should correctly sum up float values" do
     user = User.create
 
     r1 = Review.create :user_id => user.id, :value => 3.4
