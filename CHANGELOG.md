@@ -1,3 +1,8 @@
+## 0.1.22 (May 24, 2014)
+
+Bugfixes:
+  - support for single-table inheritance in counter_culture_fix_counts
+
 ## 0.1.21 (May 24, 2014)
 
 Bugfixes:
