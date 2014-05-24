@@ -100,4 +100,17 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "updated_at"
   end
 
+  create_table "conditional_mains", :force => true do |t|
+    t.integer "conditional_dependents_count", :null => false, :default => 0
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "conditional_dependents", :force => true do |t|
+    t.integer "conditional_main_id"
+    t.boolean "condition", default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
 end

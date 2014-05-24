@@ -74,62 +74,63 @@ module CounterCulture
           # column name otherwise
           # which class does this relation ultimately point to? that's where we have to start
           klass = relation_klass(hash[:relation])
+          query = klass
 
-          # we are only interested in the id and the count of related objects (that's this class itself)
-          if hash[:delta_column]
-            query = klass.select("#{klass.table_name}.id, SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0)) AS count")
-          else
-            query = klass.select("#{klass.table_name}.id, COUNT(#{self.table_name}.id                              ) AS count")
-          end
+          # if a delta column is provided use SUM, otherwise use COUNT
+          count_select = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.id)"
+
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
 
           column_names = hash[:column_names] || {nil => hash[:counter_cache_name]}
           raise ":column_names must be a Hash of conditions and column names" unless column_names.is_a?(Hash)
 
+          # we need to work our way back from the end-point of the relation to this class itself;
+          # make a list of arrays pointing to the second-to-last, third-to-last, etc.
+          reverse_relation = (1..hash[:relation].length).to_a.reverse.inject([]) {|a,i| a << hash[:relation][0,i]; a }
+
+          # store joins in an array so that we can later apply column-specific conditions
+          joins = reverse_relation.map do |cur_relation|
+            reflect = relation_reflect(cur_relation)
+            joins_query = "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
+            # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
+            joins_query = "#{joins_query} AND #{reflect.active_record.table_name}.type IN ('#{self.name}')" if self.column_names.include?('type') and not(self.descends_from_active_record?)
+            joins_query
+          end
+
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
-            # if there are additional conditions, add them here
-            counts_query = query.where(where)
+            # select id and count (from above) as well as cache column ('column_name') for later comparison
+            counts_query = query.select("#{klass.table_name}.id, #{count_select} AS count, #{klass.table_name}.#{column_name}")
 
-            # we need to work our way back from the end-point of the relation to this class itself;
-            # make a list of arrays pointing to the second-to-last, third-to-last, etc.
-            reverse_relation = []
-            (1..hash[:relation].length).to_a.reverse.each {|i| reverse_relation<< hash[:relation][0,i] }
-
-            # we need to join together tables until we get back to the table this class itself
-            # lives in
-            reverse_relation.each do |cur_relation|
-              reflect = relation_reflect(cur_relation)
-              joins_query = "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
-              # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
-              joins_query = "#{joins_query} AND #{reflect.active_record.table_name}.type IN ('#{self.name}')" if self.column_names.include?('type') and not(self.descends_from_active_record?)
-              counts_query = counts_query.joins(joins_query)
+            # we need to join together tables until we get back to the table this class itself lives in
+            # conditions must also be applied to the join on which we are counting
+            joins.each_with_index do |join,index|
+              join += " AND (#{sanitize_sql_for_conditions(where)})" if index == joins.size - 1 && where
+              counts_query = counts_query.joins(join)
             end
 
             # iterate in batches; otherwise we might run out of memory when there's a lot of
             # instances and we try to load all their counts at once
             start = 0
             batch_size = options[:batch_size] || 1000
-            while (records = klass.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size)).any?
-              # collect the counts for this batch in an id => count hash; this saves time relative
-              # to running one query per record
-              counts = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass)).inject({}){|memo, model| memo[model.id] = model.count || 0; memo}
 
+            while (records = counts_query.reorder(full_primary_key(klass) + " ASC").offset(start).limit(batch_size).group(full_primary_key(klass)).to_a).any?
               # now iterate over all the models and see whether their counts are right
               records.each do |model|
-                if model.read_attribute(column_name) != (counts[model.id] || 0)
+                count = model.read_attribute('count') || 0
+                if model.read_attribute(column_name) != count
                   # keep track of what we fixed, e.g. for a notification email
                   fixed<< {
                     :entity => klass.name,
                     :id => model.id,
                     :what => column_name,
                     :wrong => model.send(column_name),
-                    :right => counts[model.id]
+                    :right => count
                   }
                   # use update_all because it's faster and because a fixed counter-cache shouldn't
                   # update the timestamp
-                  klass.where(:id => model.id).update_all(column_name => counts[model.id] || 0)
+                  klass.where(:id => model.id).update_all(column_name => count)
                 end
               end
 
