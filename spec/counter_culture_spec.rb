@@ -1215,6 +1215,12 @@ describe "CounterCulture" do
     user.created_at.to_i.should == user.updated_at.to_i
     product.created_at.to_i.should < product.updated_at.to_i
   end
+
+  it "should update counts correctly when creating using nested attributes" do
+    user = User.create(:reviews_attributes => [{:some_text => 'abc'}, {:some_text => 'xyz'}])
+    user.reload
+    user.reviews_count.should == 2
+  end
   
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}
