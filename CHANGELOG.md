@@ -1,3 +1,8 @@
+## 0.1.21 (May 24, 2014)
+
+Bugfixes:
+  - makes the migration generator compatible with Rails 4.1
+
 ## 0.1.20 (May 14, 2014)
 
 Bugfixes:
