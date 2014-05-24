@@ -63,7 +63,6 @@ Gem::Specification.new do |s|
     "spec/rails_app/config/database.yml",
     "spec/rails_app/config/environment.rb",
     "spec/rails_app/config/environments/development.rb",
-    "spec/rails_app/config/environments/production.rb",
     "spec/rails_app/config/environments/test.rb",
     "spec/rails_app/config/initializers/backtrace_silencers.rb",
     "spec/rails_app/config/initializers/inflections.rb",

@@ -14,8 +14,6 @@ class CounterCultureGenerator < ActiveRecord::Generators::Base
     migration_template "counter_culture_migration.rb.erb", "db/migrate/#{migration_file_name}"
   end
 
-  protected
-
   def migration_name
     "add_#{counter_cache_columns.join("_")}_to_#{name.underscore.pluralize}"
   end
