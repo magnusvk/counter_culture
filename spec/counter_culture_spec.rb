@@ -4,6 +4,7 @@ require 'models/company'
 require 'models/industry'
 require 'models/product'
 require 'models/review'
+require 'models/twitter_review'
 require 'models/user'
 require 'models/category'
 require 'models/has_string_id'
@@ -862,6 +863,32 @@ describe "CounterCulture" do
 
     user.reviews_count.should == 0
 
+  end
+
+  it "should fix a STI counter cache correctly" do
+    company = Company.create
+    user = User.create :manages_company_id => company.id
+    product = Product.create
+
+    product.twitter_reviews_count.should == 0
+    
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
+    twitter_review = TwitterReview.create :user_id => user.id, :product_id => product.id, :approvals => 32
+
+    company.reload
+    user.reload
+    product.reload
+
+    product.twitter_reviews_count.should == 1
+
+    product.twitter_reviews_count = 2
+    product.save!
+
+    TwitterReview.counter_culture_fix_counts
+
+    product.reload
+
+    product.twitter_reviews_count.should == 1
   end
 
   it "should fix a second-level counter cache correctly" do
