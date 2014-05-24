@@ -1,6 +1,11 @@
-## 0.1.22 (May 24, 2014)
+## 0.1.33 (May 24, 2014)
 
 Bugfixes:
+  - fixes problems fixing conditional counter caches with batching
+
+## 0.1.22 (May 24, 2014)
+
+Improvements:
   - support for single-table inheritance in counter_culture_fix_counts
 
 ## 0.1.21 (May 24, 2014)
