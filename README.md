@@ -1,6 +1,18 @@
-# counter_culture [![Build Status](https://travis-ci.org/magnusvk/counter_culture.png)](https://travis-ci.org/magnusvk/counter_culture)
+# counter_culture
 
-Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
+Turbo-charged counter caches for your Rails app. 
+
+[![Gem Version](http://img.shields.io/gem/v/counter_culture.svg)][gem]
+[![Build Status](http://img.shields.io/travis/magnusvk/counter_culture.svg)][travis]
+[![Dependency Status](http://img.shields.io/gemnasium/magnusvk/counter_culture.svg)][gemnasium]
+[![Code Climate](http://img.shields.io/codeclimate/github/magnusvk/counter_culture.svg)][codeclimate]
+
+[gem]: https://rubygems.org/gems/counter_culture
+[travis]: https://travis-ci.org/magnusvk/counter_culture
+[gemnasium]: https://gemnasium.com/magnusvk/counter_culture
+[codeclimate]: https://codeclimate.com/github/magnusvk/counter_culture
+
+Huge improvements over the Rails standard counter caches:
 
 * Updates counter cache when values change, not just when creating and destroying 
 * Supports counter caches through multiple levels of relations
