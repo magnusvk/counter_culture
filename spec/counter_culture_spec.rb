@@ -12,6 +12,7 @@ require 'models/simple_main'
 require 'models/simple_dependent'
 require 'models/conditional_main'
 require 'models/conditional_dependent'
+require 'models/post'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1220,6 +1221,13 @@ describe "CounterCulture" do
     user = User.create(:reviews_attributes => [{:some_text => 'abc'}, {:some_text => 'xyz'}])
     user.reload
     user.reviews_count.should == 2
+  end
+
+  it "should use relation primary_key correctly", :focus => true do
+    category = Category.create!
+    post = Post.create!(:category_id => category.id)
+    category.reload
+    category.posts_count.should == 1
   end
 
   describe "#previous_model" do
