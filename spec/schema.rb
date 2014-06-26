@@ -93,7 +93,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
-  
+
   create_table "simple_dependents", :force => true do |t|
     t.integer "simple_main_id"
     t.datetime "created_at"

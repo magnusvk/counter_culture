@@ -182,7 +182,7 @@ module CounterCulture
       def relation_foreign_key(relation)
         relation_reflect(relation).foreign_key
       end
-      
+
       # gets the foreign key name of the relation. will look at the first
       # level only -- i.e., if passed an array will consider only its
       # first element
@@ -193,7 +193,7 @@ module CounterCulture
         relation = relation.first if relation.is_a?(Enumerable)
         relation_reflect(relation).foreign_key
       end
-        
+
     end
 
     private
@@ -257,7 +257,7 @@ module CounterCulture
     #
     # options:
     #   :increment => true to increment, false to decrement
-    #   :relation => which relation to increment the count on, 
+    #   :relation => which relation to increment the count on,
     #   :counter_cache_name => the column name of the counter cache
     #   :counter_column => overrides :counter_cache_name
     #   :delta_column => override the default count delta (1) with the value of this column in the counted record
@@ -265,7 +265,7 @@ module CounterCulture
     #      first part of the relation
     def change_counter_cache(options)
       options[:counter_column] = counter_cache_name_for(self, options[:counter_cache_name]) unless options.has_key?(:counter_column)
-      
+
       # default to the current foreign key value
       id_to_change = foreign_key_value(options[:relation], options[:was])
       # allow overwriting of foreign key value by the caller
@@ -302,14 +302,14 @@ module CounterCulture
     end
 
     # Gets the name of the counter cache for a specific object
-    # 
+    #
     # obj: object to calculate the counter cache name for
     # cache_name_finder: object used to calculate the cache name
     def counter_cache_name_for(obj, cache_name_finder)
       # figure out what the column name is
       if cache_name_finder.is_a? Proc
         # dynamic column name -- call the Proc
-        cache_name_finder.call(obj) 
+        cache_name_finder.call(obj)
       else
         # static column name
         cache_name_finder
@@ -319,11 +319,11 @@ module CounterCulture
     # Creates a copy of the current model with changes rolled back
     def previous_model
       prev = self.dup
-      
+
       self.changed_attributes.each_pair do |key, value|
         prev.send("#{key}=".to_sym, value)
       end
-      
+
       prev
     end
 
@@ -356,7 +356,7 @@ module CounterCulture
     def relation_reflect(relation)
       self.class.send :relation_reflect, relation
     end
-    
+
     def relation_foreign_key(relation)
       self.class.send :relation_foreign_key, relation
     end

@@ -30,7 +30,7 @@ describe "CounterCulture" do
     user.review_approvals_count.should == 0
 
     user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
-    
+
     user.reload
     product.reload
 
@@ -48,7 +48,7 @@ describe "CounterCulture" do
     user.review_approvals_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 69
-    
+
     user.reload
     product.reload
 
@@ -78,7 +78,7 @@ describe "CounterCulture" do
     user2.review_approvals_count.should == 0
 
     review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 42
-    
+
     user1.reload
     user2.reload
     product.reload
@@ -135,7 +135,7 @@ describe "CounterCulture" do
     company.review_approvals_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
-    
+
     company.reload
     user.reload
     product.reload
@@ -157,7 +157,7 @@ describe "CounterCulture" do
     company.review_approvals_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
-    
+
     user.reload
     product.reload
     company.reload
@@ -195,7 +195,7 @@ describe "CounterCulture" do
     company2.review_approvals_count.should == 0
 
     review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 69
-    
+
     user1.reload
     user2.reload
     company1.reload
@@ -238,7 +238,7 @@ describe "CounterCulture" do
     product.rexiews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id
-    
+
     product.reload
 
     product.rexiews_count.should == 1
@@ -251,7 +251,7 @@ describe "CounterCulture" do
     product.rexiews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id
-    
+
     product.reload
 
     product.rexiews_count.should == 1
@@ -272,7 +272,7 @@ describe "CounterCulture" do
     product2.rexiews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product1.id
-    
+
     product1.reload
     product2.reload
 
@@ -297,7 +297,7 @@ describe "CounterCulture" do
     user.tried_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
-    
+
     user.reload
 
     user.using_count.should == 0
@@ -312,7 +312,7 @@ describe "CounterCulture" do
     user.tried_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
-    
+
     product.reload
 
     user.using_count.should == 0
@@ -337,7 +337,7 @@ describe "CounterCulture" do
     user2.tried_count.should == 0
 
     review = Review.create :user_id => user1.id, :product_id => product.id, :review_type => nil
-    
+
     user1.reload
     user2.reload
 
@@ -357,64 +357,64 @@ describe "CounterCulture" do
     user2.using_count.should == 0
     user2.tried_count.should == 0
   end
-  
+
   describe "conditional counts on update" do
     let(:product) {Product.create!}
     let(:user) {User.create!}
-    
+
     it "should increment and decrement if changing column name" do
       user.using_count.should == 0
       user.tried_count.should == 0
-      
+
       review = Review.create :user_id => user.id, :product_id => product.id, :review_type => "using"
       user.reload
-      
+
       user.using_count.should == 1
       user.tried_count.should == 0
-      
+
       review.review_type = "tried"
       review.save!
-      
+
       user.reload
-      
+
       user.using_count.should == 0
       user.tried_count.should == 1
     end
-    
+
     it "should increment if changing from a nil column name" do
       user.using_count.should == 0
       user.tried_count.should == 0
-      
+
       review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
       user.reload
-      
+
       user.using_count.should == 0
       user.tried_count.should == 0
-      
+
       review.review_type = "tried"
       review.save!
-      
+
       user.reload
-      
+
       user.using_count.should == 0
       user.tried_count.should == 1
     end
-    
+
     it "should decrement if changing column name to nil" do
       user.using_count.should == 0
       user.tried_count.should == 0
-      
+
       review = Review.create :user_id => user.id, :product_id => product.id, :review_type => "using"
       user.reload
-      
+
       user.using_count.should == 1
       user.tried_count.should == 0
-      
+
       review.review_type = nil
       review.save!
-      
+
       user.reload
-      
+
       user.using_count.should == 0
       user.tried_count.should == 0
     end
@@ -433,7 +433,7 @@ describe "CounterCulture" do
     product.reviews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
-    
+
     industry.reload
     company.reload
     user.reload
@@ -459,7 +459,7 @@ describe "CounterCulture" do
     product.reviews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
-    
+
     industry.reload
     company.reload
     user.reload
@@ -504,7 +504,7 @@ describe "CounterCulture" do
     industry2.review_approvals_count.should == 0
 
     review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 42
-    
+
     industry1.reload
     industry2.reload
     company1.reload
@@ -553,7 +553,7 @@ describe "CounterCulture" do
     industry.rexiews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id
-    
+
     industry.reload
 
     industry.rexiews_count.should == 1
@@ -568,7 +568,7 @@ describe "CounterCulture" do
     industry.rexiews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id
-    
+
     industry.reload
     industry.rexiews_count.should == 1
 
@@ -591,7 +591,7 @@ describe "CounterCulture" do
     industry2.rexiews_count.should == 0
 
     review = Review.create :user_id => user1.id, :product_id => product.id
-    
+
     industry1.reload
     industry1.rexiews_count.should == 1
     industry2.reload
@@ -609,7 +609,7 @@ describe "CounterCulture" do
   it "increments dynamic counter cache on create" do
     user = User.create
     product = Product.create
-    
+
     user.using_count.should == 0
     user.tried_count.should == 0
 
@@ -631,7 +631,7 @@ describe "CounterCulture" do
   it "decrements dynamic counter cache on destroy" do
     user = User.create
     product = Product.create
-    
+
     user.using_count.should == 0
     user.tried_count.should == 0
 
@@ -674,14 +674,14 @@ describe "CounterCulture" do
     industry.tried_count.should == 0
 
     review_using = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'using'
-    
+
     industry.reload
 
     industry.using_count.should == 1
     industry.tried_count.should == 0
 
     review_tried = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'tried'
-    
+
     industry.reload
 
     industry.using_count.should == 1
@@ -698,14 +698,14 @@ describe "CounterCulture" do
     industry.tried_count.should == 0
 
     review_using = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'using'
-    
+
     industry.reload
 
     industry.using_count.should == 1
     industry.tried_count.should == 0
 
     review_tried = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'tried'
-    
+
     industry.reload
 
     industry.using_count.should == 1
@@ -741,7 +741,7 @@ describe "CounterCulture" do
     industry2.tried_count.should == 0
 
     review_using = Review.create :user_id => user1.id, :product_id => product.id, :review_type => 'using'
-    
+
     industry1.reload
     industry2.reload
 
@@ -751,7 +751,7 @@ describe "CounterCulture" do
     industry2.tried_count.should == 0
 
     review_tried = Review.create :user_id => user1.id, :product_id => product.id, :review_type => 'tried'
-    
+
     industry1.reload
     industry2.reload
 
@@ -786,7 +786,7 @@ describe "CounterCulture" do
   it "should overwrite foreign-key values on create" do
     3.times { Category.create }
     Category.all {|category| category.products_count.should == 0 }
-    
+
     product = Product.create :category_id => Category.first.id
     Category.all {|category| category.products_count.should == 1 }
   end
@@ -794,7 +794,7 @@ describe "CounterCulture" do
   it "should overwrite foreign-key values on destroy" do
     3.times { Category.create }
     Category.all {|category| category.products_count.should == 0 }
-    
+
     product = Product.create :category_id => Category.first.id
     Category.all {|category| category.products_count.should == 1 }
 
@@ -805,7 +805,7 @@ describe "CounterCulture" do
   it "should overwrite foreign-key values on destroy" do
     3.times { Category.create }
     Category.all {|category| category.products_count.should == 0 }
-    
+
     product = Product.create :category_id => Category.first.id
     Category.all {|category| category.products_count.should == 1 }
 
@@ -824,7 +824,7 @@ describe "CounterCulture" do
     user.review_approvals_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 69
-    
+
     user.reload
     product.reload
 
@@ -873,7 +873,7 @@ describe "CounterCulture" do
     product = Product.create
 
     product.twitter_reviews_count.should == 0
-    
+
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
     twitter_review = TwitterReview.create :user_id => user.id, :product_id => product.id, :approvals => 32
 
@@ -904,7 +904,7 @@ describe "CounterCulture" do
     company.review_approvals_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
-    
+
     company.reload
     user.reload
     product.reload
@@ -940,7 +940,7 @@ describe "CounterCulture" do
     product.rexiews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id
-    
+
     product.reload
 
     product.rexiews_count.should == 1
@@ -957,7 +957,7 @@ describe "CounterCulture" do
   it "should fix a dynamic counter cache correctly" do
     user = User.create
     product = Product.create
-    
+
     user.using_count.should == 0
     user.tried_count.should == 0
 
@@ -1007,7 +1007,7 @@ describe "CounterCulture" do
     string_id.users_count.should == 123
 
     User.counter_culture_fix_counts
-    
+
     string_id.reload
     string_id.users_count.should == 2
   end
@@ -1080,7 +1080,7 @@ describe "CounterCulture" do
     # first, clean up
     SimpleDependent.delete_all
     SimpleMain.delete_all
-    
+
     1000.times do |i|
       main = SimpleMain.create
       3.times { main.simple_dependents.create }
@@ -1221,18 +1221,18 @@ describe "CounterCulture" do
     user.reload
     user.reviews_count.should == 2
   end
-  
+
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}
-    
+
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
       prev = user.send(:previous_model)
-      
+
       prev.name.should == "John Smith"
       prev.manages_company_id.should == 1
-      
+
       user.name.should =="Joe Smith"
       user.manages_company_id.should == 2
     end
