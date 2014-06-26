@@ -296,7 +296,8 @@ module CounterCulture
             end
           end
 
-          relation_klass(options[:relation]).where(self.class.primary_key => id_to_change).update_all updates.join(', ')
+          klass = relation_klass(options[:relation])
+          klass.where(klass.primary_key => id_to_change).update_all updates.join(', ')
         end
       end
     end

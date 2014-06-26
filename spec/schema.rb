@@ -75,6 +75,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "categories", :force => true do |t|
     t.string   "name"
     t.integer  "products_count",       :default => 0, :null => false
+    t.integer  "posts_count",       :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -113,4 +114,10 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "updated_at"
   end
 
+  create_table "posts", :primary_key => "post_id", :force => true do |t|
+    t.string   "title"
+    t.integer  "category_id", :default => nil
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
 end
