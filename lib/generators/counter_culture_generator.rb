@@ -4,7 +4,7 @@ class CounterCultureGenerator < ActiveRecord::Generators::Base
 
   desc "Create a migration that adds counter-cache columns to a model"
 
-  argument :counter_cache_columns, :required => true, :type => :array, 
+  argument :counter_cache_columns, :required => true, :type => :array,
     :desc => "The names of the counter cache columns to add",
     :banner => "counter_cache_one counter_cache_two counter_cache_three ..."
 
