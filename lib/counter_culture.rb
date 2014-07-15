@@ -77,7 +77,7 @@ module CounterCulture
           query = klass
 
           # if a delta column is provided use SUM, otherwise use COUNT
-          count_select = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.id)"
+          count_select = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.#{self.primary_key})"
 
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
@@ -101,7 +101,7 @@ module CounterCulture
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
             # select id and count (from above) as well as cache column ('column_name') for later comparison
-            counts_query = query.select("#{klass.table_name}.id, #{count_select} AS count, #{klass.table_name}.#{column_name}")
+            counts_query = query.select("#{klass.table_name}.#{klass.primary_key}, #{count_select} AS count, #{klass.table_name}.#{column_name}")
 
             # we need to join together tables until we get back to the table this class itself lives in
             # conditions must also be applied to the join on which we are counting
@@ -123,7 +123,7 @@ module CounterCulture
                   # keep track of what we fixed, e.g. for a notification email
                   fixed<< {
                     :entity => klass.name,
-                    :id => model.id,
+                    klass.primary_key.to_sym => model.id,
                     :what => column_name,
                     :wrong => model.send(column_name),
                     :right => count
@@ -371,3 +371,4 @@ module CounterCulture
   # extend ActiveRecord with our own code here
   ::ActiveRecord::Base.send :include, ActiveRecord
 end
+

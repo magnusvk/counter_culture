@@ -1230,6 +1230,12 @@ describe "CounterCulture" do
     category.posts_count.should == 1
   end
 
+  it "should use relation primary key on counter destination table correctly when fixing counts", :focus => true do
+    category = Category.create!
+    post = Post.create!(:category_id => category.id)
+    fixed = Post.counter_culture_fix_counts
+  end
+
   describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}
 
