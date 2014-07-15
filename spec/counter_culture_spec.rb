@@ -13,6 +13,7 @@ require 'models/simple_dependent'
 require 'models/conditional_main'
 require 'models/conditional_dependent'
 require 'models/post'
+require 'models/post_comment'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1234,6 +1235,13 @@ describe "CounterCulture" do
     category = Category.create!
     post = Post.create!(:category_id => category.id)
     fixed = Post.counter_culture_fix_counts
+  end
+
+  it "should use primary key on counted records table correctly when fixing counts", :focus => true do
+    category = Category.create!
+    post = Post.create!(:category_id => category.id)
+    post = PostComment.create!(:post_id => post.id)
+    fixed = PostComment.counter_culture_fix_counts
   end
 
   describe "#previous_model" do

@@ -92,7 +92,7 @@ module CounterCulture
           # store joins in an array so that we can later apply column-specific conditions
           joins = reverse_relation.map do |cur_relation|
             reflect = relation_reflect(cur_relation)
-            joins_query = "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.id = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
+            joins_query = "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.#{klass.primary_key} = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
             # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
             joins_query = "#{joins_query} AND #{reflect.active_record.table_name}.type IN ('#{self.name}')" if self.column_names.include?('type') and not(self.descends_from_active_record?)
             joins_query
@@ -123,14 +123,14 @@ module CounterCulture
                   # keep track of what we fixed, e.g. for a notification email
                   fixed<< {
                     :entity => klass.name,
-                    klass.primary_key.to_sym => model.id,
+                    klass.primary_key.to_sym => model.send(klass.primary_key),
                     :what => column_name,
                     :wrong => model.send(column_name),
                     :right => count
                   }
                   # use update_all because it's faster and because a fixed counter-cache shouldn't
                   # update the timestamp
-                  klass.where(:id => model.id).update_all(column_name => count)
+                  klass.where(klass.primary_key => model.send(klass.primary_key)).update_all(column_name => count)
                 end
               end
 

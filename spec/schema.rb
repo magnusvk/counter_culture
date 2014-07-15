@@ -117,6 +117,13 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "posts", :primary_key => "post_id", :force => true do |t|
     t.string   "title"
     t.integer  "category_id", :default => nil
+    t.integer  "comments_count", :null => false, :default => 0
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  create_table "post_comments", :primary_key => "post_id", :force => true do |t|
+    t.string   "comment"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
