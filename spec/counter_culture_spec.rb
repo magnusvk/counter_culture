@@ -25,8 +25,6 @@ describe "CounterCulture" do
     DatabaseCleaner.clean
   end
 
-=begin
-
   it "increments counter cache on create" do
     user = User.create
     product = Product.create
@@ -1227,7 +1225,6 @@ describe "CounterCulture" do
     user.reload
     user.reviews_count.should == 2
   end
-=end
 
   it "should use relation primary_key correctly", :focus => true do
     subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
