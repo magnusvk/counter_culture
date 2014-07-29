@@ -13,6 +13,9 @@ require 'models/simple_dependent'
 require 'models/conditional_main'
 require 'models/conditional_dependent'
 require 'models/post'
+require 'models/post_comment'
+require 'models/categ'
+require 'models/subcateg'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1224,10 +1227,63 @@ describe "CounterCulture" do
   end
 
   it "should use relation primary_key correctly", :focus => true do
-    category = Category.create!
-    post = Post.create!(:category_id => category.id)
-    category.reload
-    category.posts_count.should == 1
+    subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+    subcateg.reload
+    subcateg.posts_count.should == 1
+  end
+
+  it "should use relation primary key on counter destination table correctly when fixing counts" do
+    subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+
+    subcateg.posts_count = -1
+    subcateg.save!
+
+    fixed = Post.counter_culture_fix_counts :only => :subcateg
+
+    fixed.length.should == 1
+    subcateg.reload.posts_count.should == 1
+  end
+
+  it "should use primary key on counted records table correctly when fixing counts" do
+    subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+
+    post_comment = PostComment.create!(:post_id => post.id)
+
+    post.comments_count = -1
+    post.save!
+
+    fixed = PostComment.counter_culture_fix_counts
+    fixed.length.should == 1
+    post.reload.comments_count.should == 1
+  end
+
+
+  it "should use multi-level relation primary key on counter destination table correctly when fixing counts" do
+    categ = Categ.create :cat_id => Categ::CAT_1
+    subcateg = Subcateg.new :subcat_id => Subcateg::SUBCAT_1
+    subcateg.categ = categ
+    subcateg.save!
+
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+
+    categ.posts_count = -1
+    categ.save!
+
+    fixed = Post.counter_culture_fix_counts :only => [[:subcateg, :categ]]
+
+    fixed.length.should == 1
+    categ.reload.posts_count.should == 1
   end
 
   describe "#previous_model" do
