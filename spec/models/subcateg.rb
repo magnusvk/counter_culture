@@ -5,5 +5,5 @@ class Subcateg < ActiveRecord::Base
   self.primary_key = :subcat_id
 
   has_many :posts
-  belongs_to :categ, :foreign_key => :cat_id
+  belongs_to :categ, :foreign_key => :fk_cat_id
 end

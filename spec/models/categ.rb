@@ -4,5 +4,5 @@ class Categ < ActiveRecord::Base
 
   self.primary_key = :cat_id
 
-  has_many :subcategs, :foreign_key => :subcat_id
+  has_many :subcategs, :foreign_key => :fk_subcat_id
 end
