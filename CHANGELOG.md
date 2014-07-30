@@ -1,4 +1,14 @@
-## 0.1.33 (May 24, 2014)
+## 0.1.25 (July 30, 2014)
+
+Bugfixes:
+  - makes fix_counts work correctly with custom primary keys
+
+## 0.1.24 (June 27, 2014)
+
+Bugfixes:
+  - correctly uses custom primary keys when incrementing / decrementing counts
+
+## 0.1.23 (May 24, 2014)
 
 Bugfixes:
   - fixes problems fixing conditional counter caches with batching
