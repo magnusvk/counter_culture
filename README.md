@@ -28,7 +28,7 @@ rails generate counter_culture Category products_count
 
 Which will generate a migration with code like the following:
 ```ruby
-add_column :categories, :products_count, :integer, :null => false, :default => 0
+add_column :categories, :products_count, :integer, null: false, default: 0
 ```
 Note that the column must be ```NOT NULL``` and have a default of zero for this gem to work correctly.
 
