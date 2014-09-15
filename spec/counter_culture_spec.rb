@@ -876,6 +876,7 @@ describe "CounterCulture" do
     user = User.create :manages_company_id => company.id
     product = Product.create
 
+    company.twitter_reviews_count.should == 0
     product.twitter_reviews_count.should == 0
 
     review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
@@ -885,15 +886,20 @@ describe "CounterCulture" do
     user.reload
     product.reload
 
+    company.twitter_reviews_count.should == 1
     product.twitter_reviews_count.should == 1
 
+    company.twitter_reviews_count = 2
     product.twitter_reviews_count = 2
+    company.save!
     product.save!
 
     TwitterReview.counter_culture_fix_counts
 
+    company.reload
     product.reload
 
+    company.twitter_reviews_count.should == 1
     product.twitter_reviews_count.should == 1
   end
 

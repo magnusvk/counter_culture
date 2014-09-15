@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "name"
     t.integer  "industry_id"
     t.integer  "reviews_count",       :default => 0, :null => false
+    t.integer  "twitter_reviews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "managers_count",      :default => 0, :null => false
