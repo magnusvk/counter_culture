@@ -1,3 +1,8 @@
+## 0.1.27 (November 13, 2014)
+
+Bugfixes:
+  - re-add after_commit_action as a dependency, that had gone missing in 0.1.26
+
 ## 0.1.26 (November 12, 2014)
 
 Bugfixes:
