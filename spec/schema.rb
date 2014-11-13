@@ -21,6 +21,8 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "tried_count",         :default => 0, :null => false
     t.integer  "managers_count",      :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
+    t.integer  "parent_id"
+    t.integer  "children_count",      :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end

@@ -1302,4 +1302,38 @@ describe "CounterCulture" do
     end
   end
 
+  describe "self referential counter cache" do
+    it "increments counter cache on create" do
+      company = Company.create!
+      company.children << Company.create!
+
+      company.reload
+      company.children_count.should == 1
+    end
+
+    it "decrements counter cache on destroy" do
+      company = Company.create!
+      company.children << Company.create!
+
+      company.reload
+      company.children_count.should == 1
+
+      company.children.first.destroy
+
+      company.reload
+      company.children_count.should == 0
+    end
+
+    it "fixes counter cache" do
+      company = Company.create!
+      company.children << Company.create!
+
+      company.children_count = -1
+      company.save!
+
+      fixed = Company.counter_culture_fix_counts
+      fixed.length.should == 1
+      company.reload.children_count.should == 1
+    end
+  end
 end

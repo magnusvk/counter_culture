@@ -76,8 +76,14 @@ module CounterCulture
           klass = relation_klass(hash[:relation])
           query = klass
 
+          if klass.table_name == self.table_name
+            self_table_name = "#{self.table_name}_#{self.table_name}"
+          else
+            self_table_name = self.table_name
+          end
+
           # if a delta column is provided use SUM, otherwise use COUNT
-          count_select = hash[:delta_column] ? "SUM(COALESCE(#{self.table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self.table_name}.#{self.primary_key})"
+          count_select = hash[:delta_column] ? "SUM(COALESCE(#{self_table_name}.#{hash[:delta_column]},0))" : "COUNT(#{self_table_name}.#{self.primary_key})"
 
           # respect the deleted_at column if it exists
           query = query.where("#{self.table_name}.deleted_at IS NULL") if self.column_names.include?('deleted_at')
@@ -92,7 +98,13 @@ module CounterCulture
           # store joins in an array so that we can later apply column-specific conditions
           joins = reverse_relation.map do |cur_relation|
             reflect = relation_reflect(cur_relation)
-            joins_query = "LEFT JOIN #{reflect.active_record.table_name} ON #{reflect.table_name}.#{reflect.klass.primary_key} = #{reflect.active_record.table_name}.#{reflect.foreign_key}"
+            if klass.table_name == reflect.active_record.table_name
+              join_table_name = "#{klass.table_name}_#{klass.table_name}"
+            else
+              join_table_name = reflect.active_record.table_name
+            end
+            # join with alias to avoid ambiguous table name with self-referential models:
+            joins_query = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.klass.primary_key} = #{join_table_name}.#{reflect.foreign_key}"
             # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
             joins_query = "#{joins_query} AND #{reflect.active_record.table_name}.type IN ('#{self.name}')" if self.column_names.include?('type') and not(self.descends_from_active_record?)
             joins_query
