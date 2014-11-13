@@ -1,3 +1,8 @@
+## 0.1.26 (November 12, 2014)
+
+Bugfixes:
+  - makes fix_counts work correctly with self-referential tables
+
 ## 0.1.25 (July 30, 2014)
 
 Bugfixes:
