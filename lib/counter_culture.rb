@@ -128,9 +128,9 @@ module CounterCulture
                     :wrong => model.send(column_name),
                     :right => count
                   }
-                  # use update_all because it's faster and because a fixed counter-cache shouldn't
+                  # use update_column because it's faster and because a fixed counter-cache shouldn't
                   # update the timestamp
-                  klass.where(klass.primary_key => model.send(klass.primary_key)).update_all(column_name => count)
+                  model.update_column(column_name, count)
                 end
               end
 
