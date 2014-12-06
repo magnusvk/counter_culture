@@ -142,6 +142,28 @@ module CounterCulture
         return fixed
       end
 
+      def update_counters_with_counter_culture(id, counters, options = {})
+        Array.wrap(id).each do
+          updates = counters.map do |counter_name, value|
+            operator = value < 0 ? '-' : '+'
+            quoted_column = connection.quote_column_name(counter_name)
+            "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{value.abs}"
+          end
+
+          if options[:touch]
+            current_time = self.default_timezone == :utc ? Time.now.utc : Time.now
+            timestamp_attributes_for_update_in_model =
+              [:updated_at, :updated_on].select { |c| self.column_names.include?(c.to_s) }
+
+            timestamp_attributes_for_update_in_model.each do |timestamp_column|
+              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
+            end
+          end
+
+          unscoped.where(primary_key => id).update_all updates.join(', ')
+        end
+      end
+
       private
       # the string to pass to order() in order to sort by primary key
       def full_primary_key(klass)
@@ -279,25 +301,12 @@ module CounterCulture
                             1
                           end
         execute_after_commit do
-          # increment or decrement?
-          operator = options[:increment] ? '+' : '-'
-
-          # we don't use Rails' update_counters because we support changing the timestamp
-          quoted_column = self.class.connection.quote_column_name(options[:counter_column])
-
-          updates = []
-          # this updates the actual counter
-          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
-          # and here we update the timestamp, if so desired
-          if options[:touch]
-            current_time = current_time_from_proper_timezone
-            timestamp_attributes_for_update_in_model.each do |timestamp_column|
-              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
-            end
-          end
-
           klass = relation_klass(options[:relation])
-          klass.where(klass.primary_key => id_to_change).update_all updates.join(', ')
+          klass.update_counters_with_counter_culture(
+            id_to_change,
+            { options[:counter_column] => (options[:increment] ? delta_magnitude : -delta_magnitude) },
+            :touch => options[:touch]
+          )
         end
       end
     end
