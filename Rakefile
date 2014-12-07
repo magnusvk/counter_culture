@@ -21,8 +21,6 @@ Jeweler::Tasks.new do |gem|
   gem.description = %Q{counter_culture provides turbo-charged counter caches that are kept up-to-date not just on create and destroy, that support multiple levels of indirection through relationships, allow dynamic column names and that avoid deadlocks by updating in the after_commit callback.}
   gem.email = "magnus@vonkoeller.de"
   gem.authors = ["Magnus von Koeller"]
-
-  gem.add_dependency 'after_commit_action', '~> 0.1.3' 
 end
 Jeweler::RubygemsDotOrgTasks.new
 
