@@ -10,6 +10,7 @@ group :development, :test do
   gem "rails", '>= 3.1.0'
   gem "rspec", "~> 2.10.0"
   gem "awesome_print"
+  gem "after_commit_action", "~> 0.1.3"
 end
 
 group :development do
