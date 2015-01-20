@@ -15,7 +15,11 @@ class Review < ActiveRecord::Base
   counter_culture [:user, :manages_company, :industry], :column_name => Proc.new { |model| model.review_type ? "#{model.review_type}_count" : nil }
   counter_culture [:user, :manages_company, :industry], :column_name => 'review_approvals_count', :delta_column => 'approvals'
 
+  counter_culture :product, :column_name => 'total_score', :delta_column => 'score'
+
   after_create :update_some_text
+
+  enum score: [ :bad, :ok, :great ]
 
   def update_some_text
     update_attribute(:some_text, rand(36**12).to_s(36))

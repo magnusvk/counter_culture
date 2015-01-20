@@ -286,7 +286,12 @@ module CounterCulture
       if id_to_change && options[:counter_column]
         delta_magnitude = if options[:delta_column]
                             delta_attr_name = options[:was] ? "#{options[:delta_column]}_was" : options[:delta_column]
-                            self.send(delta_attr_name) || 0
+                            val = self.send(delta_attr_name)
+                            # check if value is a string. This can happen if the
+                            # delta_column is an enum
+                            val = val.is_a?(String) ? self[delta_attr_name.to_sym] : val
+
+                            val || 0
                           else
                             1
                           end
