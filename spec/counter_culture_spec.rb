@@ -141,6 +141,13 @@ describe "CounterCulture" do
     product.reload
 
     product.total_score.should == 2
+
+    review.score = "bad"
+    review.save
+
+    product.reload
+
+    product.total_score.should == 0
   end
 
   it "increments second-level counter cache on create" do

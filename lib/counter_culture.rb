@@ -289,8 +289,7 @@ module CounterCulture
                             val = self.send(delta_attr_name)
                             # check if value is a string. This can happen if the
                             # delta_column is an enum
-                            val = val.is_a?(String) ? self[delta_attr_name.to_sym] : val
-
+                            val = val.is_a?(String) ? self.class.send(options[:delta_column].pluralize)[val] : val
                             val || 0
                           else
                             1
