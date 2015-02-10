@@ -104,7 +104,7 @@ module CounterCulture
               join_table_name = reflect.active_record.table_name
             end
             # join with alias to avoid ambiguous table name with self-referential models:
-            joins_query = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.klass.primary_key} = #{join_table_name}.#{reflect.foreign_key}"
+            joins_query = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
             # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
             joins_query = "#{joins_query} AND #{reflect.active_record.table_name}.type IN ('#{self.name}')" if reflect.active_record.column_names.include?('type') and not(self.descends_from_active_record?)
             joins_query
@@ -112,8 +112,8 @@ module CounterCulture
 
           # iterate over all the possible counter cache column names
           column_names.each do |where, column_name|
-            # select id and count (from above) as well as cache column ('column_name') for later comparison
-            counts_query = query.select("#{klass.table_name}.#{klass.primary_key}, #{count_select} AS count, #{klass.table_name}.#{column_name}")
+            # select join column and count (from above) as well as cache column ('column_name') for later comparison
+            counts_query = query.select("#{klass.table_name}.#{klass.primary_key}, #{klass.table_name}.#{relation_reflect(hash[:relation]).association_primary_key}, #{count_select} AS count, #{klass.table_name}.#{column_name}")
 
             # we need to join together tables until we get back to the table this class itself lives in
             # conditions must also be applied to the join on which we are counting
@@ -193,6 +193,14 @@ module CounterCulture
       #   that has the counter cache column
       def relation_foreign_key(relation)
         relation_reflect(relation).foreign_key
+      end
+
+      # gets the primary key name of the given relation
+      #
+      # relation: a symbol or array of symbols; specifies the relation
+      #   that has the counter cache column
+      def relation_primary_key(relation)
+        relation_reflect(relation).association_primary_key
       end
 
       # gets the foreign key name of the relation. will look at the first
@@ -309,7 +317,7 @@ module CounterCulture
           end
 
           klass = relation_klass(options[:relation])
-          klass.where(klass.primary_key => id_to_change).update_all updates.join(', ')
+          klass.where(relation_primary_key(options[:relation]) => id_to_change).update_all updates.join(', ')
         end
       end
     end
@@ -349,17 +357,18 @@ module CounterCulture
     #   current value
     def foreign_key_value(relation, was = false)
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
+      first_relation = relation.first
       if was
         first = relation.shift
         foreign_key_value = send("#{relation_foreign_key(first)}_was")
-        value = relation_klass(first).find(foreign_key_value) if foreign_key_value
+        value = relation_klass(first).where("#{relation_primary_key(first)} = ?", foreign_key_value).first if foreign_key_value
       else
         value = self
       end
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(:id)
+      return value.try(relation_primary_key(first_relation).to_sym)
     end
 
     def relation_klass(relation)
@@ -372,6 +381,10 @@ module CounterCulture
 
     def relation_foreign_key(relation)
       self.class.send :relation_foreign_key, relation
+    end
+
+    def relation_primary_key(relation)
+      self.class.send :relation_primary_key, relation
     end
 
     def first_level_relation_foreign_key(relation)
