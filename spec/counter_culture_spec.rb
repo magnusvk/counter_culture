@@ -16,6 +16,8 @@ require 'models/post'
 require 'models/post_comment'
 require 'models/categ'
 require 'models/subcateg'
+require 'models/another_post'
+require 'models/another_post_comment'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -23,6 +25,35 @@ DatabaseCleaner.strategy = :deletion
 describe "CounterCulture" do
   before(:each) do
     DatabaseCleaner.clean
+  end
+
+
+  it "should use relation foreign_key correctly", :focus => true do
+    post = AnotherPost.new
+    comment = post.comments.build
+    comment.comment = 'Comment'
+    post.save!
+    post.reload
+    post.another_post_comments_count.should == 1
+  end
+
+  it "should fix counts using relation foreign_key correctly", :focus => true do
+    post = AnotherPost.new
+    comment = post.comments.build
+    comment.comment = 'Comment'
+    post.save!
+    post.reload
+    post.another_post_comments_count.should == 1
+    post.comments.size.should == 1
+
+    post.another_post_comments_count = 2
+    post.save!
+
+    fixed = AnotherPostComment.counter_culture_fix_counts
+    fixed.length.should == 1
+
+    post.reload
+    post.another_post_comments_count.should == 1
   end
 
   it "increments counter cache on create" do

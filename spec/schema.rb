@@ -143,4 +143,21 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
+
+  create_table "another_posts", :force => true do |t|
+    t.string   "title"
+    t.integer  "another_id", :null => false
+    t.integer  "another_post_comments_count", :null => false, :default => 0
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+  add_index "another_posts", :another_id, :unique => true
+
+  create_table "another_post_comments", :force => true do |t|
+    t.integer "another_post_id"
+    t.string   "comment"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
 end
