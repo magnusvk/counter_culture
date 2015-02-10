@@ -1,3 +1,8 @@
+## 0.1.30 (February 10, 2014)
+
+Bugfixes:
+  - Correctly use custom relation primary keys (fixes #93)
+
 ## 0.1.29 (December 25, 2014)
 
 Bugfixes:
