@@ -28,7 +28,7 @@ describe "CounterCulture" do
   end
 
 
-  it "should use relation foreign_key correctly", :focus => true do
+  it "should use relation foreign_key correctly" do
     post = AnotherPost.new
     comment = post.comments.build
     comment.comment = 'Comment'
@@ -37,7 +37,7 @@ describe "CounterCulture" do
     post.another_post_comments_count.should == 1
   end
 
-  it "should fix counts using relation foreign_key correctly", :focus => true do
+  it "should fix counts using relation foreign_key correctly" do
     post = AnotherPost.new
     comment = post.comments.build
     comment.comment = 'Comment'
@@ -849,6 +849,17 @@ describe "CounterCulture" do
     Category.all {|category| category.products_count.should == 0 }
   end
 
+  it "should not report correct counts when fix_counts is called" do
+    user1 = User.create
+    user2 = User.create
+
+    review1 = Review.create user_id: user1.id, product: Product.create
+    review2 = Review.create user_id: user2.id, product: Product.create
+
+    user1.update_columns reviews_count: 2
+
+    Review.counter_culture_fix_counts(skip_unsupported: true).should == [{ entity: 'User', id: user1.id, what: 'reviews_count', right: 1, wrong: 2 }]
+  end
 
   it "should fix a simple counter cache correctly" do
     user = User.create
@@ -1263,7 +1274,7 @@ describe "CounterCulture" do
     user.reviews_count.should == 2
   end
 
-  it "should use relation primary_key correctly", :focus => true do
+  it "should use relation primary_key correctly" do
     subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
     post = Post.new
     post.subcateg = subcateg
