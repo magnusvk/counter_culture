@@ -1,4 +1,9 @@
-## 0.1.30 (February 10, 2014)
+## 0.1.31 (March 7, 2015)
+
+Bugfixes:
+  - Avoid issue with has_and_belongs_to_many and transactions by using new after_commit_action version (fixes #88)
+
+## 0.1.30 (February 10, 2015)
 
 Bugfixes:
   - Correctly use custom relation primary keys (fixes #93)
