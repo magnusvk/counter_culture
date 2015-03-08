@@ -1,12 +1,14 @@
 require 'after_commit_action'
+require 'active_support/concern'
 
 module CounterCulture
 
   module ActiveRecord
+    extend ActiveSupport::Concern
 
-    def self.included(base)
+    included do
       # also add class methods to ActiveRecord::Base
-      base.extend ClassMethods
+      extend ClassMethods
     end
 
     module ClassMethods
@@ -15,6 +17,8 @@ module CounterCulture
 
       # called to configure counter caches
       def counter_culture(relation, options = {})
+        include AfterCommitAction
+
         unless @after_commit_counter_cache
           # initialize callbacks only once
           after_create :_update_counts_after_create
