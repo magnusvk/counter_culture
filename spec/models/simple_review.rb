@@ -1,0 +1,2 @@
+class SimpleReview < Review
+end

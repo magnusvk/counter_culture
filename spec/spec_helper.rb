@@ -19,4 +19,5 @@ ActiveRecord::Base.logger.level = 1
 
 RSpec.configure do |config|
   config.fail_fast = true
+  config.filter_run focus: true
 end

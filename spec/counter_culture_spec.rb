@@ -4,6 +4,7 @@ require 'models/company'
 require 'models/industry'
 require 'models/product'
 require 'models/review'
+require 'models/simple_review'
 require 'models/twitter_review'
 require 'models/user'
 require 'models/category'
@@ -943,6 +944,14 @@ describe "CounterCulture" do
 
     company.twitter_reviews_count.should == 1
     product.twitter_reviews_count.should == 1
+  end
+
+  it "handles an inherited STI counter cache correctly", focus: true do
+    company = Company.create
+    user = User.create :manages_company_id => company.id
+    product = Product.create
+    simple_review = SimpleReview.create :user_id => user.id, :product_id => product.id
+    product.reload.reviews_count.should == 1
   end
 
   it "should fix a second-level counter cache correctly" do
