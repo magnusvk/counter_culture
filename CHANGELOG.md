@@ -1,3 +1,8 @@
+## 0.1.32 (March 16, 2015)
+
+Improvements:
+  - Restores compatibility with Rails 3.2 (fixes #100)
+
 ## 0.1.31 (March 7, 2015)
 
 Bugfixes:
