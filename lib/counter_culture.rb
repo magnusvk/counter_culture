@@ -14,9 +14,9 @@ module CounterCulture
     module ClassMethods
       # this holds all configuration data
       def after_commit_counter_cache
-        config = @after_commit_counter_cache
-        if !config && superclass.respond_to?(:after_commit_counter_cache)
-          config = superclass.after_commit_counter_cache
+        config = @after_commit_counter_cache || []
+        if superclass.respond_to?(:after_commit_counter_cache) && superclass.after_commit_counter_cache
+          config = superclass.after_commit_counter_cache + config
         end
         config
       end
