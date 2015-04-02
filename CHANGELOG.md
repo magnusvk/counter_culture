@@ -1,3 +1,8 @@
+## 0.1.33 (April 2, 2015)
+
+Bugfixes:
+  - Fixes an issue with STI classes and inheritance
+
 ## 0.1.32 (March 16, 2015)
 
 Improvements:
