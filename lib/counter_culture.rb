@@ -230,20 +230,22 @@ module CounterCulture
     # need to make sure counter_culture is only activated once
     # per commit; otherwise, if we do an update in an after_create,
     # we would be triggered twice within the same transaction -- once
-    # for the create, once for the update
-    def _wrap_in_counter_culture_active(&block)
-      if @_counter_culture_active
+    # for the create, once for the update. Still both triggers should be called,
+    # if one of actions is update and another is destroy
+    def _wrap_in_counter_culture_active(action_group, &block)
+      if @_counter_culture_active && @_counter_culture_active.include?(action_group)
         # don't do anything; we are already active for this transaction
       else
-        @_counter_culture_active = true
+        @_counter_culture_active ||= []
+        @_counter_culture_active << action_group
         block.call
-        execute_after_commit { @_counter_culture_active = false}
+        execute_after_commit { @_counter_culture_active.delete(action_group)}
       end
     end
 
     # called by after_create callback
     def _update_counts_after_create
-      _wrap_in_counter_culture_active do
+      _wrap_in_counter_culture_active(:create_or_update) do
         self.class.after_commit_counter_cache.each do |hash|
           # increment counter cache
           change_counter_cache(hash.merge(:increment => true))
@@ -253,7 +255,7 @@ module CounterCulture
 
     # called by after_destroy callback
     def _update_counts_after_destroy
-      _wrap_in_counter_culture_active do
+      _wrap_in_counter_culture_active(:destroy) do
         self.class.after_commit_counter_cache.each do |hash|
           # decrement counter cache
           change_counter_cache(hash.merge(:increment => false))
@@ -263,7 +265,7 @@ module CounterCulture
 
     # called by after_update callback
     def _update_counts_after_update
-      _wrap_in_counter_culture_active do
+      _wrap_in_counter_culture_active(:create_or_update) do
         self.class.after_commit_counter_cache.each do |hash|
           # figure out whether the applicable counter cache changed (this can happen
           # with dynamic column names)
