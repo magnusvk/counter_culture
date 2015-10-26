@@ -397,6 +397,8 @@ describe "CounterCulture" do
   describe "conditional counts on update" do
     let(:product) {Product.create!}
     let(:user) {User.create!}
+    before(:all) {User.with_default_scope!}
+    after(:all) {User.without_default_scope!}
 
     it "should increment and decrement if changing column name" do
       user.using_count.should == 0

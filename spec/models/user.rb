@@ -8,4 +8,12 @@ class User < ActiveRecord::Base
 
   has_many :reviews
   accepts_nested_attributes_for :reviews, :allow_destroy => true
+
+  def self.with_default_scope!
+    default_scope { joins("LEFT OUTER JOIN companies").uniq }
+  end
+
+  def self.without_default_scope!
+    default_scope { all }
+  end
 end
