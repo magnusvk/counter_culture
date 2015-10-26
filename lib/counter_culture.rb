@@ -371,7 +371,8 @@ module CounterCulture
       if was
         first = relation.shift
         foreign_key_value = send("#{relation_foreign_key(first)}_was")
-        value = relation_klass(first).where("#{relation_primary_key(first)} = ?", foreign_key_value).first if foreign_key_value
+        klass = relation_klass(first)
+        value = klass.where("#{klass.table_name}.#{relation_primary_key(first)} = ?", foreign_key_value).first if foreign_key_value
       else
         value = self
       end
