@@ -455,7 +455,7 @@ describe "CounterCulture" do
       user.tried_count.should == 0
     end
 
-    it "should decrement if changing column name to nilwithout errors with default scope" do
+    it "should decrement if changing column name to nil without errors using default scope" do
       User.with_default_scope do
         user.using_count.should == 0
         user.tried_count.should == 0

@@ -9,21 +9,21 @@ class User < ActiveRecord::Base
   has_many :reviews
   accepts_nested_attributes_for :reviews, :allow_destroy => true
 
-  default_scope {
-    if self._default_scope_enabled
+  default_scope do
+    if _default_scope_enabled
       joins("LEFT OUTER JOIN companies").uniq
     else
       all
     end
-  }
-
-  def self._default_scope_enabled
-    @_default_scope_enabled
   end
 
-  def self.with_default_scope
-    @_default_scope_enabled = true
-    yield
-    @_default_scope_enabled = false
+  class << self
+    attr_accessor :_default_scope_enabled
+
+    def with_default_scope
+      @_default_scope_enabled = true
+      yield
+      @_default_scope_enabled = false
+    end
   end
 end
