@@ -454,6 +454,27 @@ describe "CounterCulture" do
       user.using_count.should == 0
       user.tried_count.should == 0
     end
+
+    it "should decrement if changing column name to nil without errors using default scope" do
+      User.with_default_scope do
+        user.using_count.should == 0
+        user.tried_count.should == 0
+
+        review = Review.create :user_id => user.id, :product_id => product.id, :review_type => "using"
+        user.reload
+
+        user.using_count.should == 1
+        user.tried_count.should == 0
+
+        review.review_type = nil
+        review.save!
+
+        user.reload
+
+        user.using_count.should == 0
+        user.tried_count.should == 0
+      end
+    end
   end
 
   it "increments third-level counter cache on create" do
