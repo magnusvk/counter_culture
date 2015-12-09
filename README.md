@@ -216,7 +216,7 @@ Product.counter_culture_fix_counts :only => [[:subcategory, :category]]
 
 #### Handling dynamic column names
 
-Manually populating counter caches with dynammic column names requires additional configuration:
+Manually populating counter caches with dynamic column names requires additional configuration:
 
 ```ruby
 class Product < ActiveRecord::Base
