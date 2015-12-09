@@ -160,6 +160,28 @@ describe "CounterCulture" do
     product.reviews_count.should == 1
   end
 
+  it "uses enum value in delta column" do
+    user = User.create
+    product = Product.create
+
+    user.reviews_count.should == 0
+    product.reviews_count.should == 0
+    user.review_approvals_count.should == 0
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :score => "great"
+
+    product.reload
+
+    product.total_score.should == 2
+
+    review.score = "bad"
+    review.save
+
+    product.reload
+
+    product.total_score.should == 0
+  end
+
   it "increments second-level counter cache on create" do
     company = Company.create
     user = User.create :manages_company_id => company.id

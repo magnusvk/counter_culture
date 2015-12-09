@@ -46,6 +46,8 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "rexiews_count",               :default => 0, :null => false
     t.integer  "twitter_reviews_count",       :default => 0, :null => false
     t.integer  "category_id"
+    t.integer  "status"
+    t.integer  "total_score", :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -56,6 +58,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "user_id"
     t.integer  "product_id"
     t.integer  "approvals"
+    t.integer  "score", default: 1
     t.float    "value"
     t.string   "type"
     t.datetime "created_at"
