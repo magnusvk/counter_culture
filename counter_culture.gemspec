@@ -107,7 +107,7 @@ Gem::Specification.new do |s|
     "spec/schema.rb",
     "spec/spec_helper.rb"
   ]
-  s.homepage = "http://github.com/bestvendor/counter_culture"
+  s.homepage = "https://github.com/magnusvk/counter_culture"
   s.licenses = ["MIT"]
   s.rubygems_version = "2.2.5"
   s.summary = "Turbo-charged counter caches for your Rails app."
