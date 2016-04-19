@@ -1,12 +1,7 @@
 module CounterCulture
   module Helpers
     extend ActiveSupport::Concern
-
-    included do
-      # also add class methods to ActiveRecord::Base
-      extend ClassMethods
-    end
-
+    
     module ClassMethods
       # this holds all configuration data
       def after_commit_counter_cache
