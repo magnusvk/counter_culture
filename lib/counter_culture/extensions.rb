@@ -1,5 +1,5 @@
 module CounterCulture
-  module Helpers
+  module Extensions
     extend ActiveSupport::Concern
     
     module ClassMethods
