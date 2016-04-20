@@ -55,18 +55,12 @@ module CounterCulture
           # now iterate over all the models and see whether their counts are right
           records.each do |record|
             count = record.read_attribute('count') || 0
-            if record.read_attribute(column_name) != count
-              # keep track of what we fixed, e.g. for a notification email
-              @changes << {
-                :entity => relation_class.name,
-                relation_class.primary_key.to_sym => record.send(relation_class.primary_key),
-                :what => column_name,
-                :wrong => record.send(column_name),
-                :right => count
-              }
-              # use update_all because it's faster and because a fixed counter-cache shouldn't update the timestamp
-              relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(column_name => count)
-            end
+            next if record.read_attribute(column_name) == count
+
+            track_change(record, column_name, count)
+
+            # use update_all because it's faster and because a fixed counter-cache shouldn't update the timestamp
+            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(column_name => count)
           end
         end
       end
@@ -75,6 +69,17 @@ module CounterCulture
     end
 
     private
+
+    # keep track of what we fixed, e.g. for a notification email
+    def track_change(record, column_name, count)
+      @changes << {
+        :entity => relation_class.name,
+        relation_class.primary_key.to_sym => record.send(relation_class.primary_key),
+        :what => column_name,
+        :wrong => record.send(column_name),
+        :right => count
+      }
+    end
 
     def count_select
       # if a delta column is provided use SUM, otherwise use COUNT
