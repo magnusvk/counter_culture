@@ -49,10 +49,9 @@ module CounterCulture
 
         # iterate in batches; otherwise we might run out of memory when there's a lot of
         # instances and we try to load all their counts at once
-        start = 0
         batch_size = options.fetch(:batch_size, 1000)
 
-        while (records = counts_query.reorder(full_primary_key(relation_class) + " ASC").offset(start).limit(batch_size).group(full_primary_key(relation_class)).to_a).any?
+        counts_query.group(full_primary_key(relation_class)).find_in_batches(batch_size: batch_size) do |records|
           # now iterate over all the models and see whether their counts are right
           records.each do |record|
             count = record.read_attribute('count') || 0
@@ -65,13 +64,10 @@ module CounterCulture
                 :wrong => record.send(column_name),
                 :right => count
               }
-              # use update_all because it's faster and because a fixed counter-cache shouldn't
-              # update the timestamp
+              # use update_all because it's faster and because a fixed counter-cache shouldn't update the timestamp
               relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(column_name => count)
             end
           end
-
-          start += batch_size
         end
       end
 
