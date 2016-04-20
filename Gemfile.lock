@@ -43,7 +43,6 @@ GEM
     arel (6.0.3)
     awesome_print (1.6.1)
     builder (3.2.2)
-    byebug (8.2.4)
     database_cleaner (1.5.1)
     descendants_tracker (0.0.4)
       thread_safe (~> 0.3, >= 0.3.1)
@@ -154,7 +153,6 @@ DEPENDENCIES
   after_commit_action (~> 1.0.0)
   awesome_print
   bundler (>= 1.2.0)
-  byebug
   database_cleaner (>= 1.1.1)
   jeweler (~> 2.0.1)
   rails (>= 3.1.0)

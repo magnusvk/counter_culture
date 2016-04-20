@@ -14,7 +14,6 @@ group :development, :test do
   gem "rails", '>= 3.1.0'
   gem "rspec", "~> 2.10.0"
   gem "awesome_print"
-  gem "byebug"
 end
 
 group :development do
