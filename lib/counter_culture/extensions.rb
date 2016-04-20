@@ -30,15 +30,8 @@ module CounterCulture
           raise ":column_names must be a Hash of conditions and column names" 
         end
 
-        # add the current information to our list
-        @after_commit_counter_cache << Counter.new(self, {
-          :relation => relation.is_a?(Enumerable) ? relation : [relation],
-          :counter_cache_name => (options[:column_name] || "#{name.tableize}_count"),
-          :column_names => options[:column_names],
-          :delta_column => options[:delta_column],
-          :foreign_key_values => options[:foreign_key_values],
-          :touch => options[:touch]
-        })
+        # add the counter to our collection
+        @after_commit_counter_cache << Counter.new(self, relation, options)
       end
 
       # checks all of the declared counter caches on this class for correctnes based

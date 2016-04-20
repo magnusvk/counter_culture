@@ -1,14 +1,18 @@
 module CounterCulture
   class Counter
-    CONFIG_KEYS = [ :relation, :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch ]
 
-    attr_reader :model, :config, *CONFIG_KEYS
+    attr_reader :model, :relation, *CONFIG_OPTIONS
 
-    def initialize(model, config)
-      @model, @config = model, config
-      config.each do |key, value|
-        send("#{key}=", value)
-      end
+    def initialize(model, relation, options)
+      @model = model
+      @relation = relation.is_a?(Enumerable) ? relation : [relation]
+
+      @counter_cache_name = options.fetch(:column_name, "#{model.name.tableize}_count")
+      @column_names = options[:column_names]
+      @delta_column = options[:delta_column]
+      @foreign_key_values = options[:foreign_key_values]
+      @touch = options.fetch(:touch, false)
     end
 
     # increments or decrements a counter cache
@@ -167,9 +171,5 @@ module CounterCulture
 
       prev
     end
-
-    private
-
-    attr_writer *CONFIG_KEYS
   end
 end
