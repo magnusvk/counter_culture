@@ -6,6 +6,8 @@ require 'counter_culture/counter'
 require 'counter_culture/reconciler'
 
 module CounterCulture
+  mattr_accessor :batch_size
+  self.batch_size = 1000
 end
 
 # extend ActiveRecord with our own code here
