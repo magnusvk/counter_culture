@@ -56,17 +56,14 @@ module CounterCulture
         options[:only] = [options[:only]] if options[:only] && !options[:only].is_a?(Enumerable)
         options[:only] = options[:only].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
 
-        fixed = []
-        @after_commit_counter_cache.each do |counter|
+        @after_commit_counter_cache.flat_map do |counter|
           next if options[:exclude] && options[:exclude].include?(counter.relation)
           next if options[:only] && !options[:only].include?(counter.relation)
 
           reconciler = CounterCulture::Reconciler.new(counter, options.slice(:skip_unsupported))
           reconciler.reconcile!
-          fixed += reconciler.changes
-        end
-
-        fixed
+          reconciler.changes
+        end.compact
       end
     end
 
