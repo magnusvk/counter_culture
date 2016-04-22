@@ -1,4 +1,4 @@
-## 0.2.1 (April 22, 2016)
+## 0.2.0 (April 22, 2016)
 
 Improvments:
   - Major refactor of the code that reduces ActiveRecord method pollution. Documented API is unchanged, but behind the scenes a lot has changed.
