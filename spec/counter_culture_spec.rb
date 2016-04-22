@@ -1371,7 +1371,6 @@ describe "CounterCulture" do
     categ.reload.posts_count.should == 1
   end
 
-  # TODO check that effect is tested rather than method directly
   pending "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}
 
