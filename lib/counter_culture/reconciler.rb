@@ -49,7 +49,7 @@ module CounterCulture
 
         # iterate in batches; otherwise we might run out of memory when there's a lot of
         # instances and we try to load all their counts at once
-        batch_size = options.fetch(:batch_size, CounterCulture.batch_size)
+        batch_size = options.fetch(:batch_size, CounterCulture.config.batch_size)
 
         counts_query.group(full_primary_key(relation_class)).find_in_batches(batch_size: batch_size) do |records|
           # now iterate over all the models and see whether their counts are right

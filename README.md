@@ -202,6 +202,17 @@ Product.counter_culture_fix_counts :only => [[:subcategory, :category]]
 # :except and :only also accept arrays
 ```
 
+The ```counter_culture_fix_counts``` counts method uses batch processing of records to keep the memory consumption low. The default batch size is 1000 but is configurable like so
+```ruby
+# In an initializer
+CounterCulture.config.batch_size = 100
+```
+or by passing the :batch_size option to the method call
+
+```ruby
+Product.counter_culture_fix_counts :batch_size => 100
+```
+
 ```counter_culture_fix_counts``` returns an array of hashes of all incorrect values for debugging purposes. The hashes have the following format:
 
 ```ruby
