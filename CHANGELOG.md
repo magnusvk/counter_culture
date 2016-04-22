@@ -1,3 +1,9 @@
+## 0.2.1 (April 22, 2016)
+
+Improvments:
+  - Major refactor of the code that reduces ActiveRecord method pollution. Documented API is unchanged, but behind the scenes a lot has changed.
+  - Ability to configure batch size of `counter_culture_fix_size`
+
 ## 0.1.34 (October 27, 2015)
 
 Bugfixes:
