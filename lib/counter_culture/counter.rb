@@ -5,6 +5,10 @@ module CounterCulture
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
     def initialize(model, relation, options)
+      if options[:column_names] && !options[:column_names].is_a?(Hash)
+        raise ":column_names must be a Hash of conditions and column names"
+      end
+
       @model = model
       @relation = relation.is_a?(Enumerable) ? relation : [relation]
 

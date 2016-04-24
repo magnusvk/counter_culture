@@ -26,10 +26,6 @@ module CounterCulture
           @after_commit_counter_cache = []
         end
 
-        if options[:column_names] && !options[:column_names].is_a?(Hash)
-          raise ":column_names must be a Hash of conditions and column names" 
-        end
-
         # add the counter to our collection
         @after_commit_counter_cache << Counter.new(self, relation, options)
       end
