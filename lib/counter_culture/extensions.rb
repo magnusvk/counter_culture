@@ -83,7 +83,7 @@ module CounterCulture
       _wrap_in_counter_culture_active do
         self.class.after_commit_counter_cache.each do |counter|
           # increment counter cache
-          counter.change_counter_cache(self, :increment => true)
+          counter.increment_counter_cache(self)
         end
       end
     end
@@ -93,7 +93,7 @@ module CounterCulture
       _wrap_in_counter_culture_active do
         self.class.after_commit_counter_cache.each do |counter|
           # decrement counter cache
-          counter.change_counter_cache(self, :increment => false)
+          counter.decrement_counter_cache(self)
         end
       end
     end
@@ -112,9 +112,9 @@ module CounterCulture
             counter_cache_name != counter_cache_name_was
 
             # increment the counter cache of the new value
-            counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)
+            counter.increment_counter_cache(self, :counter_column => counter_cache_name)
             # decrement the counter cache of the old value
-            counter.change_counter_cache(self, :increment => false, :was => true, :counter_column => counter_cache_name_was)
+            counter.decrement_counter_cache(self, :was => true, :counter_column => counter_cache_name_was)
           end
         end
       end

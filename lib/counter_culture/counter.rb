@@ -19,53 +19,22 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
     end
 
-    # increments or decrements a counter cache
+    # increments a counter cache
     #
     # options:
-    #   :increment => true to increment, false to decrement
-    #   :relation => which relation to increment the count on,
-    #   :counter_cache_name => the column name of the counter cache
     #   :counter_column => overrides :counter_cache_name
-    #   :delta_column => override the default count delta (1) with the value of this column in the counted record
-    #   :was => whether to get the current value or the old value of the
-    #      first part of the relation
-    def change_counter_cache(obj, options)
-      change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
+    #   :was => whether to get the current value or the old value of the first part of the relation
+    def increment_counter_cache(obj, options={})
+      change_counter_cache(obj, :+, options)
+    end
 
-      # default to the current foreign key value
-      id_to_change = foreign_key_value(obj, relation, options[:was])
-      # allow overwriting of foreign key value by the caller
-      id_to_change = foreign_key_values.call(id_to_change) if foreign_key_values
-
-      if id_to_change && change_counter_column
-        delta_magnitude = if delta_column
-                            delta_attr_name = options[:was] ? "#{delta_column}_was" : delta_column
-                            obj.send(delta_attr_name) || 0
-                          else
-                            1
-                          end
-        obj.execute_after_commit do
-          # increment or decrement?
-          operator = options[:increment] ? '+' : '-'
-
-          # we don't use Rails' update_counters because we support changing the timestamp
-          quoted_column = model.connection.quote_column_name(change_counter_column)
-
-          updates = []
-          # this updates the actual counter
-          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
-          # and here we update the timestamp, if so desired
-          if touch
-            current_time = obj.send(:current_time_from_proper_timezone)
-            obj.send(:timestamp_attributes_for_update_in_model).each do |timestamp_column|
-              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
-            end
-          end
-
-          klass = relation_klass(relation)
-          klass.where(relation_primary_key(relation) => id_to_change).update_all updates.join(', ')
-        end
-      end
+    # decrements a counter cache
+    #
+    # options:
+    #   :counter_column => overrides :counter_cache_name
+    #   :was => whether to get the current value or the old value of the first part of the relation
+    def decrement_counter_cache(obj, options={})
+      change_counter_cache(obj, :-, options)
     end
 
     # Gets the name of the counter cache for a specific object
@@ -175,5 +144,53 @@ module CounterCulture
 
       prev
     end
+
+    private 
+
+    # changes a counter cache using operator
+    #
+    # options:
+    #   :counter_column => overrides :counter_cache_name
+    #   :was => whether to get the current value or the old value of the first part of the relation
+    def change_counter_cache(obj, operator, options)
+      change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
+
+      # default to the current foreign key value
+      id_to_change = foreign_key_value(obj, relation, options[:was])
+      # allow overwriting of foreign key value by the caller
+      id_to_change = foreign_key_values.call(id_to_change) if foreign_key_values
+
+      if id_to_change && change_counter_column
+        delta_magnitude = delta_value(obj, options[:was])
+
+        obj.execute_after_commit do
+          # we don't use Rails' update_counters because we support changing the timestamp
+          quoted_column = model.connection.quote_column_name(change_counter_column)
+
+          updates = []
+          # this updates the actual counter
+          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+          # and here we update the timestamp, if so desired
+          if touch
+            current_time = obj.send(:current_time_from_proper_timezone)
+            obj.send(:timestamp_attributes_for_update_in_model).each do |timestamp_column|
+              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
+            end
+          end
+
+          klass = relation_klass(relation)
+          klass.where(relation_primary_key(relation) => id_to_change).update_all updates.join(', ')
+        end
+      end
+    end
+
+    def delta_value(obj, was=false)
+      if delta_column
+        obj.send("#{delta_column}#{'_was' if was}") || 0
+      else
+        1
+      end
+    end
+
   end
 end
