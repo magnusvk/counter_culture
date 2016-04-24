@@ -5,7 +5,7 @@ module CounterCulture
     module ClassMethods
       # this holds all configuration data
       def after_commit_counter_cache
-        config = @after_commit_counter_cache || []
+        config = @after_commit_counter_cache || Collection.new
         if superclass.respond_to?(:after_commit_counter_cache) && superclass.after_commit_counter_cache
           config = superclass.after_commit_counter_cache + config
         end
@@ -23,7 +23,7 @@ module CounterCulture
           after_update :_update_counts_after_update
 
           # we keep a list of all counter caches we must maintain
-          @after_commit_counter_cache = []
+          @after_commit_counter_cache = Collection.new
         end
 
         if options[:column_names] && !options[:column_names].is_a?(Hash)
@@ -51,19 +51,7 @@ module CounterCulture
       def counter_culture_fix_counts(options = {})
         raise "No counter cache defined on #{name}" unless @after_commit_counter_cache
 
-        options[:exclude] = Array(options[:exclude]) if options[:exclude]
-        options[:exclude] = options[:exclude].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
-        options[:only] = [options[:only]] if options[:only] && !options[:only].is_a?(Enumerable)
-        options[:only] = options[:only].try(:map) {|x| x.is_a?(Enumerable) ? x : [x] }
-
-        @after_commit_counter_cache.flat_map do |counter|
-          next if options[:exclude] && options[:exclude].include?(counter.relation)
-          next if options[:only] && !options[:only].include?(counter.relation)
-
-          reconciler = CounterCulture::Reconciler.new(counter, options.slice(:skip_unsupported))
-          reconciler.reconcile!
-          reconciler.changes
-        end.compact
+        @after_commit_counter_cache.fix_counts(options)
       end
     end
 
@@ -85,42 +73,21 @@ module CounterCulture
     # called by after_create callback
     def _update_counts_after_create
       _wrap_in_counter_culture_active do
-        self.class.after_commit_counter_cache.each do |counter|
-          # increment counter cache
-          counter.change_counter_cache(self, :increment => true)
-        end
+        self.class.after_commit_counter_cache.increment_counters(self)
       end
     end
 
     # called by after_destroy callback
     def _update_counts_after_destroy
       _wrap_in_counter_culture_active do
-        self.class.after_commit_counter_cache.each do |counter|
-          # decrement counter cache
-          counter.change_counter_cache(self, :increment => false)
-        end
+        self.class.after_commit_counter_cache.decrement_counters(self)
       end
     end
 
     # called by after_update callback
     def _update_counts_after_update
       _wrap_in_counter_culture_active do
-        self.class.after_commit_counter_cache.each do |counter|
-          # figure out whether the applicable counter cache changed (this can happen
-          # with dynamic column names)
-          counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
-          counter_cache_name = counter.counter_cache_name_for(self)
-
-          if send("#{counter.first_level_relation_foreign_key}_changed?") ||
-            (counter.delta_column && send("#{counter.delta_column}_changed?")) ||
-            counter_cache_name != counter_cache_name_was
-
-            # increment the counter cache of the new value
-            counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)
-            # decrement the counter cache of the old value
-            counter.change_counter_cache(self, :increment => false, :was => true, :counter_column => counter_cache_name_was)
-          end
-        end
+        self.class.after_commit_counter_cache.update_counters(self)
       end
     end
 

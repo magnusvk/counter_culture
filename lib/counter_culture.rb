@@ -1,9 +1,10 @@
 require 'after_commit_action'
 require 'active_support/concern'
 
-require 'counter_culture/extensions'
+require 'counter_culture/collection'
 require 'counter_culture/counter'
 require 'counter_culture/reconciler'
+require 'counter_culture/extensions'
 
 module CounterCulture
   mattr_accessor :batch_size
