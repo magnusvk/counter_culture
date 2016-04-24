@@ -1371,23 +1371,6 @@ describe "CounterCulture" do
     categ.reload.posts_count.should == 1
   end
 
-  # TODO check that effect is tested rather than method directly
-  pending "#previous_model" do
-    let(:user){User.create :name => "John Smith", :manages_company_id => 1}
-
-    it "should return a copy of the original model" do
-      user.name = "Joe Smith"
-      user.manages_company_id = 2
-      prev = user.send(:previous_model)
-
-      prev.name.should == "John Smith"
-      prev.manages_company_id.should == 1
-
-      user.name.should =="Joe Smith"
-      user.manages_company_id.should == 2
-    end
-  end
-
   describe "self referential counter cache" do
     it "increments counter cache on create" do
       company = Company.create!
@@ -1420,6 +1403,26 @@ describe "CounterCulture" do
       fixed = Company.counter_culture_fix_counts
       fixed.length.should == 1
       company.reload.children_count.should == 1
+    end
+  end
+
+  describe "Counter" do
+    context "#previous_model" do
+      let(:user) {User.create :name => "John Smith", :manages_company_id => 1}
+
+      it "should return a copy of the original model" do
+        counter = User.after_commit_counter_cache.find { |c| c.relation == [:manages_company] }
+
+        user.name = "Joe Smith"
+        user.manages_company_id = 2
+        prev = counter.previous_model(user)
+
+        prev.name.should == "John Smith"
+        prev.manages_company_id.should == 1
+
+        user.name.should =="Joe Smith"
+        user.manages_company_id.should == 2
+      end
     end
   end
 end
