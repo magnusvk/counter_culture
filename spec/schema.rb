@@ -133,6 +133,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
 
   create_table "posts", :primary_key => "post_id", :force => true do |t|
     t.string   "title"
+    t.integer  "custom_touch_field", :default => nil
     t.integer  "fk_subcat_id", :default => nil
     t.integer  "comments_count", :null => false, :default => 0
     t.datetime "created_at", :null => false

@@ -1305,6 +1305,16 @@ describe "CounterCulture" do
     product.created_at.to_i.should < product.updated_at.to_i
   end
 
+  it "should execute user code for update if :touch is set to a hash of lambdas" do
+    post = Post.new
+    post.save!
+    post.custom_touch_field.should be_nil
+
+    post_comment = PostComment.create!(:post_id => post.id)
+
+    post.reload.custom_touch_field.should == post_comment.id + 42
+  end
+
   it "should update counts correctly when creating using nested attributes" do
     user = User.create(:reviews_attributes => [{:some_text => 'abc'}, {:some_text => 'xyz'}])
     user.reload
