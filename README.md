@@ -179,6 +179,11 @@ By default, counter_culture does not update the timestamp of models when it upda
 
 This can be useful when you use Rails' caching mechanism and display a counter cache's value in the cached fragment.
 
+If you need to do something besides setting the default timestamp field to the current time, you can provide a hash of columns with lambdas:
+```ruby
+  counter_culture :category, :touch => { :category_cache_id => -> (product) { product.something(5) + 37 } }
+```
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.

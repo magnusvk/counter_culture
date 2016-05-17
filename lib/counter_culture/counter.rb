@@ -51,10 +51,16 @@ module CounterCulture
           # this updates the actual counter
           updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
           # and here we update the timestamp, if so desired
-          if touch
+          if touch == true
             current_time = obj.send(:current_time_from_proper_timezone)
             obj.send(:timestamp_attributes_for_update_in_model).each do |timestamp_column|
               updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
+            end
+          elsif touch.is_a?(Hash)
+            touch.each do |col_name, touch_lambda|
+              quoted_touch_column = model.connection.quote_column_name(col_name.to_s)
+              value = touch_lambda.call(obj)
+              updates << "#{quoted_touch_column} = #{model.connection.quote(value)}"
             end
           end
 
