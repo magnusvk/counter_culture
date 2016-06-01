@@ -1,6 +1,10 @@
 module CounterCulture
   class Counter
+<<<<<<< HEAD
     CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude ]
+=======
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch ]
+>>>>>>> da8f9679e75dee5117434df9069345a2c4e2dfd8
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
@@ -11,10 +15,15 @@ module CounterCulture
       @counter_cache_name = options.fetch(:column_name, "#{model.name.tableize}_count")
       @column_names = options[:column_names]
       @delta_column = options[:delta_column]
+<<<<<<< HEAD
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
+=======
+      @foreign_key_values = options[:foreign_key_values]
+      @touch = options.fetch(:touch, false)
+>>>>>>> da8f9679e75dee5117434df9069345a2c4e2dfd8
     end
 
     # increments or decrements a counter cache
@@ -40,7 +49,11 @@ module CounterCulture
                             delta_attr_name = options[:was] ? "#{delta_column}_was" : delta_column
                             obj.send(delta_attr_name) || 0
                           else
+<<<<<<< HEAD
                             @delta_magnitude
+=======
+                            1
+>>>>>>> da8f9679e75dee5117434df9069345a2c4e2dfd8
                           end
         obj.execute_after_commit do
           # increment or decrement?
