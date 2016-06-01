@@ -40,7 +40,7 @@ module CounterCulture
                             delta_attr_name = options[:was] ? "#{delta_column}_was" : delta_column
                             obj.send(delta_attr_name) || 0
                           else
-                            @delta_magnitude
+                            counter_delta_magnitude_for(obj)
                           end
         obj.execute_after_commit do
           # increment or decrement?
@@ -65,7 +65,18 @@ module CounterCulture
         end
       end
     end
-
+    
+    # Gets the delta magnitude of the counter cache for a specific object
+    #
+    # obj: object to calculate the counter cache name for
+    def counter_delta_magnitude_for(obj)
+      if delta_magnitude.is_a?(Proc)
+        delta_magnitude.call(obj)
+      else
+        delta_magnitude
+      end
+    end
+    
     # Gets the name of the counter cache for a specific object
     #
     # obj: object to calculate the counter cache name for
