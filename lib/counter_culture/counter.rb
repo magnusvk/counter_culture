@@ -7,10 +7,8 @@ module CounterCulture
     def initialize(model, relation, options)
       @model = model
       @relation = relation.is_a?(Enumerable) ? relation : [relation]
-
       @counter_cache_name = options.fetch(:column_name, "#{model.name.tableize}_count")
       @column_names = options[:column_names]
-      @delta_column = options[:delta_column]
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
