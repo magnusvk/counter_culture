@@ -1,18 +1,18 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude ]
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
     def initialize(model, relation, options)
       @model = model
       @relation = relation.is_a?(Enumerable) ? relation : [relation]
-
       @counter_cache_name = options.fetch(:column_name, "#{model.name.tableize}_count")
       @column_names = options[:column_names]
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
+      @delta_magnitude = options[:delta_magnitude] || 1
     end
 
     # increments or decrements a counter cache
@@ -38,7 +38,7 @@ module CounterCulture
                             delta_attr_name = options[:was] ? "#{delta_column}_was" : delta_column
                             obj.send(delta_attr_name) || 0
                           else
-                            1
+                            counter_delta_magnitude_for(obj)
                           end
         obj.execute_after_commit do
           # increment or decrement?
@@ -63,7 +63,18 @@ module CounterCulture
         end
       end
     end
-
+    
+    # Gets the delta magnitude of the counter cache for a specific object
+    #
+    # obj: object to calculate the counter cache name for
+    def counter_delta_magnitude_for(obj)
+      if delta_magnitude.is_a?(Proc)
+        delta_magnitude.call(obj)
+      else
+        delta_magnitude
+      end
+    end
+    
     # Gets the name of the counter cache for a specific object
     #
     # obj: object to calculate the counter cache name for
