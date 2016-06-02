@@ -663,6 +663,23 @@ describe "CounterCulture" do
     industry2.rexiews_count.should == 1
   end
 
+  it "increments dynamic delta magnitude" do
+    user = User.create
+
+    user.review_value_sum.should == 0
+
+    twitter_review_using = TwitterReview.create :user_id => user.id, :review_type => 'using'
+    user.reload
+
+    user.review_value_sum.should == 2
+
+
+    twitter_review_using = TwitterReview.create :user_id => user.id
+    user.reload
+    
+    user.review_value_sum.should == 1    
+  end
+
   it "increments dynamic counter cache on create" do
     user = User.create
     product = Product.create

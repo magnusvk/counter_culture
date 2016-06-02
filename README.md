@@ -101,7 +101,7 @@ Now, the ```Category``` model will keep an up-to-date counter-cache in the ```pr
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => Proc.new {|model| "#{model.product_type}_count" }
+  counter_culture :category, :column_name => proc {|model| "#{model.product_type}_count" }
   # attribute product_type may be one of ['awesome', 'sucky']
 end
 
@@ -115,7 +115,7 @@ end
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, column_name: :weight, delta_magnitude: Proc.new { model.product_type == 'awesome' ? 2 : 1 }
+  counter_culture :category, column_name: :weight, delta_magnitude: proc { model.product_type == 'awesome' ? 2 : 1 }
   # Delta Magnitude will be flexible
 end
 
@@ -131,7 +131,7 @@ Now, the ```Category``` model will keep two up-to-date counter-caches in the ```
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => Proc.new {|model| model.special? ? 'special_count' : nil }
+  counter_culture :category, :column_name => proc {|model| model.special? ? 'special_count' : nil }
 end
 
 class Category < ActiveRecord::Base
@@ -171,7 +171,7 @@ The ```:delta_column``` option supports all numeric column types, not just ```:i
 class Product < ActiveRecord::Base
   belongs_to :category
   counter_culture :category, :foreign_key_values => 
-      Proc.new {|category_id| [category_id, Category.find_by_id(category_id).try(:parent_category).try(:id)] }
+      proc {|category_id| [category_id, Category.find_by_id(category_id).try(:parent_category).try(:id)] }
 end
 
 class Category < ActiveRecord::Base
@@ -247,7 +247,7 @@ Manually populating counter caches with dynamic column names requires additional
 class Product < ActiveRecord::Base
   belongs_to :category
   counter_culture :category, 
-      :column_name => Proc.new {|model| "#{model.product_type}_count" },
+      :column_name => proc {|model| "#{model.product_type}_count" },
       :column_names => {
           ["products.product_type = ?", 'awesome'] => 'awesome_count',
           ["products.product_type = ?", 'sucky'] => 'sucky_count'
