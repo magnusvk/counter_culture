@@ -1,6 +1,6 @@
 class TwitterReview < Review
   counter_culture :product, column_name: 'twitter_reviews_count'
-  counter_culture :user, column_name: 'review_value_sum', delta_magnitude: Proc.new {|model| model.weight}
+  counter_culture :user, column_name: 'review_value_sum', delta_magnitude: proc {|model| model.weight}
 
   counter_culture [:manages_company]
 
