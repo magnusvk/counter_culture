@@ -665,19 +665,19 @@ describe "CounterCulture" do
 
   it "increments dynamic delta magnitude" do
     user = User.create
-
-    user.review_value_sum.should == 0
-
-    twitter_review_using = TwitterReview.create :user_id => user.id, :review_type => 'using'
-    user.reload
-
-    user.review_value_sum.should == 2
-
-
-    twitter_review_using = TwitterReview.create :user_id => user.id
-    user.reload
+    product = Product.create
     
-    user.review_value_sum.should == 1    
+    long_text = (0...199).map { (65 + rand(26)).chr }.join
+
+    review_using = Review.create :user_id => user.id, :review_type => 'using', :product_id => product.id, :some_text => long_text
+    user.reload
+    user.using_count.should == 2
+
+
+    review_tried = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'tried'
+    user.reload
+    user.tried_count.should == 1
+
   end
 
   it "increments dynamic counter cache on create" do
