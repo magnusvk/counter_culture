@@ -663,6 +663,66 @@ describe "CounterCulture" do
     industry2.rexiews_count.should == 1
   end
 
+  it "correctly handles dynamic delta magnitude" do
+    user = User.create
+    product = Product.create
+
+    review_heavy = Review.create(
+      :user_id => user.id,
+      :review_type => 'using',
+      :product_id => product.id,
+      :heavy => true,
+    )
+    user.reload
+    user.dynamic_delta_count.should == 2
+
+    review_light = Review.create(
+      :user_id => user.id,
+      :product_id => product.id,
+      :review_type => 'using',
+      :heavy => false,
+    )
+    user.reload
+    user.dynamic_delta_count.should == 3
+
+    review_heavy.destroy
+    user.reload
+    user.dynamic_delta_count.should == 1
+
+    review_light.destroy
+    user.reload
+    user.dynamic_delta_count.should == 0
+  end
+
+  it "correctly handles non-dynamic custom delta magnitude" do
+    user = User.create
+    product = Product.create
+
+    review1 = Review.create(
+      :user_id => user.id,
+      :review_type => 'using',
+      :product_id => product.id
+    )
+    user.reload
+    user.custom_delta_count.should == 3
+
+    review2 = Review.create(
+      :user_id => user.id,
+      :review_type => 'using',
+      :product_id => product.id
+    )
+    user.reload
+    user.custom_delta_count.should == 6
+
+    review1.destroy
+    user.reload
+    user.custom_delta_count.should == 3
+
+    review2.destroy
+    user.reload
+    user.custom_delta_count.should == 0
+  end
+
   it "increments dynamic counter cache on create" do
     user = User.create
     product = Product.create
@@ -1099,6 +1159,27 @@ describe "CounterCulture" do
 
     string_id.reload
     string_id.users_count.should == 2
+  end
+
+  it "should fix a static delta magnitude column correctly" do
+    user = User.create
+    product = Product.create
+
+    Review.create(
+      :user_id => user.id,
+      :review_type => 'using',
+      :product_id => product.id
+    )
+
+    user.reload
+    user.custom_delta_count.should == 3
+
+    user.update_attributes(:custom_delta_count => 5)
+
+    Review.counter_culture_fix_counts(:skip_unsupported => true)
+
+    user.reload
+    user.custom_delta_count.should == 3
   end
 
   it "should work correctly for relationships with custom names" do
