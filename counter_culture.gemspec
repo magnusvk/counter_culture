@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
   s.description = "counter_culture provides turbo-charged counter caches that are kept up-to-date not just on create and destroy, that support multiple levels of indirection through relationships, allow dynamic column names and that avoid deadlocks by updating in the after_commit callback."
   s.email = "magnus@vonkoeller.de"
   s.extra_rdoc_files = [
+    "CHANGELOG.md",
     "LICENSE.txt",
     "README.md"
   ]
@@ -110,7 +111,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = "http://github.com/bestvendor/counter_culture"
   s.licenses = ["MIT"]
-  s.rubygems_version = "2.5.1"
+  s.rubygems_version = "2.4.5.1"
   s.summary = "Turbo-charged counter caches for your Rails app."
 
   if s.respond_to? :specification_version then
