@@ -15,7 +15,7 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "counter_culture"
-  gem.homepage = "http://github.com/bestvendor/counter_culture"
+  gem.homepage = "http://github.com/magnusvk/counter_culture"
   gem.license = "MIT"
   gem.summary = %Q{Turbo-charged counter caches for your Rails app.}
   gem.description = %Q{counter_culture provides turbo-charged counter caches that are kept up-to-date not just on create and destroy, that support multiple levels of indirection through relationships, allow dynamic column names and that avoid deadlocks by updating in the after_commit callback.}
