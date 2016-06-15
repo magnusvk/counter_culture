@@ -5,9 +5,10 @@ class Review < ActiveRecord::Base
   counter_culture :product, :touch => true
   counter_culture :product, :column_name => 'rexiews_count'
   counter_culture :user
-  counter_culture :user, :column_name => proc { |model| model.review_type ? "#{model.review_type}_count" : nil }, :column_names => {"reviews.review_type = 'using'" => 'using_count', "reviews.review_type = 'tried'" => 'tried_count'}, delta_magnitude: proc {|model| model.weight}
+  counter_culture :user, :column_name => proc { |model| model.review_type ? "#{model.review_type}_count" : nil }, :column_names => {"reviews.review_type = 'using'" => 'using_count', "reviews.review_type = 'tried'" => 'tried_count'}
   counter_culture :user, :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture :user, :column_name => 'review_value_sum', :delta_column => 'value'
+  counter_culture :user, :column_name => 'dynamic_delta_count', delta_magnitude: proc {|model| model.weight }
   counter_culture [:user, :manages_company]
   counter_culture [:user, :manages_company], :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture [:user, :manages_company, :industry]
@@ -22,7 +23,7 @@ class Review < ActiveRecord::Base
   end
 
   def weight
-    if some_text.to_s.length > 100
+    if heavy?
       2
     else
       1

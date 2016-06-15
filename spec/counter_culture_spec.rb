@@ -663,21 +663,37 @@ describe "CounterCulture" do
     industry2.rexiews_count.should == 1
   end
 
-  it "increments dynamic delta magnitude" do
+  it "correctly handles dynamic delta magnitude" do
     user = User.create
     product = Product.create
-    
-    long_text = (0...199).map { (65 + rand(26)).chr }.join
 
-    review_using = Review.create :user_id => user.id, :review_type => 'using', :product_id => product.id, :some_text => long_text
+    long_text = '*'*200
+
+    review_long = Review.create(
+      :user_id => user.id,
+      :review_type => 'using',
+      :product_id => product.id,
+      :heavy => true,
+    )
     user.reload
-    user.using_count.should == 2
+    user.dynamic_delta_count.should == 2
 
-
-    review_tried = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'tried'
+    review_short = Review.create(
+      :user_id => user.id,
+      :product_id => product.id,
+      :review_type => 'using',
+      :heavy => false,
+    )
     user.reload
-    user.tried_count.should == 1
+    user.dynamic_delta_count.should == 3
 
+    review_long.destroy
+    user.reload
+    user.dynamic_delta_count.should == 1
+
+    review_short.destroy
+    user.reload
+    user.dynamic_delta_count.should == 0
   end
 
   it "increments dynamic counter cache on create" do

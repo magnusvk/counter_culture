@@ -64,7 +64,7 @@ module CounterCulture
         end
       end
     end
-    
+
     # Gets the delta magnitude of the counter cache for a specific object
     #
     # obj: object to calculate the counter cache name for
@@ -75,7 +75,7 @@ module CounterCulture
         delta_magnitude
       end
     end
-    
+
     # Gets the name of the counter cache for a specific object
     #
     # obj: object to calculate the counter cache name for
