@@ -109,7 +109,7 @@ Gem::Specification.new do |s|
     "spec/schema.rb",
     "spec/spec_helper.rb"
   ]
-  s.homepage = "http://github.com/bestvendor/counter_culture"
+  s.homepage = "http://github.com/magnusvk/counter_culture"
   s.licenses = ["MIT"]
   s.rubygems_version = "2.4.5.1"
   s.summary = "Turbo-charged counter caches for your Rails app."
@@ -153,4 +153,3 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<jeweler>, ["~> 2.0.1"])
   end
 end
-
