@@ -110,13 +110,12 @@ class Category < ActiveRecord::Base
 end
 ```
 
-### Dynamic Delta Magnitude
+### Delta Magnitude
 
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
   counter_culture :category, column_name: :weight, delta_magnitude: proc { model.product_type == 'awesome' ? 2 : 1 }
-  # Delta Magnitude will be flexible
 end
 
 class Category < ActiveRecord::Base
@@ -124,7 +123,21 @@ class Category < ActiveRecord::Base
 end
 ```
 
-Now, the ```Category``` model will keep two up-to-date counter-caches in the ```awesome_count``` and ```sucky_count``` columns of the ```categories``` table. Products with type ```'awesome'``` will affect only the ```awesome_count```, while products with type ```'sucky'``` will affect only the ```sucky_count```. This will also work with multi-level counter caches.
+Now the `Category` model will keep the `weight` column up to date: `awesome` products will affect it by a magnitude of 2, others by a magnitude of 1.
+
+You can also use a static multiplier as the `delta_magnitude`:
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, column_name: :weight, delta_magnitude: 3
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+```
+
+Now adding a `Product` will increase the `weight` column in its `Category` by 3; deleting it will decrease it by 3.
 
 ### Conditional counter cache
 
