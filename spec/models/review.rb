@@ -9,6 +9,7 @@ class Review < ActiveRecord::Base
   counter_culture :user, :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture :user, :column_name => 'review_value_sum', :delta_column => 'value'
   counter_culture :user, :column_name => 'dynamic_delta_count', delta_magnitude: proc {|model| model.weight }
+  counter_culture :user, :column_name => 'custom_delta_count', delta_magnitude: 3
   counter_culture [:user, :manages_company]
   counter_culture [:user, :manages_company], :column_name => 'review_approvals_count', :delta_column => 'approvals'
   counter_culture [:user, :manages_company, :industry]
