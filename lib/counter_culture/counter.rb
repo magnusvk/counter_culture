@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :joins ]
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
@@ -13,6 +13,8 @@ module CounterCulture
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
+      joins = options.fetch(:joins, [])
+      @joins = joins.is_a?(Enumerable) ? joins : [joins]
     end
 
     # increments or decrements a counter cache

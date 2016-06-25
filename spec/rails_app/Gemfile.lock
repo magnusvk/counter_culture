@@ -1,8 +1,10 @@
 PATH
   remote: ../..
   specs:
-    counter_culture (0.1.20)
-      after_commit_action (~> 0.1.3)
+    counter_culture (0.2.0)
+      activerecord (>= 3.0.0)
+      activesupport (>= 3.0.0)
+      after_commit_action (~> 1.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -33,8 +35,9 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
-    after_commit_action (0.1.3)
+    after_commit_action (1.0.1)
       activerecord (>= 3.0.0)
+      activesupport (>= 3.0.0)
     arel (5.0.1.20140414130214)
     builder (3.2.2)
     coffee-rails (4.0.1)
@@ -117,3 +120,6 @@ DEPENDENCIES
   sass-rails
   sqlite3
   uglifier
+
+BUNDLED WITH
+   1.11.2

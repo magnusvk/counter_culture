@@ -42,7 +42,7 @@ module CounterCulture
         # conditions must also be applied to the join on which we are counting
         join_clauses.each_with_index do |join,index|
           if index == join_clauses.size - 1 && where
-            join += " AND (#{model.send(:sanitize_sql_for_conditions, where)})" 
+            join += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
           end
           counts_query = counts_query.joins(join)
         end
@@ -108,18 +108,45 @@ module CounterCulture
       # store joins in an array so that we can later apply column-specific conditions
       @join_clauses = reverse_relation.map do |cur_relation|
         reflect = relation_reflect(cur_relation)
+        join_table_name = _join_table_name(reflect)
+
+        # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
+        _prepare_left_join_for_sti(reflect, join_table_name)
+      end.concat(apply_joins_option)
+    end
+
+    def apply_joins_option
+      joins.map do |join_relation|
+        reflect = relation_reflect(join_relation)
+
+        _prepare_left_join_optional(reflect, _join_table_name(reflect))
+      end
+    end
+
+    private
+
+      def _join_table_name(reflect)
         if relation_class.table_name == reflect.active_record.table_name
           join_table_name = "#{relation_class.table_name}_#{relation_class.table_name}"
         else
           join_table_name = reflect.active_record.table_name
         end
-        # join with alias to avoid ambiguous table name with self-referential models:
-        joins_sql = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
-        # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
-        joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
-        joins_sql
       end
-    end
 
+      def _prepare_left_join(reflect, join_table_name)
+        "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
+      end
+
+      def _prepare_left_join_optional(reflect, join_table_name)
+        "LEFT JOIN #{reflect.table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
+      end
+
+      def _prepare_left_join_for_sti(reflect, join_table_name)
+        join_sql = _prepare_left_join(reflect, join_table_name)
+
+        "#{join_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
+
+        join_sql
+      end
   end
 end
