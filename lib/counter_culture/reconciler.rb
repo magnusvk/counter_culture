@@ -16,10 +16,11 @@ module CounterCulture
       return false if @reconciled
 
       if options[:skip_unsupported]
-        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names))
+        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc))
       else
         raise "Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true" if foreign_key_values
         raise "Must provide :column_names option for relation #{relation.inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if counter_cache_name.is_a?(Proc) && !column_names
+        raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
       end
 
       # if we're provided a custom set of column names with conditions, use them; just use the
@@ -83,7 +84,12 @@ module CounterCulture
 
     def count_select
       # if a delta column is provided use SUM, otherwise use COUNT
-      @count_select ||= delta_column ? "SUM(COALESCE(#{self_table_name}.#{delta_column},0))" : "COUNT(#{self_table_name}.#{model.primary_key})"
+      return @count_select if @count_select
+      if delta_column
+        @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
+      else
+        @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
+      end
     end
 
     def relation_class

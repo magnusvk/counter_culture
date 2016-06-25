@@ -1,3 +1,8 @@
+## 0.2.1 (June 15, 2016)
+
+Improvements:
+  - Add [`:delta_magnitude` option](https://github.com/magnusvk/counter_culture#dynamic-delta-magnitude)
+
 ## 0.2.0 (April 22, 2016)
 
 Improvments:
