@@ -116,7 +116,6 @@ module CounterCulture
         reflect = relation_reflect(cur_relation)
         join_table_name = _join_table_name(reflect)
 
-        # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
         _prepare_left_join_for_sti(reflect, join_table_name)
       end.concat(apply_joins_option)
     end
@@ -139,6 +138,7 @@ module CounterCulture
         end
       end
 
+      # join with alias to avoid ambiguous table name with self-referential models:
       def _prepare_left_join(reflect, join_table_name)
         "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
       end
@@ -147,12 +147,13 @@ module CounterCulture
         "LEFT JOIN #{reflect.table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
       end
 
+      # # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
       def _prepare_left_join_for_sti(reflect, join_table_name)
-        join_sql = _prepare_left_join(reflect, join_table_name)
+        joins_sql = _prepare_left_join(reflect, join_table_name)
 
-        "#{join_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
+        joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
 
-        join_sql
+        joins_sql
       end
   end
 end
