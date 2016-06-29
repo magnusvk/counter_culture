@@ -16,4 +16,6 @@ module CounterCulture
 end
 
 # extend ActiveRecord with our own code here
-::ActiveRecord::Base.send :include, CounterCulture::Extensions
+ActiveSupport.on_load(:active_record) do
+  include CounterCulture::Extensions
+end
