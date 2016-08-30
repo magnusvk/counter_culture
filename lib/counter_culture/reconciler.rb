@@ -1,3 +1,6 @@
+require 'active_support/core_ext/module/delegation'
+require 'active_support/core_ext/module/attribute_accessors'
+
 module CounterCulture
   class Reconciler
     attr_reader :counter, :options, :changes
