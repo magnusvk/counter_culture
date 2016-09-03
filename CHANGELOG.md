@@ -1,3 +1,8 @@
+## 0.2.2 (July 11, 2016)
+
+Bugfixes:
+  - Use `ActiveSupport.on_load` for better Rails 5 compatibility (see [rails/rails#23589](https://github.com/rails/rails/issues/23589))
+
 ## 0.2.1 (June 15, 2016)
 
 Improvements:

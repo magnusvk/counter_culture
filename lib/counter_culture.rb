@@ -1,5 +1,6 @@
 require 'after_commit_action'
 require 'active_support/concern'
+require 'active_support/lazy_load_hooks'
 
 require 'counter_culture/extensions'
 require 'counter_culture/counter'
@@ -16,4 +17,6 @@ module CounterCulture
 end
 
 # extend ActiveRecord with our own code here
-::ActiveRecord::Base.send :include, CounterCulture::Extensions
+ActiveSupport.on_load(:active_record) do
+  include CounterCulture::Extensions
+end
