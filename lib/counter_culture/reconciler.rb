@@ -5,7 +5,7 @@ module CounterCulture
   class Reconciler
     attr_reader :counter, :options, :changes
 
-    delegate :model, :relation, :full_primary_key, :relation_reflect, :to => :counter
+    delegate :model, :relation, :full_primary_key, :relation_reflect, :joins, :to => :counter
     delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
 
     def initialize(counter, options={})

@@ -38,6 +38,7 @@ describe "CounterCulture" do
     describe "fix_counts" do
       let!(:mr_x)      { Member.create(name: 'Mr. X', user_type: 'G') }
       let!(:conv_mr_x) {ConversationMember.create(conversation_id: conversation.id, member_id: mr_x.id)}
+      let!(:conv_multi_count) {Conversation.create(name: 'Chat with Multi-count')}
 
       it "should give me correct count for legacy data" do
         conversation.update_column(:guest_count, 0)
@@ -64,6 +65,28 @@ describe "CounterCulture" do
         conversation.reload
 
         conversation.guest_count.should == 0
+      end
+
+      it "co-relates counts for multiple _count columns" do
+        ConversationMember.delete_all
+
+        conversation.reload
+
+        vips = Member.create([{name: 'Mr. VIP', user_type: 'V'},
+                              {name: 'Mrs. VIP', user_type: 'V'}])
+
+        ConversationMember.create([{conversation_id: conv_multi_count.id, member_id: vips.first.id},
+                                   {conversation_id: conv_multi_count.id, member_id: vips.last.id, approved: true}])
+
+        Member.where(user_type: 'G').delete_all
+
+        ConversationMember.counter_culture_fix_counts
+
+        conv_multi_count.reload
+
+        conv_multi_count.vip_count.should == 2
+
+        conv_multi_count.approved_count.should == 1
       end
     end
   end
