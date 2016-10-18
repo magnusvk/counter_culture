@@ -1,3 +1,8 @@
+## 0.2.3 (October 18, 2016)
+
+Improvements:
+  - When running `fix_counts` on a table, wrap each batch in a transaction because that is faster on large tables.
+
 ## 0.2.2 (July 11, 2016)
 
 Bugfixes:
