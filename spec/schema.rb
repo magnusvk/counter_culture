@@ -164,4 +164,27 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "updated_at", :null => false
   end
 
+  create_table "members", :force => true do |t|
+    t.string   "name"
+    t.string   "user_type", :default => 'N', :limit => 1, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "conversations", :force => true do |t|
+    t.string   "name"
+    t.integer  "guest_count", :default => 0, :null => false
+    t.integer  "approved_count"
+    t.integer  "vip_count"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "conversation_members", :force => true do |t|
+    t.integer  "conversation_id"
+    t.integer  "member_id"
+    t.boolean  "approved", default: false, null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 end

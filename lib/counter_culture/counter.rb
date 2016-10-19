@@ -2,7 +2,7 @@ module CounterCulture
   class Counter
     CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude ]
 
-    attr_reader :model, :relation, *CONFIG_OPTIONS
+    attr_reader :model, :relation, :joins, *CONFIG_OPTIONS
 
     def initialize(model, relation, options)
       @model = model
@@ -14,6 +14,7 @@ module CounterCulture
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
+      @joins = determine_joins
     end
 
     # increments or decrements a counter cache
@@ -182,6 +183,23 @@ module CounterCulture
       end
 
       prev
+    end
+
+    private
+
+    def determine_joins
+      joins = []
+      self_table = model.name.tableize
+
+      return joins if column_names.nil? || !column_names.kind_of?(Hash)
+
+      column_names.keys.flatten.each do |cn|
+        cn_table = cn.to_s.split(".")[0]
+
+        joins << cn_table.singularize if cn_table != self_table && ActiveRecord::Base.connection.tables.include?(cn_table)
+      end
+
+      joins.uniq
     end
   end
 end
