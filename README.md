@@ -5,7 +5,6 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Updates counter cache when values change, not just when creating and destroying 
 * Supports counter caches through multiple levels of relations
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
-* Executes counter updates after the commit, avoiding [deadlocks](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html)
 * Can keep a running count, or a running total
 
 ## Installation
@@ -13,7 +12,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 0.1.33'
+gem 'counter_culture', '~> 1.0'
 ```
 
 Then run `bundle install`
@@ -205,6 +204,18 @@ By default, counter_culture does not update the timestamp of models when it upda
 ```
 
 This can be useful when you use Rails' caching mechanism and display a counter cache's value in the cached fragment.
+
+### Executing counter cache updates after commit
+
+By default, counter_culture will run counter cache updates inside of the same ActiveRecord transaction that triggered it. (Note that this bevavior [changed from version 0.2.3 to 1.0.0](CHANGELOG.md#100-november-15-2016).) If you would like to run counter cache updates outside of that transaction, for example because you are experiencing [deadlocks with older versions of PostgreSQL](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html), you can enable that behavior:
+```ruby
+  counter_culture :category, :execute_after_commit => true
+```
+
+You will also have to add an optional gem dependency in your `Gemfile`:
+```ruby
+gem 'after_commit_action', '~> 1.0'
+```
 
 ### Manually populating counter cache values
 
