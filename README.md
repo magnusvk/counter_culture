@@ -212,11 +212,6 @@ By default, counter_culture will run counter cache updates inside of the same Ac
   counter_culture :category, :execute_after_commit => true
 ```
 
-You will also have to add an optional gem dependency in your `Gemfile`:
-```ruby
-gem 'after_commit_action', '~> 1.0'
-```
-
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
