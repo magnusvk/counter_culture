@@ -2,6 +2,6 @@ database:
   override:
     - echo "No database setup required..."
 dependencies:
-  pre:
-    - gem install bundler
-    - bundle config without development
+  override:
+    - bundle install --jobs=3 --retry=3 --deployment --without development
+    - cd spec/rails_app && bundle install
