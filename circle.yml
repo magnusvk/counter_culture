@@ -2,8 +2,7 @@ database:
   override:
     - echo "No database setup required..."
 dependencies:
-  override:
-    - bundle install --jobs=3 --retry=3 --deployment --without development
+  post:
     - cd spec/rails_app && bundle install
 test:
   override:
