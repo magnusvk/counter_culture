@@ -1,3 +1,8 @@
+## 1.0.0 (November 15, 2016)
+
+Breaking changes:
+  - By default, counter_culture will now update counts inside the same transaction that triggered it. In older versions, counter cache updates happened outside of that transaction. To preserve the old behavior, use the new [`execute_after_commit` option](README.md#executing-counter-cache-updates-after-commit).
+
 ## 0.2.3 (October 18, 2016)
 
 Improvements:
