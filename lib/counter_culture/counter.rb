@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
@@ -14,6 +14,7 @@ module CounterCulture
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
+      @execute_after_commit = options.fetch(:execute_after_commit, false)
     end
 
     # increments or decrements a counter cache
@@ -26,6 +27,7 @@ module CounterCulture
     #   :delta_column => override the default count delta (1) with the value of this column in the counted record
     #   :was => whether to get the current value or the old value of the
     #      first part of the relation
+    #   :execute_after_commit => execute the column update outside of the transaction to avoid deadlocks
     def change_counter_cache(obj, options)
       change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
 
@@ -41,7 +43,7 @@ module CounterCulture
                           else
                             counter_delta_magnitude_for(obj)
                           end
-        obj.execute_after_commit do
+        execute_change_counter_cache(obj, options) do
           # increment or decrement?
           operator = options[:increment] ? '+' : '-'
 
@@ -182,6 +184,16 @@ module CounterCulture
       end
 
       prev
+    end
+
+    private
+
+    def execute_change_counter_cache(obj, options)
+      if execute_after_commit
+        obj.execute_after_commit { yield }
+      else
+        yield
+      end
     end
   end
 end
