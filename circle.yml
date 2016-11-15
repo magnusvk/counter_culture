@@ -3,4 +3,5 @@ database:
     - echo "No database setup required..."
 dependencies:
   pre:
+    - gem install bundler
     - bundle config without development
