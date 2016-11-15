@@ -154,7 +154,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord (>= 3.0.0)
   activesupport (>= 3.0.0)
-  after_commit_action (~> 1.0.0)
+  after_commit_action (~> 1.0)
   awesome_print
   bundler (>= 1.2.0)
   database_cleaner (>= 1.1.1)
