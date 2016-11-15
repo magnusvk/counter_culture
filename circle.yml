@@ -6,4 +6,4 @@ dependencies:
     - cd spec/rails_app && bundle install
 test:
   override:
-    - rspec spec
+    - bundle exec rspec spec
