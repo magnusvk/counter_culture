@@ -2,5 +2,5 @@ database:
   override:
     - echo "No database setup required..."
 dependencies:
-  bundler:
-    without: [development]
+  pre:
+    - bundle config without development
