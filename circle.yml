@@ -4,4 +4,6 @@ database:
 dependencies:
   override:
     - bundle install --jobs=3 --retry=3 --deployment --without development:
+        timeout: 180
     - cd spec/rails_app && bundle install:
+        timeout: 180
