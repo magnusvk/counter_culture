@@ -1520,7 +1520,7 @@ describe "CounterCulture" do
     end
 
     it "should show the correct changes when changes are present" do
-      person = Person.create!
+      person = Person.create(id:100)
 
       earning_transaction = Transaction.create(monetary_value: 10, person: person)
       spending_transaction = Transaction.create(monetary_value: -20, person: person)
@@ -1534,8 +1534,8 @@ describe "CounterCulture" do
       fixed = Transaction.counter_culture_fix_counts
       fixed.length.should == 2
       fixed.should == [
-        {:entity=>"Person", :id=>1, :what=>"money_earned_total", :wrong=>0, :right=>10},
-        {:entity=>"Person", :id=>1, :what=>"money_spent_total", :wrong=>0, :right=>-20}
+        {:entity=>"Person", :id=>100, :what=>"money_earned_total", :wrong=>0, :right=>10},
+        {:entity=>"Person", :id=>100, :what=>"money_spent_total", :wrong=>0, :right=>-20}
       ]
     end
   end
