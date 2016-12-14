@@ -1506,16 +1506,17 @@ describe "CounterCulture" do
   end
 
   describe "dynamic column names with totaling instead of counting" do
-    it "should correctly sum up the values"
-    person = Person.create!
+    it "should correctly sum up the values" do
+      person = Person.create!
 
-    earning_transaction = Transaction.create(monetary_value: 10, person: person)
+      earning_transaction = Transaction.create(monetary_value: 10, person: person)
 
-    person.reload
-    person.money_earned_total.should == 10
+      person.reload
+      person.money_earned_total.should == 10
 
-    spending_transaction = Transaction.create(monetary_value: -20, person: person)
-    person.reload
-    person.money_spent_total.should == -20
+      spending_transaction = Transaction.create(monetary_value: -20, person: person)
+      person.reload
+      person.money_spent_total.should == -20
+    end
   end
 end
