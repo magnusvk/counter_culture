@@ -19,6 +19,8 @@ require 'models/categ'
 require 'models/subcateg'
 require 'models/another_post'
 require 'models/another_post_comment'
+require 'models/person'
+require 'models/transaction'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1501,5 +1503,19 @@ describe "CounterCulture" do
       fixed.length.should == 1
       company.reload.children_count.should == 1
     end
+  end
+
+  describe "dynamic column names with totaling instead of counting" do
+    it "should correctly sum up the values"
+    person = Person.create!
+
+    earning_transaction = Transaction.create(monetary_value: 10, person: person)
+
+    person.reload
+    person.money_earned_total.should == 10
+
+    spending_transaction = Transaction.create(monetary_value: -20, person: person)
+    person.reload
+    person.money_spent_total.should == -20
   end
 end
