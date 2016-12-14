@@ -1518,5 +1518,25 @@ describe "CounterCulture" do
       person.reload
       person.money_spent_total.should == -20
     end
+
+    it "should show the correct changes when changes are present" do
+      person = Person.create!
+
+      earning_transaction = Transaction.create(monetary_value: 10, person: person)
+      spending_transaction = Transaction.create(monetary_value: -20, person: person)
+
+      # Overwrite the values for the person so they are incorrect
+      person.reload
+      person.money_earned_total = 0
+      person.money_spent_total = 0
+      person.save
+
+      fixed = Transaction.counter_culture_fix_counts
+      fixed.length.should == 2
+      fixed.should == [
+        {:entity=>"Person", :id=>1, :what=>"money_earned_total", :wrong=>0, :right=>10},
+        {:entity=>"Person", :id=>1, :what=>"money_spent_total", :wrong=>0, :right=>-20}
+      ]
+    end
   end
 end
