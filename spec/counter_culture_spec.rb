@@ -19,6 +19,8 @@ require 'models/categ'
 require 'models/subcateg'
 require 'models/another_post'
 require 'models/another_post_comment'
+require 'models/person'
+require 'models/transaction'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1500,6 +1502,41 @@ describe "CounterCulture" do
       fixed = Company.counter_culture_fix_counts
       fixed.length.should == 1
       company.reload.children_count.should == 1
+    end
+  end
+
+  describe "dynamic column names with totaling instead of counting" do
+    it "should correctly sum up the values" do
+      person = Person.create!
+
+      earning_transaction = Transaction.create(monetary_value: 10, person: person)
+
+      person.reload
+      person.money_earned_total.should == 10
+
+      spending_transaction = Transaction.create(monetary_value: -20, person: person)
+      person.reload
+      person.money_spent_total.should == -20
+    end
+
+    it "should show the correct changes when changes are present" do
+      person = Person.create(id:100)
+
+      earning_transaction = Transaction.create(monetary_value: 10, person: person)
+      spending_transaction = Transaction.create(monetary_value: -20, person: person)
+
+      # Overwrite the values for the person so they are incorrect
+      person.reload
+      person.money_earned_total = 0
+      person.money_spent_total = 0
+      person.save
+
+      fixed = Transaction.counter_culture_fix_counts
+      fixed.length.should == 2
+      fixed.should == [
+        {:entity=>"Person", :id=>100, :what=>"money_earned_total", :wrong=>0, :right=>10},
+        {:entity=>"Person", :id=>100, :what=>"money_spent_total", :wrong=>0, :right=>-20}
+      ]
     end
   end
 end
