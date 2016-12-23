@@ -175,4 +175,13 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "updated_at", :null => false
   end
 
+  create_table "people", :force => true do |t|
+    t.integer "money_earned_total", :null => false, :default => 0
+    t.integer "money_spent_total", :null => false, :default => 0
+  end
+
+  create_table "transactions", :force => true do |t|
+    t.integer "person_id", :null => false
+    t.integer "monetary_value", :null => false
+  end
 end
