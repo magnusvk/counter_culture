@@ -1,3 +1,8 @@
+## 1.1.0 (December 23, 2016)
+
+Improvements:
+  - Support for has_one associations
+
 ## 1.0.0 (November 15, 2016)
 
 Breaking changes:
