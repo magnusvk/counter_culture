@@ -124,8 +124,13 @@ module CounterCulture
         else
           join_table_name = reflect.active_record.table_name
         end
+        if reflect.has_one?
+          on_sql = "#{reflect.table_name}.#{reflect.foreign_key} = #{join_table_name}.#{reflect.association_primary_key}"
+        else
+          on_sql = "#{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
+        end
         # join with alias to avoid ambiguous table name with self-referential models:
-        joins_sql = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
+        joins_sql = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{on_sql}"
         # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
         joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
         joins_sql

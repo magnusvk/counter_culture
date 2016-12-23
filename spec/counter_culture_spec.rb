@@ -1,6 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 require 'models/company'
+require 'models/company_access_level'
+require 'models/recruiter'
 require 'models/industry'
 require 'models/product'
 require 'models/review'
@@ -1500,6 +1502,17 @@ describe "CounterCulture" do
       fixed = Company.counter_culture_fix_counts
       fixed.length.should == 1
       company.reload.children_count.should == 1
+    end
+
+    it "works with a has_one association" do
+      company = Company.create!
+      company.recruiters << Recruiter.create!
+      company.reload.recruiters_count.should == 1
+
+      company.update_columns(recruiters_count: 2)
+
+      Recruiter.counter_culture_fix_counts
+      company.reload.recruiters_count.should == 1
     end
   end
 end

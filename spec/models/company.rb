@@ -6,6 +6,8 @@ class Company < ActiveRecord::Base
   belongs_to :parent, :class_name => 'Company', :foreign_key => 'parent_id'
   has_many :children, :class_name => 'Company', :foreign_key => 'parent_id'
 
-  counter_culture :parent, :column_name => :children_count
+  has_many :company_access_levels
+  has_many :recruiters, through: :company_access_levels
 
+  counter_culture :parent, :column_name => :children_count
 end
