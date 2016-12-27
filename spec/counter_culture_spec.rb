@@ -1250,20 +1250,24 @@ describe "CounterCulture" do
     expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
   end
 
+  MANY = CI_TEST_RUN ? 1000 : 20
+  A_FEW = CI_TEST_RUN ? 50:  10
+  A_BATCH = CI_TEST_RUN ? 100: 10
+
   it "should correctly fix the counter caches with thousands of records" do
     # first, clean up
     SimpleDependent.delete_all
     SimpleMain.delete_all
 
-    1000.times do |i|
+    MANY.times do |i|
       main = SimpleMain.create
       3.times { main.simple_dependents.create }
     end
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
 
-    SimpleMain.order('random()').limit(50).update_all simple_dependents_count: 1
-    SimpleDependent.counter_culture_fix_counts :batch_size => 100
+    SimpleMain.order('random()').limit(A_FEW).update_all simple_dependents_count: 1
+    SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == 3 }
   end
@@ -1273,15 +1277,15 @@ describe "CounterCulture" do
     ConditionalDependent.delete_all
     ConditionalMain.delete_all
 
-    1000.times do |i|
+    MANY.times do |i|
       main = ConditionalMain.create
       3.times { main.conditional_dependents.create(:condition => main.id % 2 == 0) }
     end
 
     ConditionalMain.find_each { |main| main.conditional_dependents_count.should == (main.id % 2 == 0 ? 3 : 0) }
 
-    ConditionalMain.order('random()').limit(50).update_all :conditional_dependents_count => 1
-    ConditionalDependent.counter_culture_fix_counts :batch_size => 100
+    ConditionalMain.order('random()').limit(A_FEW).update_all :conditional_dependents_count => 1
+    ConditionalDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     ConditionalMain.find_each { |main| main.conditional_dependents_count.should == (main.id % 2 == 0 ? 3 : 0) }
   end
@@ -1291,15 +1295,15 @@ describe "CounterCulture" do
     SimpleDependent.delete_all
     SimpleMain.delete_all
 
-    1000.times do |i|
+    MANY.times do |i|
       main = SimpleMain.create
       (main.id % 4).times { main.simple_dependents.create }
     end
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == main.id % 4 }
 
-    SimpleMain.order('random()').limit(50).update_all simple_dependents_count: 1
-    SimpleDependent.counter_culture_fix_counts :batch_size => 100
+    SimpleMain.order('random()').limit(A_FEW).update_all simple_dependents_count: 1
+    SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     SimpleMain.find_each { |main| main.simple_dependents_count.should == main.id % 4 }
   end
