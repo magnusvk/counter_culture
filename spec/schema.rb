@@ -184,4 +184,19 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer "person_id", :null => false
     t.integer "monetary_value", :null => false
   end
+
+  #polymorphic
+  create_table "poly_images", :force => true do |t|
+    t.integer "imageable_id", :null => true
+    t.string "imageable_type", :null => true
+    t.string "url"
+  end
+  create_table "poly_employees", :force => true do |t|
+    t.string "name"
+    t.integer  "poly_images_count", :default => 0, :null => false
+  end
+  create_table "poly_products", :force => true do |t|
+    t.string "address"
+    t.integer  "poly_images_count", :default => 0, :null => false
+  end
 end

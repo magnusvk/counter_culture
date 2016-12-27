@@ -1574,4 +1574,24 @@ describe "CounterCulture" do
       ])
     end
   end
+
+  describe "with polymorphic_associations" do
+    before(:all) do
+      require 'models/poly_image'
+      require 'models/poly_employee'
+      require 'models/poly_product'
+    end
+    it "increments counter cache on create" do
+      e1 = PolyEmployee.create()
+      p1 = PolyProduct.create()
+      expect(e1.poly_images_count).to eq(0)
+      expect(p1.poly_images_count).to eq(0)
+      PolyImage.create(imageable: e1)
+      expect(e1.reload.poly_images_count).to eq(1)
+      expect(p1.poly_images_count).to eq(0)
+      PolyImage.create(imageable: p1)
+      expect(e1.reload.poly_images_count).to eq(1)
+      expect(p1.reload.poly_images_count).to eq(1)
+    end
+  end
 end
