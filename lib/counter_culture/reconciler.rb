@@ -4,8 +4,9 @@ require 'active_support/core_ext/module/attribute_accessors'
 module CounterCulture
   class Reconciler
     attr_reader :counter, :options, :changes
+    attr_accessor :target_polymorphic_associated_model
 
-    delegate :model, :relation, :full_primary_key, :relation_reflect, :to => :counter
+    delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
     delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
 
     def initialize(counter, options={})
@@ -19,13 +20,28 @@ module CounterCulture
       return false if @reconciled
 
       if options[:skip_unsupported]
-        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc))
+        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc) || (polymorphic? && polymorphic_associated_models.nil?) )
       else
         raise "Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true" if foreign_key_values
         raise "Must provide :column_names option for relation #{relation.inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if counter_cache_name.is_a?(Proc) && !column_names
         raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
+        raise "Fixing counter caches is not supported on polymorphic associations unless you specify `polymorphic_associated_models: ['Model1', 'Model2']` on the counter_cache" if polymorphic? && polymorphic_associated_models.nil?
       end
 
+      if polymorphic?
+        polymorphic_associated_models.each do |model|
+          reconciler = self.class.new(@counter, @options)
+          reconciler.target_polymorphic_associated_model = model.constantize
+          reconciler.do_reconciliation
+        end
+      else
+        do_reconciliation
+      end
+
+      @reconciled = true
+    end
+
+    def do_reconciliation
       # if we're provided a custom set of column names with conditions, use them; just use the
       # column name otherwise
       # which class does this relation ultimately point to? that's where we have to start
@@ -46,7 +62,7 @@ module CounterCulture
         next unless column_name
 
         # select join column and count (from above) as well as cache column ('column_name') for later comparison
-        counts_query = scope.select("#{relation_class.table_name}.#{relation_class.primary_key}, #{relation_class.table_name}.#{relation_reflect(relation).association_primary_key}, #{count_select} AS count, #{relation_class.table_name}.#{column_name}")
+        counts_query = scope.select("#{relation_class.table_name}.#{relation_class.primary_key}, #{relation_class.table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, #{count_select} AS count, #{relation_class.table_name}.#{column_name}")
 
         # we need to join together tables until we get back to the table this class itself lives in
         # conditions must also be applied to the join on which we are counting
@@ -76,8 +92,6 @@ module CounterCulture
           end
         end
       end
-
-      @reconciled = true
     end
 
     private
@@ -104,7 +118,13 @@ module CounterCulture
     end
 
     def relation_class
-      @relation_class ||= counter.relation_klass(counter.relation)
+      @relation_class ||= begin
+        if polymorphic?
+          target_polymorphic_associated_model
+        else
+          counter.relation_klass(counter.relation)
+        end
+      end
     end
 
     def self_table_name
@@ -130,15 +150,26 @@ module CounterCulture
         else
           join_table_name = reflect.active_record.table_name
         end
-        if reflect.has_one?
-          on_sql = "#{reflect.table_name}.#{reflect.foreign_key} = #{join_table_name}.#{reflect.association_primary_key}"
+        if polymorphic?
+          # NB: polymorphic only supports one level of relation (at present)
+          association_primary_key = reflect.association_primary_key(target_polymorphic_associated_model)
+          reflect_table_name = target_polymorphic_associated_model.table_name
         else
-          on_sql = "#{reflect.table_name}.#{reflect.association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
+          association_primary_key = reflect.association_primary_key
+          reflect_table_name = reflect.table_name
+        end
+
+        if reflect.has_one?
+          on_sql = "#{reflect_table_name}.#{reflect.foreign_key} = #{join_table_name}.#{association_primary_key}"
+        else
+          on_sql = "#{reflect_table_name}.#{association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
         end
         # join with alias to avoid ambiguous table name with self-referential models:
         joins_sql = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{on_sql}"
         # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
         joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
+        # adds 'type' condition to JOIN clause if the current model is a polymorphic relation
+        joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.#{reflect.foreign_type} = '#{target_polymorphic_associated_model.name}'" if polymorphic? # NB only works for one-level relations
         joins_sql
       end
     end

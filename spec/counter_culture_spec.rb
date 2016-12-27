@@ -1593,5 +1593,21 @@ describe "CounterCulture" do
       expect(e1.reload.poly_images_count).to eq(1)
       expect(p1.reload.poly_images_count).to eq(1)
     end
+    it "can fix counts for polymorphic correctly" do
+      e1 = PolyEmployee.create()
+      p1 = PolyProduct.create()
+      p2 = PolyProduct.create()
+      PolyImage.create(imageable: e1)
+      PolyImage.create(imageable: e1)
+      PolyImage.create(imageable: p1)
+      PolyEmployee.update_all(poly_images_count: 100)
+      PolyProduct.update_all(poly_images_count: 100)
+
+      PolyImage.counter_culture_fix_counts
+
+      expect(p2.reload.poly_images_count).to eq(0)
+      expect(p1.reload.poly_images_count).to eq(1)
+      expect(e1.reload.poly_images_count).to eq(2)
+    end
   end
 end

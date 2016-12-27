@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit, :polymorphic_associated_models ]
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
@@ -15,6 +15,7 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @execute_after_commit = options.fetch(:execute_after_commit, false)
+      @polymorphic_associated_models = options[:polymorphic_associated_models]
     end
 
     # increments or decrements a counter cache
@@ -61,8 +62,8 @@ module CounterCulture
             end
           end
 
-          klass = relation_klass(relation)
-          klass.where(relation_primary_key(relation) => id_to_change).update_all updates.join(', ')
+          klass = relation_klass(relation, obj:obj)
+          klass.where(relation_primary_key(relation, obj: obj) => id_to_change).update_all updates.join(', ')
         end
       end
     end
@@ -198,6 +199,12 @@ module CounterCulture
     def first_level_relation_foreign_key
       first_relation = relation.first if relation.is_a?(Enumerable)
       relation_reflect(first_relation).foreign_key
+    end
+
+    def polymorphic?
+      relation_reflect(relation).polymorphic?.tap do |is_polymorphic|
+        raise "Polymorphic associations only supported with one level" unless (relation.is_a?(Symbol) || relation.length == 1) if is_polymorphic
+      end
     end
 
     def previous_model(obj)
