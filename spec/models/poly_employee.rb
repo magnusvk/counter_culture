@@ -1,3 +1,3 @@
 class PolyEmployee < ActiveRecord::Base
-  has_many :images, as: :imageable
+  has_many :poly_images, as: :imageable
 end
