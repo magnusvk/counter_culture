@@ -194,9 +194,13 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "poly_employees", :force => true do |t|
     t.string "name"
     t.integer  "poly_images_count", :default => 0, :null => false
+    t.integer  "poly_images_count_dup", :default => 0, :null => false
+    t.integer  "special_poly_images_count", :default => 0, :null => false
   end
   create_table "poly_products", :force => true do |t|
     t.string "brand_name"
     t.integer  "poly_images_count", :default => 0, :null => false
+    t.integer  "poly_images_count_dup", :default => 0, :null => false
+    t.integer  "special_poly_images_count", :default => 0, :null => false
   end
 end
