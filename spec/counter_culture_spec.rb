@@ -1460,7 +1460,7 @@ describe "CounterCulture" do
     categ.reload.posts_count.should == 1
   end
 
-  pending "#previous_model" do
+  skip "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}
 
     it "should return a copy of the original model" do

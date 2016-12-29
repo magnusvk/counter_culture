@@ -12,7 +12,7 @@ gem "activesupport", ">= 3.0.0"
 group :development, :test do
   gem "rake"
   gem "rails", '>= 3.1.0'
-  gem "rspec", "~> 2.10.0"
+  gem "rspec", "~> 2.99.0"
   gem "awesome_print"
 end
 
