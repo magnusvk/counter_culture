@@ -20,7 +20,7 @@ ActiveRecord::Base.logger = Logger.new(STDOUT)
 ActiveRecord::Base.logger.level = 1
 
 RSpec.configure do |config|
-  config.fail_fast = true
+  config.fail_fast = true unless CI_TEST_RUN
   config.filter_run focus: true
   config.run_all_when_everything_filtered = true
 end
