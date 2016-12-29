@@ -62,8 +62,8 @@ module CounterCulture
             end
           end
 
-          klass = relation_klass(relation, obj:obj)
-          klass.where(relation_primary_key(relation, obj: obj) => id_to_change).update_all updates.join(', ')
+          klass = relation_klass(relation, source:obj)
+          klass.where(relation_primary_key(relation, source: obj) => id_to_change).update_all updates.join(', ')
         end
       end
     end
@@ -112,8 +112,8 @@ module CounterCulture
       if was
         first = relation.shift
         foreign_key_value = obj.send("#{relation_foreign_key(first)}_was")
-        klass = relation_klass(first, obj:obj)
-        value = klass.where("#{klass.table_name}.#{relation_primary_key(first, obj:obj)} = ?", foreign_key_value).first if foreign_key_value
+        klass = relation_klass(first, source:obj)
+        value = klass.where("#{klass.table_name}.#{relation_primary_key(first, source:obj)} = ?", foreign_key_value).first if foreign_key_value
       else
         value = obj
       end
@@ -146,15 +146,15 @@ module CounterCulture
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
-    # obj [optional]: the source object,
+    # source [optional]: the source object,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    def relation_klass(relation, obj:nil)
+    def relation_klass(relation, source:nil)
       reflect = relation_reflect(relation)
       if reflect.polymorphic?
-        raise "Can't work out relation's class without being passed object (relation: #{relation}, reflect: #{reflect})" if obj.nil?
+        raise "Can't work out relation's class without being passed object (relation: #{relation}, reflect: #{reflect})" if source.nil?
         raise "Can't work out polymorhpic relation's class with multiple relations yet" unless (relation.is_a?(Symbol) || relation.length == 1)
-        obj.try(reflect.foreign_type.to_sym).constantize
+        source.try(reflect.foreign_type.to_sym).constantize
       else
         reflect.klass
       end
@@ -175,17 +175,17 @@ module CounterCulture
     # related [optional]: the target object that the relationship is linked to,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    # obj[optional]: the model instance that the relationship is linked from,
+    # source[optional]: the model instance that the relationship is linked from,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    def relation_primary_key(relation, related: nil, obj: nil)
+    def relation_primary_key(relation, related: nil, source: nil)
       reflect = relation_reflect(relation)
       klass = nil
       if reflect.polymorphic?
         raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
-        return obj.class.primary_key if obj
+        return source.class.primary_key if source
         klass = (related && related.class)
-        raise "must specify related or obj for polymorphic associations..." unless klass
+        raise "must specify related or source for polymorphic associations..." unless klass
       end
       reflect.association_primary_key(klass)
     end
