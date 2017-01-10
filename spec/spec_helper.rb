@@ -10,6 +10,8 @@ require 'counter_culture'
 
 load "#{File.dirname(__FILE__)}/schema.rb"
 
+CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') || (ENV['CIRCLECI'] && 'CIRCLE') || ENV["CI"] && 'CI'
+
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
