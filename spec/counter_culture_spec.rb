@@ -1478,19 +1478,19 @@ describe "CounterCulture" do
     expect(categ.reload.posts_count).to eq(1)
   end
 
-  skip "#previous_model" do
+  describe "#previous_model" do
     let(:user){User.create :name => "John Smith", :manages_company_id => 1}
 
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
-      prev = user.send(:previous_model)
+      prev = CounterCulture::Counter.new(user, :foobar, {}).previous_model(user)
 
-      prev.name.should == "John Smith"
-      prev.manages_company_id.should == 1
+      expect(prev.name).to eq("John Smith")
+      expect(prev.manages_company_id).to eq(1)
 
-      user.name.should =="Joe Smith"
-      user.manages_company_id.should == 2
+      expect(user.name).to eq("Joe Smith")
+      expect(user.manages_company_id).to eq(2)
     end
   end
 
