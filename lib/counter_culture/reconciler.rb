@@ -39,6 +39,12 @@ module CounterCulture
 
       # iterate over all the possible counter cache column names
       counter_column_names.each do |where, column_name|
+        # if the column name is nil, that means those records don't affect
+        # counts; we don't need to do anything in that case. but we allow
+        # specifying that condition regardless to make the syntax less
+        # confusing
+        next unless column_name
+
         # select join column and count (from above) as well as cache column ('column_name') for later comparison
         counts_query = scope.select("#{relation_class.table_name}.#{relation_class.primary_key}, #{relation_class.table_name}.#{relation_reflect(relation).association_primary_key}, #{count_select} AS count, #{relation_class.table_name}.#{column_name}")
 

@@ -1138,6 +1138,24 @@ describe "CounterCulture" do
 
     expect(user.using_count).to eq(1)
     expect(user.tried_count).to eq(1)
+
+    review_tried = Review.create :user_id => user.id, :product_id => product.id, :review_type => 'null'
+
+    user.reload
+
+    expect(user.using_count).to eq(1)
+    expect(user.tried_count).to eq(1)
+
+    user.using_count = 2
+    user.tried_count = 3
+    user.save!
+
+    Review.counter_culture_fix_counts :skip_unsupported => true
+
+    user.reload
+
+    expect(user.using_count).to eq(1)
+    expect(user.tried_count).to eq(1)
   end
 
   it "should fix a string counter cache correctly" do
