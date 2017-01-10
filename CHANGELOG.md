@@ -1,3 +1,7 @@
+## 1.1.1 (unreleased)
+Bugfixes:
+  - Don't blow up if the `column_names` hash contains a `nil` column name
+
 ## 1.1.0 (December 23, 2016)
 
 Improvements:
