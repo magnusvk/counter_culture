@@ -19,20 +19,15 @@ module CounterCulture
       return false if @reconciled
 
       if options[:skip_unsupported]
-        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc) || (polymorphic? && polymorphic_associated_models.nil?))
+        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc))
       else
         raise "Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true" if foreign_key_values
         raise "Must provide :column_names option for relation #{relation.inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if counter_cache_name.is_a?(Proc) && !column_names
         raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
-        raise "Fixing counter caches is not supported on polymorphic associations unless you specify `polymorphic_associated_models: ['Model1', 'Model2']` on the counter_cache" if polymorphic? && polymorphic_associated_models.nil?
       end
 
-      if polymorphic?
-        polymorphic_associated_models.each do |model|
-          Reconciliation.new(counter, changes, options, model.constantize).perform
-        end
-      else
-        Reconciliation.new(counter, changes, options, relation_class).perform
+      associated_model_classes.each do |associated_model_class|
+        Reconciliation.new(counter, changes, options, associated_model_class).perform
       end
 
       @reconciled = true
@@ -40,7 +35,20 @@ module CounterCulture
 
     private
 
-    def relation_class
+    def associated_model_classes
+      if polymorphic?
+        polymorphic_associated_model_classes
+      else
+        [associated_model_class]
+      end
+    end
+
+    def polymorphic_associated_model_classes
+      foreign_type_field = relation_reflect(relation).foreign_type
+      model.pluck("DISTINCT #{foreign_type_field}").map{|type_name| type_name.constantize }
+    end
+
+    def associated_model_class
       counter.relation_klass(counter.relation)
     end
 

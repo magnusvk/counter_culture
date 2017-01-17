@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit, :polymorphic_associated_models ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
@@ -15,7 +15,6 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @execute_after_commit = options.fetch(:execute_after_commit, false)
-      @polymorphic_associated_models = options[:polymorphic_associated_models]
     end
 
     # increments or decrements a counter cache
