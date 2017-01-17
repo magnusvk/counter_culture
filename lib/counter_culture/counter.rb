@@ -201,9 +201,11 @@ module CounterCulture
     end
 
     def polymorphic?
-      relation_reflect(relation).polymorphic?.tap do |is_polymorphic|
-        raise "Polymorphic associations only supported with one level" unless (relation.is_a?(Symbol) || relation.length == 1) if is_polymorphic
+      is_polymorphic = relation_reflect(relation).polymorphic?
+      if is_polymorphic && !(relation.is_a?(Symbol) || relation.length == 1)
+        raise "Polymorphic associations only supported with one level"
       end
+      return is_polymorphic
     end
 
     def previous_model(obj)
