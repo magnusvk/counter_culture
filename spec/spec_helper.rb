@@ -8,9 +8,15 @@ require "rails_app/config/environment"
 require 'rspec'
 require 'counter_culture'
 
-load "#{File.dirname(__FILE__)}/schema.rb"
-
 CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') || (ENV['CIRCLECI'] && 'CIRCLE') || ENV["CI"] && 'CI'
+SUPPRESS_MIGRATION_MESSAGES = !CI_TEST_RUN
+
+begin
+  was, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false if SUPPRESS_MIGRATION_MESSAGES
+  load "#{File.dirname(__FILE__)}/schema.rb"
+ensure
+  ActiveRecord::Migration.verbose = was if SUPPRESS_MIGRATION_MESSAGES
+end
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
