@@ -50,6 +50,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "reviews_count",               :default => 0, :null => false
     t.integer  "simple_reviews_count",        :default => 0, :null => false
     t.integer  "rexiews_count",               :default => 0, :null => false
+    t.datetime "rexiews_updated_at"
     t.integer  "twitter_reviews_count",       :default => 0, :null => false
     t.integer  "category_id"
     t.datetime "created_at"
