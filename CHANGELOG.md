@@ -1,3 +1,8 @@
+## 1.2.0 (February 21, 2017)
+
+New features:
+  - Add support for custom timestamp column with `touch` option
+
 ## 1.1.1 (January 13, 2017)
 
 Bugfixes:
