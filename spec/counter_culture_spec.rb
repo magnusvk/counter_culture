@@ -1,8 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 require 'models/company'
-require 'models/company_access_level'
-require 'models/recruiter'
 require 'models/industry'
 require 'models/product'
 require 'models/review'
@@ -1544,17 +1542,6 @@ describe "CounterCulture" do
       fixed = Company.counter_culture_fix_counts
       expect(fixed.length).to eq(1)
       expect(company.reload.children_count).to eq(1)
-    end
-
-    it "works with a has_one association" do
-      company = Company.create!
-      company.recruiters << Recruiter.create!
-      expect(company.reload.recruiters_count).to eq(1)
-
-      company.update_column(:recruiters_count, 2)
-
-      Recruiter.counter_culture_fix_counts
-      expect(company.reload.recruiters_count).to eq(1)
     end
   end
 
