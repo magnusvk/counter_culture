@@ -1402,29 +1402,28 @@ describe "CounterCulture" do
     user = User.create
     product = Product.create
 
-    sleep 1
+    Timecop.travel(1.second.from_now) do
+      review = Review.create :user_id => user.id, :product_id => product.id
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+      user.reload; product.reload
 
-    user.reload; product.reload
-
-    expect(user.created_at.to_i).to eq(user.updated_at.to_i)
-    expect(product.created_at.to_i).to be < product.updated_at.to_i
+      expect(user.created_at.to_i).to eq(user.updated_at.to_i)
+      expect(product.created_at.to_i).to be < product.updated_at.to_i
+    end
   end
 
   it "should update the timestamp for custom column if touch: rexiews_updated_at is set" do
     product = Product.create
 
-    sleep 1
+    Timecop.travel(1.second.from_now) do
+      Review.create :product_id => product.id
 
-    Review.create :product_id => product.id
+      product.reload
 
-    product.reload
-
-    expect(product.created_at.to_i).to be < product.rexiews_updated_at.to_i
+      expect(product.created_at.to_i).to be < product.rexiews_updated_at.to_i
+      expect(product.created_at.to_i).to be < product.updated_at.to_i
+    end
   end
-
-
 
   it "should update counts correctly when creating using nested attributes" do
     user = User.create(:reviews_attributes => [{:some_text => 'abc'}, {:some_text => 'xyz'}])
