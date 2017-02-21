@@ -6,4 +6,9 @@ class Subcateg < ActiveRecord::Base
 
   has_many :posts
   belongs_to :categ, :foreign_key => :fk_cat_id
+
+  def subcat_id
+    # required for Rails 3.2 compatibility
+    read_attribute(:subcat_id)
+  end
 end

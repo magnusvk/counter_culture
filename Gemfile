@@ -11,7 +11,17 @@ gem "activesupport", ">= 3.0.0"
 # Include everything needed to run rake, tests, features, etc.
 group :development, :test do
   gem "rake"
-  gem "rails", '>= 3.1.0'
+
+  rails = case ENV["RAILS_VERSION"]
+  when "master"
+    {github: "rails/rails"}
+  when nil, ""
+    ">= 3.1.0"
+  else
+    "~> #{ENV["RAILS_VERSION"]}"
+  end
+  gem "rails", rails
+
   gem "rspec", "~> 3.0"
   gem "awesome_print"
   gem "timecop"

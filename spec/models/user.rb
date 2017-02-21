@@ -11,9 +11,18 @@ class User < ActiveRecord::Base
 
   default_scope do
     if _default_scope_enabled
-      joins("LEFT OUTER JOIN companies").uniq
+      query = joins("LEFT OUTER JOIN companies")
+      if Rails.version < "5.0.0"
+        query = query.uniq
+      else
+        query = query.distinct
+      end
     else
-      all
+      if Rails.version < "4.0.0"
+        scoped
+      else
+        all
+      end
     end
   end
 
