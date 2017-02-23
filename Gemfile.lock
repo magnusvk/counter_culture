@@ -177,7 +177,7 @@ DEPENDENCIES
   bundler (>= 1.2.0)
   database_cleaner (>= 1.1.1)
   jeweler (~> 2.1)
-  rails (~> 5.0.0)
+  rails (>= 3.1.0)
   rake
   rdoc (~> 3.12)
   rspec (~> 3.0)
@@ -186,4 +186,4 @@ DEPENDENCIES
   timecop
 
 BUNDLED WITH
-   1.13.7
+   1.14.4
