@@ -1,3 +1,8 @@
+## 1.3.1 (February 23, 2017)
+
+Bugfixes:
+  - Removed requirement for Rails 5 added by mistake (in fact, this gem supports and tests Rails versions as far back as Rails 3.2 now)
+
 ## 1.3.0 (February 21, 2017)
 Removed features:
   - Removed support for `has_one`; this did not work properly. If you need this, consider adding the `counter_culture` call on the model with the `belongs_to` instead.
