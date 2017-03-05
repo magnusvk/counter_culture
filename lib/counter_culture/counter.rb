@@ -162,7 +162,7 @@ module CounterCulture
     #   probably only works with a single relation (symbol, or array of 1 symbol)
     def relation_klass(relation, source: nil)
       reflect = relation_reflect(relation)
-      if reflect.polymorphic?
+      if reflect.options.key?(:polymorphic)
         raise "Can't work out relation's class without being passed object (relation: #{relation}, reflect: #{reflect})" if source.nil?
         raise "Can't work out polymorhpic relation's class with multiple relations yet" unless (relation.is_a?(Symbol) || relation.length == 1)
         # this is the column that stores the polymorphic type, aka the class name
@@ -195,7 +195,7 @@ module CounterCulture
     def relation_primary_key(relation, related: nil, source: nil)
       reflect = relation_reflect(relation)
       klass = nil
-      if reflect.polymorphic?
+      if reflect.options.key?(:polymorphic)
         raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
         raise "must specify related or source for polymorphic associations..." unless source || related
         return source.class.primary_key if source
@@ -216,7 +216,7 @@ module CounterCulture
     end
 
     def polymorphic?
-      is_polymorphic = relation_reflect(relation).polymorphic?
+      is_polymorphic = relation_reflect(relation).options.key?(:polymorphic)
       if is_polymorphic && !(relation.is_a?(Symbol) || relation.length == 1)
         raise "Polymorphic associations only supported with one level"
       end
