@@ -1587,20 +1587,30 @@ describe "CounterCulture" do
     let(:special_url) { "http://images.example.com/special.png" }
 
     def mess_up_counts
-      PolyEmployee.update_all(poly_images_count_dup: 100)
-      PolyProduct.update_all(poly_images_count_dup: 100)
+      PolyEmployee.update_all(poly_images_count: 100, poly_images_count_dup: 100, special_poly_images_count: 100)
+      PolyProduct.update_all(poly_images_count: 100, poly_images_count_dup: 100, special_poly_images_count: 100)
     end
 
     describe "default" do
-      it "increments counter cache on create" do
+      it "increments / decrements counter caches correctly" do
         expect(employee.poly_images_count).to eq(0)
         expect(product1.poly_images_count).to eq(0)
-        PolyImage.create(imageable: employee)
+        img1 = PolyImage.create(imageable: employee)
         expect(employee.reload.poly_images_count).to eq(1)
         expect(product1.reload.poly_images_count).to eq(0)
-        PolyImage.create(imageable: product1)
+        img2 = PolyImage.create(imageable: product1)
         expect(employee.reload.poly_images_count).to eq(1)
         expect(product1.reload.poly_images_count).to eq(1)
+        img3 = PolyImage.create(imageable: product1)
+        expect(employee.reload.poly_images_count).to eq(1)
+        expect(product1.reload.poly_images_count).to eq(2)
+        img3.destroy
+        expect(employee.reload.poly_images_count).to eq(1)
+        expect(product1.reload.poly_images_count).to eq(1)
+        img2.imageable = employee
+        img2.save!
+        expect(employee.reload.poly_images_count).to eq(2)
+        expect(product1.reload.poly_images_count).to eq(0)
       end
       it "can fix counts for polymorphic correctly" do
         2.times { PolyImage.create(imageable: employee) }
@@ -1618,12 +1628,22 @@ describe "CounterCulture" do
       it "increments counter cache on create" do
         expect(employee.poly_images_count_dup).to eq(0)
         expect(product1.poly_images_count_dup).to eq(0)
-        PolyImage.create(imageable: employee)
+        img1 = PolyImage.create(imageable: employee)
         expect(employee.reload.poly_images_count_dup).to eq(1)
-        expect(product1.poly_images_count_dup).to eq(0)
-        PolyImage.create(imageable: product1)
+        expect(product1.reload.poly_images_count_dup).to eq(0)
+        img2 = PolyImage.create(imageable: product1)
         expect(employee.reload.poly_images_count_dup).to eq(1)
         expect(product1.reload.poly_images_count_dup).to eq(1)
+        img3 = PolyImage.create(imageable: product1)
+        expect(employee.reload.poly_images_count_dup).to eq(1)
+        expect(product1.reload.poly_images_count_dup).to eq(2)
+        img3.destroy
+        expect(employee.reload.poly_images_count_dup).to eq(1)
+        expect(product1.reload.poly_images_count_dup).to eq(1)
+        img2.imageable = employee
+        img2.save!
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+        expect(product1.reload.poly_images_count_dup).to eq(0)
       end
       it "can fix counts for polymorphic correctly" do
         2.times { PolyImage.create(imageable: employee) }
@@ -1647,12 +1667,18 @@ describe "CounterCulture" do
         PolyImage.create(imageable: product1)
         expect(employee.reload.special_poly_images_count).to eq(0)
         expect(product1.reload.special_poly_images_count).to eq(0)
-        PolyImage.create(imageable: employee, url: special_url)
+        img1 = PolyImage.create(imageable: employee, url: special_url)
         expect(employee.reload.special_poly_images_count).to eq(1)
         expect(product1.special_poly_images_count).to eq(0)
-        PolyImage.create(imageable: product1, url: special_url)
+        img2 = PolyImage.create(imageable: product1, url: special_url)
         expect(employee.reload.special_poly_images_count).to eq(1)
         expect(product1.reload.special_poly_images_count).to eq(1)
+        img2.destroy
+        expect(employee.reload.special_poly_images_count).to eq(1)
+        expect(product1.special_poly_images_count).to eq(0)
+        img1.imageable = product1
+        expect(employee.reload.special_poly_images_count).to eq(0)
+        expect(product1.special_poly_images_count).to eq(1)
       end
 
       it "can fix counts for polymorphic correctly" do
