@@ -2,8 +2,12 @@
 
 set -e
 
-for RAILS_VERSION in "3.2.0" "4.0.0" "4.1.0" "5.0.0"
+for RAILS_VERSION in "3.2.0" "4.0.0" "4.1.0" "4.2.0" "5.0.0"
 do
+  export RAILS_VERSION
+  echo "Rails $RAILS_VERSION"
   bundle update
   bundle exec rspec spec
 done
+
+unset RAILS_VERSION
