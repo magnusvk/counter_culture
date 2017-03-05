@@ -1597,7 +1597,7 @@ describe "CounterCulture" do
         expect(product1.poly_images_count).to eq(0)
         PolyImage.create(imageable: employee)
         expect(employee.reload.poly_images_count).to eq(1)
-        expect(product1.poly_images_count).to eq(0)
+        expect(product1.reload.poly_images_count).to eq(0)
         PolyImage.create(imageable: product1)
         expect(employee.reload.poly_images_count).to eq(1)
         expect(product1.reload.poly_images_count).to eq(1)

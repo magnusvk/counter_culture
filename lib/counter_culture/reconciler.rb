@@ -182,8 +182,11 @@ module CounterCulture
           joins_sql = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{on_sql}"
           # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
           joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
-          # adds 'type' condition to JOIN clause if the current model is a polymorphic relation
-          joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.#{reflect.foreign_type} = '#{relation_class.name}'" if polymorphic? # NB only works for one-level relations
+          if polymorphic?
+            # adds 'type' condition to JOIN clause if the current model is a polymorphic relation
+            # NB only works for one-level relations
+            joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.#{reflect.foreign_type} = '#{relation_class.name}'"
+          end
           joins_sql
         end
       end
