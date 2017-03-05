@@ -1,8 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 require 'models/company'
-require 'models/company_access_level'
-require 'models/recruiter'
 require 'models/industry'
 require 'models/product'
 require 'models/review'
@@ -942,7 +940,7 @@ describe "CounterCulture" do
     review1 = Review.create user_id: user1.id, product: Product.create
     review2 = Review.create user_id: user2.id, product: Product.create
 
-    user1.update_columns reviews_count: 2
+    user1.update_column :reviews_count, 2
 
     expect(Review.counter_culture_fix_counts(skip_unsupported: true)).to eq([{ entity: 'User', id: user1.id, what: 'reviews_count', right: 1, wrong: 2 }])
   end
@@ -1230,6 +1228,8 @@ describe "CounterCulture" do
   end
 
   it "should work correctly with string keys" do
+    skip("Unsupported in this version of Rails") if Rails.version < "4.0.0"
+
     string_id = HasStringId.create(id: "1")
     string_id2 = HasStringId.create(id: "abc")
 
@@ -1402,14 +1402,27 @@ describe "CounterCulture" do
     user = User.create
     product = Product.create
 
-    sleep 1
+    Timecop.travel(1.second.from_now) do
+      review = Review.create :user_id => user.id, :product_id => product.id
 
-    review = Review.create :user_id => user.id, :product_id => product.id
+      user.reload; product.reload
 
-    user.reload; product.reload
+      expect(user.created_at.to_i).to eq(user.updated_at.to_i)
+      expect(product.created_at.to_i).to be < product.updated_at.to_i
+    end
+  end
 
-    expect(user.created_at.to_i).to eq(user.updated_at.to_i)
-    expect(product.created_at.to_i).to be < product.updated_at.to_i
+  it "should update the timestamp for custom column if touch: rexiews_updated_at is set" do
+    product = Product.create
+
+    Timecop.travel(1.second.from_now) do
+      Review.create :product_id => product.id
+
+      product.reload
+
+      expect(product.created_at.to_i).to be < product.rexiews_updated_at.to_i
+      expect(product.created_at.to_i).to be < product.updated_at.to_i
+    end
   end
 
   it "should update counts correctly when creating using nested attributes" do
@@ -1443,6 +1456,8 @@ describe "CounterCulture" do
   end
 
   it "should use primary key on counted records table correctly when fixing counts" do
+    skip("Unsupported in this version of Rails") if Rails.version < "4.0.0"
+
     subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
     post = Post.new
     post.subcateg = subcateg
@@ -1458,8 +1473,9 @@ describe "CounterCulture" do
     expect(post.reload.comments_count).to eq(1)
   end
 
-
   it "should use multi-level relation primary key on counter destination table correctly when fixing counts" do
+    skip("Unsupported in this version of Rails") if Rails.version < "4.0.0"
+
     categ = Categ.create :cat_id => Categ::CAT_1
     subcateg = Subcateg.new :subcat_id => Subcateg::SUBCAT_1
     subcateg.categ = categ
@@ -1527,17 +1543,6 @@ describe "CounterCulture" do
       expect(fixed.length).to eq(1)
       expect(company.reload.children_count).to eq(1)
     end
-
-    it "works with a has_one association" do
-      company = Company.create!
-      company.recruiters << Recruiter.create!
-      expect(company.reload.recruiters_count).to eq(1)
-
-      company.update_columns(recruiters_count: 2)
-
-      Recruiter.counter_culture_fix_counts
-      expect(company.reload.recruiters_count).to eq(1)
-    end
   end
 
   describe "dynamic column names with totaling instead of counting" do
@@ -1569,8 +1574,8 @@ describe "CounterCulture" do
       fixed = Transaction.counter_culture_fix_counts
       expect(fixed.length).to eq(2)
       expect(fixed).to eq([
-        {:entity=>"Person", :id=>100, :what=>"money_earned_total", :wrong=>0, :right=>10},
-        {:entity=>"Person", :id=>100, :what=>"money_spent_total", :wrong=>0, :right=>-20}
+        {:entity=>"Person", :id=>person.id, :what=>"money_earned_total", :wrong=>0, :right=>10},
+        {:entity=>"Person", :id=>person.id, :what=>"money_spent_total", :wrong=>0, :right=>-20}
       ])
     end
   end

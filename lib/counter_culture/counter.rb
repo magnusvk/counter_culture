@@ -56,7 +56,9 @@ module CounterCulture
           # and here we update the timestamp, if so desired
           if touch
             current_time = obj.send(:current_time_from_proper_timezone)
-            obj.send(:timestamp_attributes_for_update_in_model).each do |timestamp_column|
+            timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
+            timestamp_columns << touch if touch != true
+            timestamp_columns.each do |timestamp_column|
               updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
             end
           end

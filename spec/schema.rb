@@ -24,14 +24,8 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "review_approvals_count",      :default => 0, :null => false
     t.integer  "parent_id"
     t.integer  "children_count",      :default => 0, :null => false
-    t.integer  "recruiters_count",    :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
-  end
-
-  create_table "company_access_levels", :force => true do |t|
-    t.integer "company_id"
-    t.integer "recruiter_id"
   end
 
   create_table "industries", :force => true do |t|
@@ -50,6 +44,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "reviews_count",               :default => 0, :null => false
     t.integer  "simple_reviews_count",        :default => 0, :null => false
     t.integer  "rexiews_count",               :default => 0, :null => false
+    t.datetime "rexiews_updated_at"
     t.integer  "twitter_reviews_count",       :default => 0, :null => false
     t.integer  "category_id"
     t.datetime "created_at"
@@ -65,11 +60,6 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.float    "value"
     t.boolean  "heavy",               :default => false, :null => false
     t.string   "type"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
-  create_table "recruiters", :force => true do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
   end

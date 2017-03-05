@@ -198,12 +198,21 @@ Now, the ```Category``` model will keep an up-to-date counter-cache in the ```pr
 
 ### Updating timestamps when counts change
 
-By default, counter_culture does not update the timestamp of models when it updates their counter caches. If you would like every change in the counter cache column to result in an updated timestamp, simply set the touch option to true like so:
+By default, counter_culture does not update the timestamp of models when it updates their counter caches. If you would like every change in the counter cache column to result in an updated timestamp, simply set the touch option to true:
 ```ruby
   counter_culture :category, :touch => true
 ```
 
-This can be useful when you use Rails' caching mechanism and display a counter cache's value in the cached fragment.
+This is useful when you require your caches to get invalidated when the counter cache changes.
+
+### Custom timestamp column
+
+You may also specify a custom timestamp column that gets updated only when a particular counter cache changes:
+```ruby
+  counter_culture :category, :touch => 'category_count_changed'
+```
+
+With this option, any time the `category_counter_cache` changes both the `category_count_changed` and `updated_at` columns will get updated.
 
 ### Executing counter cache updates after commit
 

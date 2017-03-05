@@ -1,3 +1,17 @@
+## 1.3.1 (February 23, 2017)
+
+Bugfixes:
+  - Removed requirement for Rails 5 added by mistake (in fact, this gem supports and tests Rails versions as far back as Rails 3.2 now)
+
+## 1.3.0 (February 21, 2017)
+Removed features:
+  - Removed support for `has_one`; this did not work properly. If you need this, consider adding the `counter_culture` call on the model with the `belongs_to` instead.
+
+## 1.2.0 (February 21, 2017)
+
+New features:
+  - Add support for custom timestamp column with `touch` option
+
 ## 1.1.1 (January 13, 2017)
 
 Bugfixes:
@@ -6,7 +20,7 @@ Bugfixes:
 ## 1.1.0 (December 23, 2016)
 
 Improvements:
-  - Support for has_one associations
+  - Support for `has_one` associations
 
 ## 1.0.0 (November 15, 2016)
 

@@ -1,3 +1,6 @@
+machine:
+  ruby:
+    version: 2.3.1
 database:
   override:
     - echo "No database setup required..."

@@ -51,6 +51,8 @@ module RailsApp
     config.assets.version = '1.0'
 
     # Avoid deprecation warning
-    config.active_record.raise_in_transactional_callbacks = true
+    if Rails.version >= "4.2.0" && Rails.version < "5.0.0"
+      config.active_record.raise_in_transactional_callbacks = true
+    end
   end
 end
