@@ -2,7 +2,7 @@
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
-* Updates counter cache when values change, not just when creating and destroying 
+* Updates counter cache when values change, not just when creating and destroying
 * Supports counter caches through multiple levels of relations
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Can keep a running count, or a running total
@@ -27,7 +27,7 @@ rails generate counter_culture Category products_count
 
 Which will generate a migration with code like the following:
 ```ruby
-add_column :categories, :products_count, :integer, :null => false, :default => 0
+add_column :categories, :products_count, :integer, null: false, default: 0
 ```
 Note that the column must be ```NOT NULL``` and have a default of zero for this gem to work correctly.
 
@@ -85,7 +85,7 @@ end
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => "products_counter_cache"
+  counter_culture :category, :column_name: "products_counter_cache"
 end
 
 class Category < ActiveRecord::Base
@@ -100,7 +100,7 @@ Now, the ```Category``` model will keep an up-to-date counter-cache in the ```pr
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => proc {|model| "#{model.product_type}_count" }
+  counter_culture :category, column_name: proc {|model| "#{model.product_type}_count" }
   # attribute product_type may be one of ['awesome', 'sucky']
 end
 
@@ -143,7 +143,7 @@ Now adding a `Product` will increase the `weight` column in its `Category` by 3;
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => proc {|model| model.special? ? 'special_count' : nil }
+  counter_culture :category, column_name: proc {|model| model.special? ? 'special_count' : nil }
 end
 
 class Category < ActiveRecord::Base
@@ -164,7 +164,7 @@ total of the weight for all the products in the Category model's ```product_weig
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name => 'product_weight_ounces', :delta_column => 'weight_ounces'
+  counter_culture :category, column_name: 'product_weight_ounces', delta_column: 'weight_ounces'
 end
 
 class Category < ActiveRecord::Base
@@ -182,14 +182,14 @@ The ```:delta_column``` option supports all numeric column types, not just ```:i
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :foreign_key_values => 
+  counter_culture :category, foreign_key_values:
       proc {|category_id| [category_id, Category.find_by_id(category_id).try(:parent_category).try(:id)] }
 end
 
 class Category < ActiveRecord::Base
-  belongs_to :parent_category, :class_name => 'Category', :foreign_key => 'parent_id'
-  has_many :children, :class_name => 'Category', :foreign_key => 'parent_id'
-  
+  belongs_to :parent_category, class_name: 'Category', foreign_key: 'parent_id'
+  has_many :children, class_name: 'Category', :foreign_key: 'parent_id'
+
   has_many :products
 end
 ```
@@ -200,7 +200,7 @@ Now, the ```Category``` model will keep an up-to-date counter-cache in the ```pr
 
 By default, counter_culture does not update the timestamp of models when it updates their counter caches. If you would like every change in the counter cache column to result in an updated timestamp, simply set the touch option to true:
 ```ruby
-  counter_culture :category, :touch => true
+  counter_culture :category, touch: true
 ```
 
 This is useful when you require your caches to get invalidated when the counter cache changes.
@@ -209,7 +209,7 @@ This is useful when you require your caches to get invalidated when the counter 
 
 You may also specify a custom timestamp column that gets updated only when a particular counter cache changes:
 ```ruby
-  counter_culture :category, :touch => 'category_count_changed'
+  counter_culture :category, touch: 'category_count_changed'
 ```
 
 With this option, any time the `category_counter_cache` changes both the `category_count_changed` and `updated_at` columns will get updated.
@@ -218,7 +218,7 @@ With this option, any time the `category_counter_cache` changes both the `catego
 
 By default, counter_culture will run counter cache updates inside of the same ActiveRecord transaction that triggered it. (Note that this bevavior [changed from version 0.2.3 to 1.0.0](CHANGELOG.md#100-november-15-2016).) If you would like to run counter cache updates outside of that transaction, for example because you are experiencing [deadlocks with older versions of PostgreSQL](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html), you can enable that behavior:
 ```ruby
-  counter_culture :category, :execute_after_commit => true
+  counter_culture :category, execute_after_commit: true
 ```
 
 ### Manually populating counter cache values
@@ -229,16 +229,16 @@ You will sometimes want to populate counter-cache values from primary data. This
 Product.counter_culture_fix_counts
 # will automatically fix counts for all counter caches defined on Product
 
-Product.counter_culture_fix_counts :except => :category
+Product.counter_culture_fix_counts except: :category
 # will automatically fix counts for all counter caches defined on Product, except for the :category relation
 
-Product.counter_culture_fix_counts :only => :category
+Product.counter_culture_fix_counts only: :category
 # will automatically fix counts only on the :category relation on Product
 
 # :except and :only also accept arrays of one level relations
 # if you want to fix counts on a more than one level relation you need to use convention below:
 
-Product.counter_culture_fix_counts :only => [[:subcategory, :category]]
+Product.counter_culture_fix_counts only: [[:subcategory, :category]]
 # will automatically fix counts only on the two-level [:subcategory, :category] relation on Product
 
 # :except and :only also accept arrays
@@ -252,17 +252,17 @@ CounterCulture.config.batch_size = 100
 or by passing the :batch_size option to the method call
 
 ```ruby
-Product.counter_culture_fix_counts :batch_size => 100
+Product.counter_culture_fix_counts batch_size: 100
 ```
 
 ```counter_culture_fix_counts``` returns an array of hashes of all incorrect values for debugging purposes. The hashes have the following format:
 
 ```ruby
-{ :entity => which model the count was fixed on,
-  :id => the id of the model that had the incorrect count,
-  :what => which column contained the incorrect count,
-  :wrong => the previously saved, incorrect count,
-  :right => the newly fixed, correct count }
+{ entity: which model the count was fixed on,
+  id: the id of the model that had the incorrect count,
+  what: which column contained the incorrect count,
+  wrong: the previously saved, incorrect count,
+  right: the newly fixed, correct count }
 ```
 
 ```counter_culture_fix_counts``` is optimized to minimize the number of queries and runs very quickly.
@@ -274,9 +274,9 @@ Manually populating counter caches with dynamic column names requires additional
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, 
-      :column_name => proc {|model| "#{model.product_type}_count" },
-      :column_names => {
+  counter_culture :category,
+      column_name: proc {|model| "#{model.product_type}_count" },
+      column_names: {
           ["products.product_type = ?", 'awesome'] => 'awesome_count',
           ["products.product_type = ?", 'sucky'] => 'sucky_count'
       }
@@ -299,7 +299,7 @@ counter_culture will not update counters in your automated tests *if* you use tr
 counter_culture itself has extensive automated tests so there should not be a need to test counter caches in your own tests. I therefore recommend removing any checks of counter caches as that will avoid this issue. If that is not an option for you, you can use the [`test_after_commit` gem](https://github.com/grosser/test_after_commit) to trigger `after_commit` callbacks even with transactional fixtures enabled. Another option is to turn off transactional fixtures and use something like [database_cleaner](https://github.com/bmabey/database_cleaner) instead to clean your database between tests.
 
 ## Contributing to counter_culture
- 
+
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it.
 * Fork the project.
