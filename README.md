@@ -85,7 +85,7 @@ end
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, :column_name: "products_counter_cache"
+  counter_culture :category, column_name: "products_counter_cache"
 end
 
 class Category < ActiveRecord::Base
@@ -188,7 +188,7 @@ end
 
 class Category < ActiveRecord::Base
   belongs_to :parent_category, class_name: 'Category', foreign_key: 'parent_id'
-  has_many :children, class_name: 'Category', :foreign_key: 'parent_id'
+  has_many :children, class_name: 'Category', foreign_key: 'parent_id'
 
   has_many :products
 end
