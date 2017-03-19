@@ -211,11 +211,8 @@ module CounterCulture
     end
 
     def first_level_relation_changed?(instance)
-      puts "#{first_level_relation_foreign_key}: #{instance.send("#{first_level_relation_foreign_key}_changed?")}"
       return true if instance.send("#{first_level_relation_foreign_key}_changed?")
-
       if polymorphic?
-        puts "#{first_level_relation_foreign_type}: #{instance.send("#{first_level_relation_foreign_type}_changed?")}"
         return true if instance.send("#{first_level_relation_foreign_type}_changed?")
       end
     end
