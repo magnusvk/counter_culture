@@ -101,6 +101,7 @@ module CounterCulture
       "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
     end
 
+    private
     # gets the value of the foreign key on the given relation
     #
     # relation: a symbol or array of symbols; specifies the relation
@@ -128,6 +129,8 @@ module CounterCulture
       end
       return value.try(relation_primary_key(first_relation, source: obj, was: was).to_sym)
     end
+
+    public
 
     # gets the reflect object on the given relation
     #
@@ -181,6 +184,8 @@ module CounterCulture
       end
     end
 
+    private
+
     # gets the foreign key name of the given relation
     #
     # relation: a symbol or array of symbols; specifies the relation
@@ -188,6 +193,8 @@ module CounterCulture
     def relation_foreign_key(relation)
       relation_reflect(relation).foreign_key
     end
+
+    public
 
     # gets the primary key name of the given relation
     #
