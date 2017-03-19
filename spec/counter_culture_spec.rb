@@ -1718,6 +1718,18 @@ describe "CounterCulture" do
         expect(employee.reload.special_poly_images_count).to eq(2)
         expect(product1.reload.special_poly_images_count).to eq(1)
       end
+
+      it "can deal with changes to condition" do
+        img1 = PolyImage.create(imageable: employee)
+        expect {img1.update_attributes!(url: special_url)}
+          .to change { employee.reload.special_poly_images_count }.from(0).to(1)
+      end
+
+      it "can deal with changes to condition" do
+        img1 = PolyImage.create(imageable: employee, url: special_url)
+        expect {img1.update_attributes!(url: "normal url")}
+          .to change { employee.reload.special_poly_images_count }.from(1).to(0)
+      end
     end
   end
 end
