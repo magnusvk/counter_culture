@@ -63,7 +63,7 @@ module CounterCulture
             end
           end
 
-          klass = relation_klass(relation, source: obj)
+          klass = relation_klass(relation, source: obj, was: options[:was])
           klass.where(relation_primary_key(relation, source: obj) => id_to_change).update_all updates.join(', ')
         end
       end
@@ -160,7 +160,9 @@ module CounterCulture
     # source [optional]: the source object,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    def relation_klass(relation, source: nil)
+    # was: boolean
+    #   we're actually looking for the old value -- only can change for polymorphic relations
+    def relation_klass(relation, source: nil, was: false)
       reflect = relation_reflect(relation)
       if reflect.options.key?(:polymorphic)
         raise "Can't work out relation's class without being passed object (relation: #{relation}, reflect: #{reflect})" if source.nil?
@@ -168,7 +170,11 @@ module CounterCulture
         # this is the column that stores the polymorphic type, aka the class name
         type_column = reflect.foreign_type.to_sym
         # so now turn that into the class that we're looking for here
-        source.try(type_column).constantize
+        if was
+          source.try("#{type_column}_was").constantize
+        else
+          source.try(type_column).constantize
+        end
       else
         reflect.klass
       end
@@ -204,6 +210,17 @@ module CounterCulture
       reflect.association_primary_key(klass)
     end
 
+    def first_level_relation_changed?(instance)
+      puts "#{first_level_relation_foreign_key}: #{instance.send("#{first_level_relation_foreign_key}_changed?")}"
+      return true if instance.send("#{first_level_relation_foreign_key}_changed?")
+
+      if polymorphic?
+        puts "#{first_level_relation_foreign_type}: #{instance.send("#{first_level_relation_foreign_type}_changed?")}"
+        return true if instance.send("#{first_level_relation_foreign_type}_changed?")
+      end
+    end
+
+    private
     # gets the foreign key name of the relation. will look at the first
     # level only -- i.e., if passed an array will consider only its
     # first element
@@ -215,6 +232,13 @@ module CounterCulture
       relation_reflect(first_relation).foreign_key
     end
 
+    def first_level_relation_foreign_type
+      return nil unless polymorphic?
+      first_relation = relation.first if relation.is_a?(Enumerable)
+      relation_reflect(first_relation).foreign_type
+    end
+
+    public
     def polymorphic?
       is_polymorphic = relation_reflect(relation).options.key?(:polymorphic)
       if is_polymorphic && !(relation.is_a?(Symbol) || relation.length == 1)

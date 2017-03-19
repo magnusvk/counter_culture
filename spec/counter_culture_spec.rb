@@ -1617,6 +1617,15 @@ describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(2)
         expect(product1.reload.poly_images_count).to eq(0)
       end
+      it "decrements counter caches on update correctly" do
+        puts "I do this here"
+        img = PolyImage.create(imageable: product1)
+        img.imageable = employee
+        img.save!
+        expect(product1.reload.poly_images_count).to eq(0)
+        expect(employee.reload.poly_images_count).to eq(1)
+      end
+
       it "can fix counts for polymorphic correctly" do
         2.times { PolyImage.create(imageable: employee) }
         1.times { PolyImage.create(imageable: product1) }
