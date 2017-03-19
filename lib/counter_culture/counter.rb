@@ -113,7 +113,7 @@ module CounterCulture
       if was
         first = relation.shift
         foreign_key_value = obj.send("#{relation_foreign_key(first)}_was")
-        klass = relation_klass(first, source: obj)
+        klass = relation_klass(first, source: obj, was: was)
         if foreign_key_value
           value = klass.where(
             "#{klass.table_name}.#{relation_primary_key(first, source: obj)} = ?",
@@ -125,7 +125,7 @@ module CounterCulture
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation, related: value).to_sym)
+      return value.try(relation_primary_key(first_relation, related: value, source: obj).to_sym)
     end
 
     # gets the reflect object on the given relation

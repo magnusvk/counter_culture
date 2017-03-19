@@ -1586,7 +1586,7 @@ describe "CounterCulture" do
       require 'models/poly_employee'
       require 'models/poly_product'
     end
-    let(:employee) { PolyEmployee.create() }
+    let(:employee) { PolyEmployee.create(id: 3000) }
     let(:product1) { PolyProduct.create() }
     let(:product2) { PolyProduct.create() }
     let(:special_url) { "http://images.example.com/special.png" }
@@ -1698,10 +1698,11 @@ describe "CounterCulture" do
         expect(product1.reload.special_poly_images_count).to eq(1)
         img2.destroy
         expect(employee.reload.special_poly_images_count).to eq(1)
-        expect(product1.special_poly_images_count).to eq(0)
+        expect(product1.reload.special_poly_images_count).to eq(0)
         img1.imageable = product1
+        img1.save!
         expect(employee.reload.special_poly_images_count).to eq(0)
-        expect(product1.special_poly_images_count).to eq(1)
+        expect(product1.reload.special_poly_images_count).to eq(1)
       end
 
       it "can fix counts for polymorphic correctly" do
