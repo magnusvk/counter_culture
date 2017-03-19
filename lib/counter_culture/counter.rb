@@ -64,7 +64,8 @@ module CounterCulture
           end
 
           klass = relation_klass(relation, source: obj, was: options[:was])
-          klass.where(relation_primary_key(relation, source: obj) => id_to_change).update_all updates.join(', ')
+          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+          klass.where(primary_key => id_to_change).update_all updates.join(', ')
         end
       end
     end
@@ -116,7 +117,7 @@ module CounterCulture
         klass = relation_klass(first, source: obj, was: was)
         if foreign_key_value
           value = klass.where(
-            "#{klass.table_name}.#{relation_primary_key(first, source: obj)} = ?",
+            "#{klass.table_name}.#{relation_primary_key(first, source: obj, was: was)} = ?",
             foreign_key_value).first
         end
       else
@@ -125,7 +126,7 @@ module CounterCulture
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation, related: value, source: obj).to_sym)
+      return value.try(relation_primary_key(first_relation, source: obj, was: was).to_sym)
     end
 
     # gets the reflect object on the given relation
@@ -192,20 +193,18 @@ module CounterCulture
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
-    # related [optional]: the target object that the relationship is linked to,
-    #   only needed for polymorphic associations,
-    #   probably only works with a single relation (symbol, or array of 1 symbol)
     # source[optional]: the model instance that the relationship is linked from,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    def relation_primary_key(relation, related: nil, source: nil)
+    # was: boolean
+    #   we're actually looking for the old value -- only can change for polymorphic relations
+    def relation_primary_key(relation, source: nil, was: false)
       reflect = relation_reflect(relation)
       klass = nil
       if reflect.options.key?(:polymorphic)
         raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
-        raise "must specify related or source for polymorphic associations..." unless source || related
-        return source.class.primary_key if source
-        klass = related.class
+        raise "must specify source for polymorphic associations..." unless source
+        return relation_klass(relation, source: source, was: was).primary_key
       end
       reflect.association_primary_key(klass)
     end
