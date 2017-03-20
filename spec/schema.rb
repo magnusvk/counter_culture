@@ -24,6 +24,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "review_approvals_count",      :default => 0, :null => false
     t.integer  "parent_id"
     t.integer  "children_count",      :default => 0, :null => false
+    t.integer  "soft_deletes_count",  :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -173,5 +174,10 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "transactions", :force => true do |t|
     t.integer "person_id", :null => false
     t.integer "monetary_value", :null => false
+  end
+
+  create_table "soft_deletes", :force => true do |t|
+    t.integer "company_id", :null => false
+    t.timestamp "deleted_at"
   end
 end

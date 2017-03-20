@@ -21,6 +21,7 @@ require 'models/another_post'
 require 'models/another_post_comment'
 require 'models/person'
 require 'models/transaction'
+require 'models/soft_delete'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -1577,6 +1578,28 @@ describe "CounterCulture" do
         {:entity=>"Person", :id=>person.id, :what=>"money_earned_total", :wrong=>0, :right=>10},
         {:entity=>"Person", :id=>person.id, :what=>"money_spent_total", :wrong=>0, :right=>-20}
       ])
+    end
+  end
+
+  describe "when using acts_as_paranoia" do
+    it "works" do
+      company = Company.create!
+      expect(company.soft_deletes_count).to eq(0)
+      sd = SoftDelete.create!(company_id: company.id)
+      expect(company.reload.soft_deletes_count).to eq(1)
+
+      sd.destroy
+      sd.reload
+      expect(sd.deleted_at).to be_truthy
+      expect(company.reload.soft_deletes_count).to eq(0)
+
+      company.update_attributes(soft_deletes_count: 100)
+      expect(company.reload.soft_deletes_count).to eq(100)
+      SoftDelete.counter_culture_fix_counts
+      expect(company.reload.soft_deletes_count).to eq(0)
+
+      sd.restore
+      expect(company.reload.soft_deletes_count).to eq(1)
     end
   end
 end

@@ -25,6 +25,9 @@ group :development, :test do
   gem "rspec", "~> 3.0"
   gem "awesome_print"
   gem "timecop"
+
+  # to test the integration
+  gem "paranoia"
 end
 
 group :development do
