@@ -221,6 +221,9 @@ By default, counter_culture will run counter cache updates inside of the same Ac
   counter_culture :category, execute_after_commit: true
 ```
 
+Please note that using `execute_after_commit` in conjunction with transactional
+fixtures will lead to your tests no longer seeing updated counter values.
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
@@ -291,12 +294,6 @@ Manually populating counter caches with dynamically over-written foreign keys (`
 #### Polymorphic associations
 
 counter_culture currently does *not* support polymorphic associations. Check [this issue](https://github.com/magnusvk/counter_culture/issues/4) for progress and alternatives.
-
-## A note on testing
-
-counter_culture will not update counters in your automated tests *if* you use transactional fixtures. That's because transactional fixtures roll back all your database transactions and they are never committed. But counter_culture will only update its counters in the ```after_commit``` callback, which in this case will never run.
-
-counter_culture itself has extensive automated tests so there should not be a need to test counter caches in your own tests. I therefore recommend removing any checks of counter caches as that will avoid this issue. If that is not an option for you, you can use the [`test_after_commit` gem](https://github.com/grosser/test_after_commit) to trigger `after_commit` callbacks even with transactional fixtures enabled. Another option is to turn off transactional fixtures and use something like [database_cleaner](https://github.com/bmabey/database_cleaner) instead to clean your database between tests.
 
 ## Contributing to counter_culture
 
