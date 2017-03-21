@@ -111,14 +111,9 @@ module CounterCulture
           counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
           counter_cache_name = counter.counter_cache_name_for(self)
 
-          if Rails.version >= "5.1.0"
-            foreign_key_changed = saved_changes[counter.first_level_relation_foreign_key].present?
-            delta_column_changed = (counter.delta_column && saved_changes[counter.delta_column].present?)
-          else
-            foreign_key_changed = attribute_changed?(counter.first_level_relation_foreign_key)
-            delta_column_changed = (counter.delta_column && attribute_changed?(counter.delta_column))
-          end
-          if foreign_key_changed || delta_column_changed || counter_cache_name != counter_cache_name_was
+          if counter.first_level_relation_changed?(self) ||
+              (counter.delta_column && counter.attribute_changed?(self, counter.delta_column)) ||
+              counter_cache_name != counter_cache_name_was
 
             # increment the counter cache of the new value
             counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)

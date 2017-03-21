@@ -174,4 +174,23 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer "person_id", :null => false
     t.integer "monetary_value", :null => false
   end
+
+  #polymorphic
+  create_table "poly_images", :force => true do |t|
+    t.integer "imageable_id", :null => true
+    t.string "imageable_type", :null => true
+    t.string "url"
+  end
+  create_table "poly_employees", :force => true do |t|
+    t.string "name"
+    t.integer  "poly_images_count", :default => 0, :null => false
+    t.integer  "poly_images_count_dup", :default => 0, :null => false
+    t.integer  "special_poly_images_count", :default => 0, :null => false
+  end
+  create_table "poly_products", :primary_key => 'pp_pk_id', :force => true do |t|
+    t.string "brand_name"
+    t.integer  "poly_images_count", :default => 0, :null => false
+    t.integer  "poly_images_count_dup", :default => 0, :null => false
+    t.integer  "special_poly_images_count", :default => 0, :null => false
+  end
 end

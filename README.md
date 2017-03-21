@@ -295,7 +295,7 @@ Manually populating counter caches with dynamically over-written foreign keys (`
 
 #### Polymorphic associations
 
-counter_culture currently does *not* support polymorphic associations. Check [this issue](https://github.com/magnusvk/counter_culture/issues/4) for progress and alternatives.
+counter_culture now supports polymorphic associations of one level only.
 
 ## Contributing to counter_culture
 
