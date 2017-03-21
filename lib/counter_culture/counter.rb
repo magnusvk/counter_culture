@@ -38,8 +38,7 @@ module CounterCulture
 
       if id_to_change && change_counter_column
         delta_magnitude = if delta_column
-                            delta_attr_name = options[:was] ? "#{delta_column}_was" : delta_column
-                            obj.send(delta_attr_name) || 0
+                            (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
                           else
                             counter_delta_magnitude_for(obj)
                           end
@@ -112,7 +111,7 @@ module CounterCulture
       first_relation = relation.first
       if was
         first = relation.shift
-        foreign_key_value = obj.send("#{relation_foreign_key(first)}_was")
+        foreign_key_value = attribute_was(obj, relation_foreign_key(first))
         klass = relation_klass(first)
         value = klass.where("#{klass.table_name}.#{relation_primary_key(first)} = ?", foreign_key_value).first if foreign_key_value
       else
@@ -181,8 +180,10 @@ module CounterCulture
     def previous_model(obj)
       prev = obj.dup
 
-      obj.changed_attributes.each do |key, value|
-        prev.send("#{key}=", value)
+      changes_method = Rails.version >= "5.1.0" ? :saved_changes : :changed_attributes
+      obj.public_send(changes_method).each do |key, value|
+        old_value = Rails.version >= "5.1.0" ? value.first : value
+        prev.public_send("#{key}=", old_value)
       end
 
       prev
@@ -196,6 +197,16 @@ module CounterCulture
       else
         yield
       end
+    end
+
+    def attribute_was(obj, attr)
+      changes_method =
+        if Rails.version >= "5.1.0"
+          "_before_last_save"
+        else
+          "_was"
+        end
+      obj.public_send("#{attr}#{changes_method}")
     end
   end
 end

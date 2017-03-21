@@ -1500,6 +1500,12 @@ describe "CounterCulture" do
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
+
+      if Rails.version >= "5.1.0"
+        # must save to make the actual "saved_changes" available in Rails 5.1
+        # whereas we simply use the "changed_attributes" before that
+        user.save!
+      end
       prev = CounterCulture::Counter.new(user, :foobar, {}).previous_model(user)
 
       expect(prev.name).to eq("John Smith")
