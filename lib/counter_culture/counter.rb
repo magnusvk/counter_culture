@@ -100,7 +100,6 @@ module CounterCulture
       "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
     end
 
-    private
     # gets the value of the foreign key on the given relation
     #
     # relation: a symbol or array of symbols; specifies the relation
@@ -128,8 +127,6 @@ module CounterCulture
       end
       return value.try(relation_primary_key(first_relation, source: obj, was: was).to_sym)
     end
-
-    public
 
     # gets the reflect object on the given relation
     #
@@ -183,26 +180,6 @@ module CounterCulture
       end
     end
 
-    # gets the primary key name of the given relation
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
-    # source[optional]: the model instance that the relationship is linked from,
-    #   only needed for polymorphic associations,
-    #   probably only works with a single relation (symbol, or array of 1 symbol)
-    # was: boolean
-    #   we're actually looking for the old value -- only can change for polymorphic relations
-    def relation_primary_key(relation, source: nil, was: false)
-      reflect = relation_reflect(relation)
-      klass = nil
-      if reflect.options.key?(:polymorphic)
-        raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
-        raise "must specify source for polymorphic associations..." unless source
-        return relation_klass(relation, source: source, was: was).primary_key
-      end
-      reflect.association_primary_key(klass)
-    end
-
     def first_level_relation_changed?(instance)
       return true if attribute_changed?(instance, first_level_relation_foreign_key)
       if polymorphic?
@@ -227,24 +204,32 @@ module CounterCulture
       return is_polymorphic
     end
 
-    def previous_model(obj)
-      prev = obj.dup
-
-      changes_method = Rails.version >= "5.1.0" ? :saved_changes : :changed_attributes
-      obj.public_send(changes_method).each do |key, value|
-        old_value = Rails.version >= "5.1.0" ? value.first : value
-        prev.public_send("#{key}=", old_value)
-      end
-
-      prev
-    end
-
     # gets the foreign key name of the given relation
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
     def relation_foreign_key(relation)
       relation_reflect(relation).foreign_key
+    end
+
+    # gets the primary key name of the given relation
+    #
+    # relation: a symbol or array of symbols; specifies the relation
+    #   that has the counter cache column
+    # source[optional]: the model instance that the relationship is linked from,
+    #   only needed for polymorphic associations,
+    #   probably only works with a single relation (symbol, or array of 1 symbol)
+    # was: boolean
+    #   we're actually looking for the old value -- only can change for polymorphic relations
+    def relation_primary_key(relation, source: nil, was: false)
+      reflect = relation_reflect(relation)
+      klass = nil
+      if reflect.options.key?(:polymorphic)
+        raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
+        raise "must specify source for polymorphic associations..." unless source
+        return relation_klass(relation, source: source, was: was).primary_key
+      end
+      reflect.association_primary_key(klass)
     end
 
     # gets the foreign key name of the relation. will look at the first
@@ -264,6 +249,19 @@ module CounterCulture
       relation_reflect(first_relation).foreign_type
     end
 
+    def previous_model(obj)
+      prev = obj.dup
+
+      changes_method = Rails.version >= "5.1.0" ? :saved_changes : :changed_attributes
+      obj.public_send(changes_method).each do |key, value|
+        old_value = Rails.version >= "5.1.0" ? value.first : value
+        prev.public_send("#{key}=", old_value)
+      end
+
+      prev
+    end
+
+    private
     def execute_change_counter_cache(obj, options)
       if execute_after_commit
         obj.execute_after_commit { yield }
