@@ -192,7 +192,7 @@ module CounterCulture
       if Rails.version >= "5.1.0"
         obj.saved_changes[attr].present?
       else
-        obj.attribute_changed?(attr)
+        obj.send(:attribute_changed?, attr)
       end
     end
 
