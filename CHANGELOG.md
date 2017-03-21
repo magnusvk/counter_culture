@@ -1,3 +1,8 @@
+## 1.4.0 (March 21, 2017)
+
+Improvements:
+  - Avoid Rails 5.1 deprecation warnings
+
 ## 1.3.1 (February 23, 2017)
 
 Bugfixes:

@@ -1,7 +1,7 @@
 module CounterCulture
   module Extensions
     extend ActiveSupport::Concern
-    
+
     module ClassMethods
       # this holds all configuration data
       def after_commit_counter_cache
@@ -27,7 +27,7 @@ module CounterCulture
         end
 
         if options[:column_names] && !options[:column_names].is_a?(Hash)
-          raise ":column_names must be a Hash of conditions and column names" 
+          raise ":column_names must be a Hash of conditions and column names"
         end
 
         # add the counter to our collection
@@ -112,8 +112,8 @@ module CounterCulture
           counter_cache_name = counter.counter_cache_name_for(self)
 
           if counter.first_level_relation_changed?(self) ||
-            (counter.delta_column && send("#{counter.delta_column}_changed?")) ||
-            counter_cache_name != counter_cache_name_was
+              (counter.delta_column && counter.attribute_changed?(self, counter.delta_column)) ||
+              counter_cache_name != counter_cache_name_was
 
             # increment the counter cache of the new value
             counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)
