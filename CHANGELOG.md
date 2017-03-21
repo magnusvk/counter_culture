@@ -1,3 +1,8 @@
+## 1.5.0 (March 21, 2017)
+
+New features:
+  - Support for counter caches on one-level polymorphic relationships
+
 ## 1.4.0 (March 21, 2017)
 
 Improvements:
