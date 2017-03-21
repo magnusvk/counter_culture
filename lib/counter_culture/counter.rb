@@ -183,18 +183,6 @@ module CounterCulture
       end
     end
 
-    private
-
-    # gets the foreign key name of the given relation
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
-    def relation_foreign_key(relation)
-      relation_reflect(relation).foreign_key
-    end
-
-    public
-
     # gets the primary key name of the given relation
     #
     # relation: a symbol or array of symbols; specifies the relation
@@ -231,25 +219,6 @@ module CounterCulture
       end
     end
 
-    private
-    # gets the foreign key name of the relation. will look at the first
-    # level only -- i.e., if passed an array will consider only its
-    # first element
-    #
-    # relation: a symbol or array of symbols; specifies the relation
-    #   that has the counter cache column
-    def first_level_relation_foreign_key
-      first_relation = relation.first if relation.is_a?(Enumerable)
-      relation_reflect(first_relation).foreign_key
-    end
-
-    def first_level_relation_foreign_type
-      return nil unless polymorphic?
-      first_relation = relation.first if relation.is_a?(Enumerable)
-      relation_reflect(first_relation).foreign_type
-    end
-
-    public
     def polymorphic?
       is_polymorphic = relation_reflect(relation).options.key?(:polymorphic)
       if is_polymorphic && !(relation.is_a?(Symbol) || relation.length == 1)
@@ -270,7 +239,30 @@ module CounterCulture
       prev
     end
 
-    private
+    # gets the foreign key name of the given relation
+    #
+    # relation: a symbol or array of symbols; specifies the relation
+    #   that has the counter cache column
+    def relation_foreign_key(relation)
+      relation_reflect(relation).foreign_key
+    end
+
+    # gets the foreign key name of the relation. will look at the first
+    # level only -- i.e., if passed an array will consider only its
+    # first element
+    #
+    # relation: a symbol or array of symbols; specifies the relation
+    #   that has the counter cache column
+    def first_level_relation_foreign_key
+      first_relation = relation.first if relation.is_a?(Enumerable)
+      relation_reflect(first_relation).foreign_key
+    end
+
+    def first_level_relation_foreign_type
+      return nil unless polymorphic?
+      first_relation = relation.first if relation.is_a?(Enumerable)
+      relation_reflect(first_relation).foreign_type
+    end
 
     def execute_change_counter_cache(obj, options)
       if execute_after_commit
