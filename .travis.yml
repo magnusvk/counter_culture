@@ -8,6 +8,7 @@ env:
   - "RAILS_VERSION=4.1.0"
   - "RAILS_VERSION=4.2.0"
   - "RAILS_VERSION=5.0.0"
+  - "RAILS_VERSION=5.1.0"
 install:
   - bundle update
 script: TRAVIS=true bundle exec rake spec
