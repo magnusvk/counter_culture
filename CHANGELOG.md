@@ -1,3 +1,8 @@
+## 1.5.1 (April 17, 2017)
+
+Bugfixes:
+  - Support for `nil` values in polymorphic relationships
+
 ## 1.5.0 (March 21, 2017)
 
 New features:

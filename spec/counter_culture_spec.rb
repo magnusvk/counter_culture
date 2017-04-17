@@ -1643,6 +1643,26 @@ describe "CounterCulture" do
         expect(product1.reload.poly_images_count).to eq(1)
         expect(employee.reload.poly_images_count).to eq(2)
       end
+
+      it "can handle nil values" do
+        img = PolyImage.create(imageable: employee)
+        PolyImage.create(imageable: nil)
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts
+
+        expect(employee.reload.poly_images_count).to eq(1)
+
+        img.imageable = nil
+        img.save!
+
+        expect(employee.reload.poly_images_count).to eq(0)
+
+        img.imageable = employee
+        img.save!
+
+        expect(employee.reload.poly_images_count).to eq(1)
+      end
     end
     describe "custom column name" do
       it "increments counter cache on create" do

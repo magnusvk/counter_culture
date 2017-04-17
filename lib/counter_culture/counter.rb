@@ -125,7 +125,7 @@ module CounterCulture
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation, source: obj, was: was).to_sym)
+      return value.try(relation_primary_key(first_relation, source: obj, was: was).try(:to_sym))
     end
 
     # gets the reflect object on the given relation
@@ -171,9 +171,9 @@ module CounterCulture
         type_column = reflect.foreign_type.to_sym
         # so now turn that into the class that we're looking for here
         if was
-          attribute_was(source, type_column).constantize
+          attribute_was(source, type_column).try(:constantize)
         else
-          source.public_send(type_column).constantize
+          source.public_send(type_column).try(:constantize)
         end
       else
         reflect.klass
@@ -227,7 +227,7 @@ module CounterCulture
       if reflect.options.key?(:polymorphic)
         raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
         raise "must specify source for polymorphic associations..." unless source
-        return relation_klass(relation, source: source, was: was).primary_key
+        return relation_klass(relation, source: source, was: was).try(:primary_key)
       end
       reflect.association_primary_key(klass)
     end

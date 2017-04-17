@@ -45,7 +45,7 @@ module CounterCulture
 
     def polymorphic_associated_model_classes
       foreign_type_field = relation_reflect(relation).foreign_type
-      model.pluck("DISTINCT #{foreign_type_field}").map(&:constantize)
+      model.pluck("DISTINCT #{foreign_type_field}").compact.map(&:constantize)
     end
 
     def associated_model_class
