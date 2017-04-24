@@ -297,7 +297,7 @@ Manually populating counter caches with dynamically over-written foreign keys (`
 
 This gem will keep counters correctly updated when using the `paranoia` gem for
 soft-delete support. However, to ensure that counts are incremented after a
-restore you have to make sure that the call to `acts_as_paranoia` comes before
+restore you have to make sure that the call to `acts_as_paranoid` comes before
 the call to `counter_culture` in your model:
 
 ```ruby
