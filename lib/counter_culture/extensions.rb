@@ -21,6 +21,9 @@ module CounterCulture
           after_create :_update_counts_after_create
           after_destroy :_update_counts_after_destroy
           after_update :_update_counts_after_update
+          if respond_to?(:after_restore)
+            after_restore :_update_counts_after_create
+          end
 
           # we keep a list of all counter caches we must maintain
           @after_commit_counter_cache = []

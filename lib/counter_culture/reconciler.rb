@@ -52,7 +52,6 @@ module CounterCulture
       counter.relation_klass(counter.relation)
     end
 
-
     class Reconciliation
       attr_reader :counter, :options, :relation_class
 
@@ -72,9 +71,6 @@ module CounterCulture
 
         scope = relation_class
 
-        # respect the deleted_at column if it exists
-        scope = scope.where("#{model.table_name}.deleted_at IS NULL") if model.column_names.include?('deleted_at')
-
         counter_column_names = column_names || {nil => counter_cache_name}
 
         # iterate over all the possible counter cache column names
@@ -91,8 +87,14 @@ module CounterCulture
           # we need to join together tables until we get back to the table this class itself lives in
           # conditions must also be applied to the join on which we are counting
           join_clauses.each_with_index do |join, index|
-            if index == join_clauses.size - 1 && where
-              join += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
+            if index == join_clauses.size - 1
+              if where
+                join += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
+              end
+              # respect the deleted_at column if it exists
+              if model.column_names.include?('deleted_at')
+                join += " AND #{model.table_name}.deleted_at IS NULL"
+              end
             end
             counts_query = counts_query.joins(join)
           end

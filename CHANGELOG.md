@@ -1,3 +1,8 @@
+## 1.6.0 (April 24, 2017)
+
+Improvements:
+  - Keeps counts updated correctly when using the paranoia gem and restoring soft-deleted records
+
 ## 1.5.1 (April 17, 2017)
 
 Bugfixes:

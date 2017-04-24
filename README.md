@@ -293,6 +293,22 @@ end
 
 Manually populating counter caches with dynamically over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
 
+### Soft-deletes / `paranoia` gem
+
+This gem will keep counters correctly updated when using the `paranoia` gem for
+soft-delete support. However, to ensure that counts are incremented after a
+restore you have to make sure that the call to `acts_as_paranoid` comes before
+the call to `counter_culture` in your model:
+
+```ruby
+class SoftDelete < ActiveRecord::Base
+  acts_as_paranoid
+
+  belongs_to :company
+  counter_culture :company
+end
+```
+
 #### Polymorphic associations
 
 counter_culture now supports polymorphic associations of one level only.
