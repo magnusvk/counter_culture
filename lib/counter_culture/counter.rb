@@ -38,8 +38,7 @@ module CounterCulture
 
       if id_to_change && change_counter_column
         delta_magnitude = if delta_column
-                            delta_attr_name = options[:was] ? "#{delta_column}_was" : delta_column
-                            obj.send(delta_attr_name) || 0
+                            (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
                           else
                             counter_delta_magnitude_for(obj)
                           end
@@ -63,8 +62,9 @@ module CounterCulture
             end
           end
 
-          klass = relation_klass(relation)
-          klass.where(relation_primary_key(relation) => id_to_change).update_all updates.join(', ')
+          klass = relation_klass(relation, source: obj, was: options[:was])
+          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+          klass.where(primary_key => id_to_change).update_all updates.join(', ')
         end
       end
     end
@@ -112,16 +112,20 @@ module CounterCulture
       first_relation = relation.first
       if was
         first = relation.shift
-        foreign_key_value = obj.send("#{relation_foreign_key(first)}_was")
-        klass = relation_klass(first)
-        value = klass.where("#{klass.table_name}.#{relation_primary_key(first)} = ?", foreign_key_value).first if foreign_key_value
+        foreign_key_value = attribute_was(obj, relation_foreign_key(first))
+        klass = relation_klass(first, source: obj, was: was)
+        if foreign_key_value
+          value = klass.where(
+            "#{klass.table_name}.#{relation_primary_key(first, source: obj, was: was)} = ?",
+            foreign_key_value).first
+        end
       else
         value = obj
       end
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation).to_sym)
+      return value.try(relation_primary_key(first_relation, source: obj, was: was).try(:to_sym))
     end
 
     # gets the reflect object on the given relation
@@ -137,7 +141,13 @@ module CounterCulture
         cur_relation = relation.shift
         reflect = klass.reflect_on_association(cur_relation)
         raise "No relation #{cur_relation} on #{klass.name}" if reflect.nil?
-        klass = reflect.klass
+
+        if relation.size > 0
+          # not necessary to do this at the last link because we won't use
+          # klass again. not calling this avoids the following causing an
+          # exception in the now-supported one-level polymorphic counter cache
+          klass = reflect.klass
+        end
       end
 
       return reflect
@@ -147,8 +157,51 @@ module CounterCulture
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
-    def relation_klass(relation)
-      relation_reflect(relation).klass
+    # source [optional]: the source object,
+    #   only needed for polymorphic associations,
+    #   probably only works with a single relation (symbol, or array of 1 symbol)
+    # was: boolean
+    #   we're actually looking for the old value -- only can change for polymorphic relations
+    def relation_klass(relation, source: nil, was: false)
+      reflect = relation_reflect(relation)
+      if reflect.options.key?(:polymorphic)
+        raise "Can't work out relation's class without being passed object (relation: #{relation}, reflect: #{reflect})" if source.nil?
+        raise "Can't work out polymorhpic relation's class with multiple relations yet" unless (relation.is_a?(Symbol) || relation.length == 1)
+        # this is the column that stores the polymorphic type, aka the class name
+        type_column = reflect.foreign_type.to_sym
+        # so now turn that into the class that we're looking for here
+        if was
+          attribute_was(source, type_column).try(:constantize)
+        else
+          source.public_send(type_column).try(:constantize)
+        end
+      else
+        reflect.klass
+      end
+    end
+
+    def first_level_relation_changed?(instance)
+      return true if attribute_changed?(instance, first_level_relation_foreign_key)
+      if polymorphic?
+        return true if attribute_changed?(instance, first_level_relation_foreign_type)
+      end
+      false
+    end
+
+    def attribute_changed?(obj, attr)
+      if Rails.version >= "5.1.0"
+        obj.saved_changes[attr].present?
+      else
+        obj.send(:attribute_changed?, attr)
+      end
+    end
+
+    def polymorphic?
+      is_polymorphic = relation_reflect(relation).options.key?(:polymorphic)
+      if is_polymorphic && !(relation.is_a?(Symbol) || relation.length == 1)
+        raise "Polymorphic associations only supported with one level"
+      end
+      return is_polymorphic
     end
 
     # gets the foreign key name of the given relation
@@ -163,8 +216,20 @@ module CounterCulture
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
-    def relation_primary_key(relation)
-      relation_reflect(relation).association_primary_key
+    # source[optional]: the model instance that the relationship is linked from,
+    #   only needed for polymorphic associations,
+    #   probably only works with a single relation (symbol, or array of 1 symbol)
+    # was: boolean
+    #   we're actually looking for the old value -- only can change for polymorphic relations
+    def relation_primary_key(relation, source: nil, was: false)
+      reflect = relation_reflect(relation)
+      klass = nil
+      if reflect.options.key?(:polymorphic)
+        raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
+        raise "must specify source for polymorphic associations..." unless source
+        return relation_klass(relation, source: source, was: was).try(:primary_key)
+      end
+      reflect.association_primary_key(klass)
     end
 
     # gets the foreign key name of the relation. will look at the first
@@ -178,24 +243,41 @@ module CounterCulture
       relation_reflect(first_relation).foreign_key
     end
 
+    def first_level_relation_foreign_type
+      return nil unless polymorphic?
+      first_relation = relation.first if relation.is_a?(Enumerable)
+      relation_reflect(first_relation).foreign_type
+    end
+
     def previous_model(obj)
       prev = obj.dup
 
-      obj.changed_attributes.each do |key, value|
-        prev.send("#{key}=", value)
+      changes_method = Rails.version >= "5.1.0" ? :saved_changes : :changed_attributes
+      obj.public_send(changes_method).each do |key, value|
+        old_value = Rails.version >= "5.1.0" ? value.first : value
+        prev.public_send("#{key}=", old_value)
       end
 
       prev
     end
 
     private
-
     def execute_change_counter_cache(obj, options)
       if execute_after_commit
         obj.execute_after_commit { yield }
       else
         yield
       end
+    end
+
+    def attribute_was(obj, attr)
+      changes_method =
+        if Rails.version >= "5.1.0"
+          "_before_last_save"
+        else
+          "_was"
+        end
+      obj.public_send("#{attr}#{changes_method}")
     end
   end
 end

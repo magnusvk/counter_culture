@@ -1,3 +1,18 @@
+## 1.5.1 (April 17, 2017)
+
+Bugfixes:
+  - Support for `nil` values in polymorphic relationships
+
+## 1.5.0 (March 21, 2017)
+
+New features:
+  - Support for counter caches on one-level polymorphic relationships
+
+## 1.4.0 (March 21, 2017)
+
+Improvements:
+  - Avoid Rails 5.1 deprecation warnings
+
 ## 1.3.1 (February 23, 2017)
 
 Bugfixes:
