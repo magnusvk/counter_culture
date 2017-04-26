@@ -183,7 +183,7 @@ module CounterCulture
 
           source_table_key = association_primary_key
           target_table_key = reflect.foreign_key
-          if reflect.has_one?
+          if !reflect.belongs_to?
             # a has_one relation flips the location of the keys on the tables
             # around
             (source_table_key, target_table_key) =
