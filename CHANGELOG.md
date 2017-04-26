@@ -1,3 +1,8 @@
+## 1.6.1 (April 26, 2017)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` for a multi-level relation where an intermediate link is `has_one`, rather than `belongs_to`
+
 ## 1.6.0 (April 24, 2017)
 
 Improvements:
