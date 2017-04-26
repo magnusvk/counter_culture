@@ -201,4 +201,16 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "poly_images_count_dup", :default => 0, :null => false
     t.integer  "special_poly_images_count", :default => 0, :null => false
   end
+
+  create_table "conversations", :force => true do |t|
+    t.integer "candidate_id"
+  end
+
+  create_table "candidates", :force => true do |t|
+  end
+
+  create_table "candidate_profiles", :force => true do |t|
+    t.integer "candidate_id"
+    t.integer "conversations_count", :default => 0, :null => false
+  end
 end

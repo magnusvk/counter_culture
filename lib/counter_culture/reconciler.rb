@@ -154,35 +154,55 @@ module CounterCulture
       def join_clauses
         return @join_clauses if defined?(@join_clauses)
 
-        # we need to work our way back from the end-point of the relation to this class itself;
-        # make a list of arrays pointing to the second-to-last, third-to-last, etc.
-        reverse_relation = (1..relation.length).to_a.reverse.inject([]) { |a, i| a << relation[0, i]; a }
+        # we need to work our way back from the end-point of the relation to
+        # this class itself; make a list of arrays pointing to the
+        # second-to-last, third-to-last, etc.
+        reverse_relation = (1..relation.length).to_a.reverse.
+          inject([]) { |a, i| a << relation[0, i]; a }
 
-        # store joins in an array so that we can later apply column-specific conditions
+        # store joins in an array so that we can later apply column-specific
+        # conditions
         @join_clauses = reverse_relation.map do |cur_relation|
           reflect = relation_reflect(cur_relation)
-          if relation_class.table_name == reflect.active_record.table_name
-            join_table_name = "#{relation_class.table_name}_#{relation_class.table_name}"
-          else
-            join_table_name = reflect.active_record.table_name
+
+          target_table_alias = target_table = reflect.active_record.table_name
+          if relation_class.table_name == target_table
+            # join with alias to avoid ambiguous table name in
+            # self-referential models
+            target_table_alias += "_#{target_table}"
           end
+
           if polymorphic?
             # NB: polymorphic only supports one level of relation (at present)
             association_primary_key = reflect.association_primary_key(relation_class)
-            reflect_table_name = relation_class.table_name
+            source_table = relation_class.table_name
           else
             association_primary_key = reflect.association_primary_key
-            reflect_table_name = reflect.table_name
+            source_table = reflect.table_name
           end
 
-          # join with alias to avoid ambiguous table name with self-referential models:
-          joins_sql = "LEFT JOIN #{reflect.active_record.table_name} AS #{join_table_name} ON #{reflect_table_name}.#{association_primary_key} = #{join_table_name}.#{reflect.foreign_key}"
-          # adds 'type' condition to JOIN clause if the current model is a child in a Single Table Inheritance
-          joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.type IN ('#{model.name}')" if reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?
+          source_table_key = association_primary_key
+          target_table_key = reflect.foreign_key
+          if reflect.has_one?
+            # a has_one relation flips the location of the keys on the tables
+            # around
+            (source_table_key, target_table_key) =
+              [target_table_key, source_table_key]
+          end
+
+          joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
+            "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
+          # adds 'type' condition to JOIN clause if the current model is a
+          # child in a Single Table Inheritance
+          if reflect.active_record.column_names.include?('type') &&
+              !model.descends_from_active_record?
+            joins_sql += " AND #{target_table}.type IN ('#{model.name}')"
+          end
           if polymorphic?
-            # adds 'type' condition to JOIN clause if the current model is a polymorphic relation
+            # adds 'type' condition to JOIN clause if the current model is a
+            # polymorphic relation
             # NB only works for one-level relations
-            joins_sql = "#{joins_sql} AND #{reflect.active_record.table_name}.#{reflect.foreign_type} = '#{relation_class.name}'"
+            joins_sql += " AND #{target_table}.#{reflect.foreign_type} = '#{relation_class.name}'"
           end
           joins_sql
         end
