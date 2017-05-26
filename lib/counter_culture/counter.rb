@@ -15,6 +15,7 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @execute_after_commit = options.fetch(:execute_after_commit, false)
+      @with_papertrail = options.fetch(:with_papertrail, false)
     end
 
     # increments or decrements a counter cache
@@ -28,6 +29,7 @@ module CounterCulture
     #   :was => whether to get the current value or the old value of the
     #      first part of the relation
     #   :execute_after_commit => execute the column update outside of the transaction to avoid deadlocks
+    #   :with_papertrail => update the column via Papertrail touch_with_version method
     def change_counter_cache(obj, options)
       change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
 
@@ -42,6 +44,11 @@ module CounterCulture
                           else
                             counter_delta_magnitude_for(obj)
                           end
+
+        klass = relation_klass(relation, source: obj, was: options[:was])
+        primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+        instance = @with_papertrail ? klass.find_by(primary_key => id_to_change) : nil
+
         execute_change_counter_cache(obj, options) do
           # increment or decrement?
           operator = options[:increment] ? '+' : '-'
@@ -50,6 +57,7 @@ module CounterCulture
           quoted_column = model.connection.quote_column_name(change_counter_column)
 
           updates = []
+          instance.lock! if instance
           # this updates the actual counter
           updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
           # and here we update the timestamp, if so desired
@@ -62,9 +70,18 @@ module CounterCulture
             end
           end
 
-          klass = relation_klass(relation, source: obj, was: options[:was])
-          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
-          klass.where(primary_key => id_to_change).update_all updates.join(', ')
+          if instance
+            if options[:increment]
+              instance[change_counter_column] = instance[change_counter_column] + delta_magnitude
+            else
+              instance[change_counter_column] = instance[change_counter_column] - delta_magnitude
+            end
+
+            instance.paper_trail.touch_with_version
+          else
+            klass.where(primary_key => id_to_change).update_all updates.join(', ')
+          end
+
         end
       end
     end
