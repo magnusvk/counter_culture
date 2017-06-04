@@ -47,7 +47,6 @@ module CounterCulture
 
         klass = relation_klass(relation, source: obj, was: options[:was])
         primary_key = relation_primary_key(relation, source: obj, was: options[:was])
-        instance = @with_papertrail ? klass.find_by(primary_key => id_to_change) : nil
 
         execute_change_counter_cache(obj, options) do
           # increment or decrement?
@@ -57,7 +56,6 @@ module CounterCulture
           quoted_column = model.connection.quote_column_name(change_counter_column)
 
           updates = []
-          instance.lock! if instance
           # this updates the actual counter
           updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
           # and here we update the timestamp, if so desired
@@ -70,18 +68,12 @@ module CounterCulture
             end
           end
 
-          if instance
-            if options[:increment]
-              instance[change_counter_column] = instance[change_counter_column] + delta_magnitude
-            else
-              instance[change_counter_column] = instance[change_counter_column] - delta_magnitude
-            end
+          klass.where(primary_key => id_to_change).update_all updates.join(', ')
 
-            instance.paper_trail.touch_with_version
-          else
-            klass.where(primary_key => id_to_change).update_all updates.join(', ')
+          if @with_papertrail
+            instance = klass.find_by(primary_key => id_to_change)
+            instance.paper_trail.touch_with_version if instance
           end
-
         end
       end
     end
