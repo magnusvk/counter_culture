@@ -68,12 +68,12 @@ module CounterCulture
             end
           end
 
-          klass.where(primary_key => id_to_change).update_all updates.join(', ')
-
           if @with_papertrail
             instance = klass.find_by(primary_key => id_to_change)
             instance.paper_trail.touch_with_version if instance
           end
+
+          klass.where(primary_key => id_to_change).update_all updates.join(', ')
         end
       end
     end
