@@ -44,10 +44,6 @@ module CounterCulture
                           else
                             counter_delta_magnitude_for(obj)
                           end
-
-        klass = relation_klass(relation, source: obj, was: options[:was])
-        primary_key = relation_primary_key(relation, source: obj, was: options[:was])
-
         execute_change_counter_cache(obj, options) do
           # increment or decrement?
           operator = options[:increment] ? '+' : '-'
@@ -67,6 +63,9 @@ module CounterCulture
               updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
             end
           end
+
+          klass = relation_klass(relation, source: obj, was: options[:was])
+          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
 
           if @with_papertrail
             instance = klass.find_by(primary_key => id_to_change)
