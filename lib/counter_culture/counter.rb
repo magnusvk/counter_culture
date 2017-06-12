@@ -68,7 +68,7 @@ module CounterCulture
           primary_key = relation_primary_key(relation, source: obj, was: options[:was])
 
           if @with_papertrail
-            instance = klass.find_by(primary_key => id_to_change)
+            instance = klass.where(primary_key => id_to_change).first
             instance.paper_trail.touch_with_version if instance
           end
 
