@@ -1822,4 +1822,36 @@ describe "CounterCulture" do
       end
     end
   end
+
+  describe "with papertrail support", versioning: true do
+    it "creates a papertrail version when changed" do
+      user = User.create
+      product = Product.create
+
+      expect(product.reviews_count).to eq(0)
+      expect(product.versions.count).to eq(1)
+
+      user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+      product.reload
+
+      expect(product.reviews_count).to eq(1)
+      expect(product.versions.count).to eq(2)
+    end
+
+    it "does not create a papertrail version when papertrail flag not set" do
+      user = User.create
+      product = Product.create
+
+      expect(user.reviews_count).to eq(0)
+      expect(user.versions.count).to eq(1)
+
+      user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+      user.reload
+
+      expect(user.reviews_count).to eq(1)
+      expect(user.versions.count).to eq(1)
+    end
+  end
 end
