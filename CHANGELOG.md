@@ -1,3 +1,8 @@
+## 1.7.0 (June 12, 2017)
+
+Improvements:
+  - Support for creating `paper_trail` versions when counters change
+
 ## 1.6.2 (April 26, 2017)
 
 Bugfixes;
