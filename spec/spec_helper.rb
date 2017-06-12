@@ -7,6 +7,7 @@ require "rails_app/config/environment"
 
 require 'rspec'
 require 'counter_culture'
+require 'paper_trail/frameworks/rspec'
 
 CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') || (ENV['CIRCLECI'] && 'CIRCLE') || ENV["CI"] && 'CI'
 

@@ -213,4 +213,15 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer "candidate_id"
     t.integer "conversations_count", :default => 0, :null => false
   end
+
+  create_table :versions, :force => true do |t|
+    t.string   :item_type
+    t.integer  :item_id,   null: false
+    t.string   :event,     null: false
+    t.integer  :whodunnit
+    t.text    :object
+    t.text    :object_changes
+    t.datetime :created_at
+  end
+  add_index :versions, [:item_id, :item_type]
 end

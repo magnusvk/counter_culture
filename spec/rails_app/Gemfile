@@ -23,6 +23,8 @@ gem 'jquery-rails'
 
 gem 'counter_culture', path: '../..'
 
+gem 'paper_trail'
+
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 

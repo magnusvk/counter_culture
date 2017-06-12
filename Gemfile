@@ -28,6 +28,7 @@ group :development, :test do
 
   # to test the integration
   gem "paranoia"
+  gem "paper_trail"
 end
 
 group :development do

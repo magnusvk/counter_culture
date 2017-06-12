@@ -15,6 +15,7 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @execute_after_commit = options.fetch(:execute_after_commit, false)
+      @with_papertrail = options.fetch(:with_papertrail, false)
     end
 
     # increments or decrements a counter cache
@@ -28,6 +29,7 @@ module CounterCulture
     #   :was => whether to get the current value or the old value of the
     #      first part of the relation
     #   :execute_after_commit => execute the column update outside of the transaction to avoid deadlocks
+    #   :with_papertrail => update the column via Papertrail touch_with_version method
     def change_counter_cache(obj, options)
       change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
 
@@ -64,6 +66,12 @@ module CounterCulture
 
           klass = relation_klass(relation, source: obj, was: options[:was])
           primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+
+          if @with_papertrail
+            instance = klass.where(primary_key => id_to_change).first
+            instance.paper_trail.touch_with_version if instance
+          end
+
           klass.where(primary_key => id_to_change).update_all updates.join(', ')
         end
       end
