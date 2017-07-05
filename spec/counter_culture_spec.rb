@@ -400,6 +400,68 @@ describe "CounterCulture" do
     expect(user2.tried_count).to eq(0)
   end
 
+  describe "conditional counts on addition/removal from association" do
+    let!(:main) { ConditionalMain.create }
+    let!(:condition) { ConditionalDependent.create(condition: true) }
+    let!(:non_condition) { ConditionalDependent.create(condition: false) }
+
+    it "should increase cache in database on adding a true conditional" do
+      expect {
+        main.conditional_dependents << condition
+      }.to change{main.reload.conditional_dependents_count}.by(1)
+    end
+
+    it "should increase cache in memory on adding true condtional" do
+      expect {
+        main.conditional_dependents << condition
+      }.to change{main.conditional_dependents_count}.by(1)
+    end
+
+    it "should not increase in database on adding a false conditional" do
+      expect {
+        main.conditional_dependents << non_condition
+      }.to_not change{main.reload.conditional_dependents_count}
+    end
+
+    it "should not increase cache in memory on adding false conditional" do
+      expect {
+        main.conditional_dependents << non_condition
+      }.to_not change{main.conditional_dependents_count}
+    end
+
+    it "should decrease in database on removing a true conditional" do
+      main.conditional_dependents << condition
+
+      expect {
+        main.conditional_dependents.delete(condition)
+      }.to change{main.reload.conditional_dependents_count}.by(-1)
+    end
+
+    it "should decrease in memory on removing a true conditional" do
+      main.conditional_dependents << condition
+
+      expect {
+        main.conditional_dependents.delete(condition)
+      }.to change{main.conditional_dependents_count}.by(-1)
+    end
+
+    it "should not decrease in database on removing a false conditional" do
+      main.conditional_dependents << non_condition
+
+      expect {
+        main.conditional_dependents.delete(non_condition)
+      }.to_not change{main.reload.conditional_dependents_count}
+    end
+    
+    it "should not decrease in memory on removing a false conditional" do
+      main.conditional_dependents << non_condition
+
+      expect {
+        main.conditional_dependents.delete(non_condition)
+      }.to_not change{main.conditional_dependents_count}
+    end
+  end
+
   describe "conditional counts on update" do
     let(:product) {Product.create!}
     let(:user) {User.create!}
