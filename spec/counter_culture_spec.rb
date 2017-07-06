@@ -421,7 +421,7 @@ describe "CounterCulture" do
       main.conditional_dependents << condition
 
       expect {
-        main.conditional_dependents.delete(condition)
+        main.conditional_dependents.destroy(condition)
       }.to change{main.reload.conditional_dependents_count}.by(-1)
     end
 
