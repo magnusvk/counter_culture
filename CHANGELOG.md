@@ -5,7 +5,7 @@ Improvements:
 
 ## 1.6.2 (April 26, 2017)
 
-Bugfixes;
+Bugfixes:
   - Restore compatibility with older Rails versions
 
 ## 1.6.1 (April 26, 2017)
