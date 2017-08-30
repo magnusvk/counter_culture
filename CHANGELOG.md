@@ -1,3 +1,9 @@
+## 1.8.0 (August 30, 2017)
+
+Improvements:
+  - Quote all table names to work correctly with PostgreSQL schemata
+  - Use ActiveRecord version, not Rails version, to make things work for projects that use ActiveRecord but not Rails
+
 ## 1.7.0 (June 12, 2017)
 
 Improvements:
