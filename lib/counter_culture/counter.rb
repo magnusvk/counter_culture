@@ -1,6 +1,7 @@
 module CounterCulture
   class Counter
     CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
+    ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
 
@@ -197,7 +198,7 @@ module CounterCulture
     end
 
     def attribute_changed?(obj, attr)
-      if Rails.version >= "5.1.0"
+      if ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0")
         obj.saved_changes[attr].present?
       else
         obj.send(:attribute_changed?, attr)
@@ -260,9 +261,9 @@ module CounterCulture
     def previous_model(obj)
       prev = obj.dup
 
-      changes_method = Rails.version >= "5.1.0" ? :saved_changes : :changed_attributes
+      changes_method = ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0") ? :saved_changes : :changed_attributes
       obj.public_send(changes_method).each do |key, value|
-        old_value = Rails.version >= "5.1.0" ? value.first : value
+        old_value = ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0") ? value.first : value
         prev.public_send("#{key}=", old_value)
       end
 
@@ -280,7 +281,7 @@ module CounterCulture
 
     def attribute_was(obj, attr)
       changes_method =
-        if Rails.version >= "5.1.0"
+        if ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0")
           "_before_last_save"
         else
           "_was"
