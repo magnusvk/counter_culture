@@ -3,6 +3,8 @@ require 'active_support/core_ext/module/attribute_accessors'
 
 module CounterCulture
   class Reconciler
+    ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
+
     attr_reader :counter, :options, :changes
 
     delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
@@ -221,7 +223,7 @@ module CounterCulture
       end
 
       def parameterize(string)
-        if Rails.version < '5.0'
+        if ACTIVE_RECORD_VERSION < Gem::Version.new("5.0")
           string.parameterize('_')
         else
           string.parameterize(separator: '_')
