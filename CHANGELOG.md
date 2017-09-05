@@ -1,3 +1,8 @@
+## 1.8.1 (September 5, 2018)
+
+Improvements:
+  - Use ActiveRecord version, not Rails version, in `Reconciler`, makeing it possible to use `counter_culture_fix_counts` without Rails
+
 ## 1.8.0 (August 30, 2017)
 
 Improvements:
