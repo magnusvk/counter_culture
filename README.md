@@ -14,7 +14,7 @@ Tested against Ruby 2.2.5 and 2.3.1 and against the latest patch releases of Rai
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 1.0'
+gem 'counter_culture', '~> 1.8.1'
 ```
 
 Then run `bundle install`
