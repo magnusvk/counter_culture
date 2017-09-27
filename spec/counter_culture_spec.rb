@@ -34,7 +34,6 @@ describe "CounterCulture" do
     DatabaseCleaner.clean
   end
 
-
   it "should use relation foreign_key correctly" do
     post = AnotherPost.new
     comment = post.comments.build
@@ -1275,6 +1274,21 @@ describe "CounterCulture" do
   MANY = CI_TEST_RUN ? 1000 : 20
   A_FEW = CI_TEST_RUN ? 50:  10
   A_BATCH = CI_TEST_RUN ? 100: 10
+
+  it "should support batch processing" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    expect_any_instance_of(CounterCulture::Reconciler::Reconciliation).to receive(:update_count_for_batch).exactly(MANY/A_BATCH).times
+
+    MANY.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
+  end
 
   it "should correctly fix the counter caches with thousands of records" do
     # first, clean up

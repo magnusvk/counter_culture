@@ -99,22 +99,26 @@ module CounterCulture
 
           counts_query.group(full_primary_key(relation_class)).find_in_batches(batch_size: batch_size) do |records|
             # now iterate over all the models and see whether their counts are right
-            ActiveRecord::Base.transaction do
-              records.each do |record|
-                count = record.read_attribute('count') || 0
-                next if record.read_attribute(column_name) == count
-
-                track_change(record, column_name, count)
-
-                # use update_all because it's faster and because a fixed counter-cache shouldn't update the timestamp
-                relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(column_name => count)
-              end
-            end
+            update_count_for_batch(column_name, records)
           end
         end
       end
 
       private
+
+      def update_count_for_batch(column_name, records)
+        ActiveRecord::Base.transaction do
+          records.each do |record|
+            count = record.read_attribute('count') || 0
+            next if record.read_attribute(column_name) == count
+
+            track_change(record, column_name, count)
+
+            # use update_all because it's faster and because a fixed counter-cache shouldn't update the timestamp
+            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(column_name => count)
+          end
+        end
+      end
 
       # keep track of what we fixed, e.g. for a notification email
       def track_change(record, column_name, count)
