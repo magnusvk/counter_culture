@@ -1,4 +1,9 @@
-## 1.8.1 (September 5, 2018)
+## 1.8.2 (September 27, 2017)
+
+Bugfixes:
+  - Actually use `batch_size` parameter in `counter_culture_fix_counts` (#200)
+
+## 1.8.1 (September 5, 2017)
 
 Improvements:
   - Use ActiveRecord version, not Rails version, in `Reconciler`, makeing it possible to use `counter_culture_fix_counts` without Rails
