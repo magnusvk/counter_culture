@@ -234,13 +234,13 @@ You will sometimes want to populate counter-cache values from primary data. This
 Product.counter_culture_fix_counts
 # will automatically fix counts for all counter caches defined on Product
 
-Product.counter_culture_fix_counts except: :category
+Product.counter_culture_fix_counts exclude: :category
 # will automatically fix counts for all counter caches defined on Product, except for the :category relation
 
 Product.counter_culture_fix_counts only: :category
 # will automatically fix counts only on the :category relation on Product
 
-# :except and :only also accept arrays of one level relations
+# :exclude and :only also accept arrays of one level relations
 # if you want to fix counts on a more than one level relation you need to use convention below:
 
 Product.counter_culture_fix_counts only: [[:subcategory, :category]]
