@@ -116,7 +116,7 @@ end
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
-  counter_culture :category, column_name: :weight, delta_magnitude: proc { model.product_type == 'awesome' ? 2 : 1 }
+  counter_culture :category, column_name: :weight, delta_magnitude: proc {|model| model.product_type == 'awesome' ? 2 : 1 }
 end
 
 class Category < ActiveRecord::Base
