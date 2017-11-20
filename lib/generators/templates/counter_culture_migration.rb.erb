@@ -2,7 +2,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration
 
   def self.up
 <% counter_cache_columns.each do |column| %>
-    add_column :<%= table_name %>, :<%= column %>, :integer, :null => false, :default => 0
+    add_column :<%= table_name %>, :<%= column %>, :integer, null: false, default: 0
 <% end %>
   end
 
