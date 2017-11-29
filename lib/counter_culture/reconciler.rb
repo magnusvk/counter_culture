@@ -133,12 +133,20 @@ module CounterCulture
 
       def count_select
         # if a delta column is provided use SUM, otherwise use COUNT
-        return @count_select if @count_select
-        if delta_column
-          @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
-        else
-          @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
-        end
+        @count_select ||= if delta_column
+                            "SUM(COALESCE(#{sum_column},0))"
+                          else
+                            "COUNT(#{count_column})*#{delta_magnitude}"
+                          end
+      end
+
+      def sum_column
+        "#{self_table_name}.#{delta_column}"
+      end
+
+      def count_column
+        relation_foreign_key_column = model.reflections[relation.first.to_s].foreign_key
+        "#{self_table_name}.#{relation_foreign_key_column}"
       end
 
       def self_table_name
