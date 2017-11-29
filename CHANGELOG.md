@@ -1,3 +1,9 @@
+## 1.9.0 (November 29, 2017)
+
+Improvements:
+  - Switch generated migration files to use new hash syntax
+  - Support for Rails 5 migration file format for generated migrations
+
 ## 1.8.2 (September 27, 2017)
 
 Bugfixes:
