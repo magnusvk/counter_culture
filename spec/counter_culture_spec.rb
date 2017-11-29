@@ -508,6 +508,28 @@ describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "increments third-level counter cache on create when default scope at second-level" do
+    Company.with_default_scope do
+      industry = Industry.create
+      company = Company.create :industry_id => industry.id
+      user = User.create :manages_company_id => company.id
+
+      expect(industry.reviews_count).to eq(0)
+      expect(company.reviews_count).to eq(0)
+      expect(user.reviews_count).to eq(0)
+
+      review = Review.create :user_id => user.id
+
+      industry.reload
+      company.reload
+      user.reload
+
+      expect(industry.reviews_count).to eq(1)
+      expect(company.reviews_count).to eq(1)
+      expect(user.reviews_count).to eq(1)
+    end
+  end
+
   it "decrements third-level counter cache on destroy" do
     industry = Industry.create
     company = Company.create :industry_id => industry.id
