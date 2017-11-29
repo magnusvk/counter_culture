@@ -1644,6 +1644,7 @@ describe "CounterCulture" do
 
   describe "when using acts_as_paranoia" do
     it "works" do
+      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
       company = Company.create!
       expect(company.soft_deletes_count).to eq(0)
       sd = SoftDelete.create!(company_id: company.id)
