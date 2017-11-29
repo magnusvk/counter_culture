@@ -11,7 +11,7 @@ class CounterCultureGenerator < ActiveRecord::Generators::Base
   source_root File.expand_path("../templates", __FILE__)
 
   def generate_migration
-    migration_template "counter_culture_migration.rb.erb", "db/migrate/#{migration_file_name}"
+    migration_template "counter_culture_migration.rb.erb", "db/migrate/#{migration_file_name}", migration_version: migration_version
   end
 
   def migration_name
@@ -24,6 +24,12 @@ class CounterCultureGenerator < ActiveRecord::Generators::Base
 
   def migration_class_name
     migration_name.camelize
+  end
+
+  def migration_version
+    if Rails.version.start_with? '5.'
+      "[#{Rails::VERSION::MAJOR}.#{Rails::VERSION::MINOR}]"
+    end
   end
 
 end
