@@ -114,14 +114,19 @@ module CounterCulture
           counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
           counter_cache_name = counter.counter_cache_name_for(self)
 
-          if counter.first_level_relation_changed?(self) ||
-              (counter.delta_column && counter.attribute_changed?(self, counter.delta_column)) ||
-              counter_cache_name != counter_cache_name_was
+          relation_was_changed = counter.first_level_relation_changed?(self)
+          delta_was_changed = counter.delta_column && counter.attribute_changed?(self, counter.delta_column)
 
+          if relation_was_changed || delta_was_changed || counter_cache_name != counter_cache_name_was
             # increment the counter cache of the new value
-            counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)
+            counter.change_counter_cache(self, increment: true, counter_column: counter_cache_name)
             # decrement the counter cache of the old value
-            counter.change_counter_cache(self, :increment => false, :was => true, :counter_column => counter_cache_name_was)
+            counter.change_counter_cache(self,
+              increment:            false,
+              delta_was_changed:    delta_was_changed,
+              relation_was_changed: relation_was_changed,
+              counter_column:       counter_cache_name_was,
+            )
           end
         end
       end

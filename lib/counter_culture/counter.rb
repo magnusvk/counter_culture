@@ -27,30 +27,28 @@ module CounterCulture
     #   :counter_cache_name => the column name of the counter cache
     #   :counter_column => overrides :counter_cache_name
     #   :delta_column => override the default count delta (1) with the value of this column in the counted record
-    #   :was => whether to get the current value or the old value of the
+    #   :relation_was_changed => whether to get the current value or the old value of the
     #      first part of the relation
     #   :execute_after_commit => execute the column update outside of the transaction to avoid deadlocks
     #   :with_papertrail => update the column via Papertrail touch_with_version method
-    def change_counter_cache(obj, options)
-      change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
-
+    def change_counter_cache(obj, increment: true, relation_was_changed: false, delta_was_changed: false, counter_column: counter_cache_name_for(obj), **options)
       # default to the current foreign key value
-      id_to_change = foreign_key_value(obj, relation, options[:was])
+      id_to_change = foreign_key_value(obj, relation, relation_was_changed: relation_was_changed)
       # allow overwriting of foreign key value by the caller
       id_to_change = foreign_key_values.call(id_to_change) if foreign_key_values
 
-      if id_to_change && change_counter_column
+      if id_to_change && counter_column
         delta_magnitude = if delta_column
-                            (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
+                            (delta_was_changed ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
                           else
                             counter_delta_magnitude_for(obj)
                           end
         execute_change_counter_cache(obj, options) do
           # increment or decrement?
-          operator = options[:increment] ? '+' : '-'
+          operator = increment ? '+' : '-'
 
           # we don't use Rails' update_counters because we support changing the timestamp
-          quoted_column = model.connection.quote_column_name(change_counter_column)
+          quoted_column = model.connection.quote_column_name(counter_column)
 
           updates = []
           # this updates the actual counter
@@ -65,8 +63,8 @@ module CounterCulture
             end
           end
 
-          klass = relation_klass(relation, source: obj, was: options[:was])
-          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+          klass = relation_klass(relation, source: obj, relation_was_changed: relation_was_changed)
+          primary_key = relation_primary_key(relation, source: obj, relation_was_changed: relation_was_changed)
 
           if @with_papertrail
             instance = klass.where(primary_key => id_to_change).first
@@ -113,19 +111,19 @@ module CounterCulture
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
-    # was: whether to get the current or past value from ActiveRecord;
+    # relation_was_changed: whether to get the current or past value from ActiveRecord;
     #   pass true to get the past value, false or nothing to get the
     #   current value
-    def foreign_key_value(obj, relation, was = false)
+    def foreign_key_value(obj, relation, relation_was_changed: first_level_relation_changed?(obj), **options)
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
       first_relation = relation.first
-      if was
+      if relation_was_changed
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
-        klass = relation_klass(first, source: obj, was: was)
+        klass = relation_klass(first, source: obj, relation_was_changed: relation_was_changed)
         if foreign_key_value
           value = klass.where(
-            "#{klass.table_name}.#{relation_primary_key(first, source: obj, was: was)} = ?",
+            "#{klass.table_name}.#{relation_primary_key(first, source: obj, relation_was_changed: relation_was_changed)} = ?",
             foreign_key_value).first
         end
       else
@@ -134,7 +132,7 @@ module CounterCulture
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation, source: obj, was: was).try(:to_sym))
+      return value.try(relation_primary_key(first_relation, source: obj, relation_was_changed: relation_was_changed).try(:to_sym))
     end
 
     # gets the reflect object on the given relation
@@ -169,9 +167,9 @@ module CounterCulture
     # source [optional]: the source object,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    # was: boolean
+    # relation_was_changed: boolean
     #   we're actually looking for the old value -- only can change for polymorphic relations
-    def relation_klass(relation, source: nil, was: false)
+    def relation_klass(relation, source: nil, relation_was_changed: false)
       reflect = relation_reflect(relation)
       if reflect.options.key?(:polymorphic)
         raise "Can't work out relation's class without being passed object (relation: #{relation}, reflect: #{reflect})" if source.nil?
@@ -179,7 +177,7 @@ module CounterCulture
         # this is the column that stores the polymorphic type, aka the class name
         type_column = reflect.foreign_type.to_sym
         # so now turn that into the class that we're looking for here
-        if was
+        if relation_was_changed
           attribute_was(source, type_column).try(:constantize)
         else
           source.public_send(type_column).try(:constantize)
@@ -228,15 +226,15 @@ module CounterCulture
     # source[optional]: the model instance that the relationship is linked from,
     #   only needed for polymorphic associations,
     #   probably only works with a single relation (symbol, or array of 1 symbol)
-    # was: boolean
+    # relation_was_changed: boolean
     #   we're actually looking for the old value -- only can change for polymorphic relations
-    def relation_primary_key(relation, source: nil, was: false)
+    def relation_primary_key(relation, source: nil, relation_was_changed: false)
       reflect = relation_reflect(relation)
       klass = nil
       if reflect.options.key?(:polymorphic)
         raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
         raise "must specify source for polymorphic associations..." unless source
-        return relation_klass(relation, source: source, was: was).try(:primary_key)
+        return relation_klass(relation, source: source, relation_was_changed: relation_was_changed).try(:primary_key)
       end
       reflect.association_primary_key(klass)
     end
