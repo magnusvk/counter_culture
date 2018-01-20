@@ -41,7 +41,7 @@ module CounterCulture
 
       if id_to_change && change_counter_column
         delta_magnitude = if delta_column
-                            (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
+                            ((options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0) * static_delta_magnitude(obj)
                           else
                             counter_delta_magnitude_for(obj)
                           end
@@ -86,6 +86,17 @@ module CounterCulture
         delta_magnitude.call(obj)
       else
         delta_magnitude
+      end
+    end
+    
+    # Called when Delta Column is use. 
+    # Determines if delta magnitude is present and is an integer or float.
+    # If true uses obj value if false uses a static value of 1
+    def static_delta_magnitude(obj)
+      if delta_magnitude && delta_magnitude.is_a?(Integer) || delta_magnitude.is_a?(Float)
+        delta_magnitude
+      else
+        1
       end
     end
 
