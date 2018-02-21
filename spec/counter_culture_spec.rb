@@ -948,6 +948,63 @@ describe "CounterCulture" do
     expect(Review.counter_culture_fix_counts(skip_unsupported: true)).to eq([{ entity: 'User', id: user1.id, what: 'reviews_count', right: 1, wrong: 2 }])
   end
 
+  it 'should update the timestamp when fixing counts with `touch: true`' do
+    product = Product.create
+    review = Review.create product: product
+
+    product.update_column :reviews_count, 2
+
+    product.reload
+
+    old_product_updated_at = product.updated_at
+
+    Timecop.travel(1.second.from_now) do
+      Review.counter_culture_fix_counts(skip_unsupported: true, only: :product, touch: true)
+
+      product.reload
+
+      expect(product.updated_at).to be > old_product_updated_at
+    end
+  end
+
+  it 'should not update the timestamp when fixing counts without `touch: true`' do
+    product = Product.create
+    review = Review.create product: product
+
+    product.update_column :reviews_count, 2
+
+    product.reload
+
+    old_product_updated_at = product.updated_at
+
+    Timecop.travel(2.second.from_now) do
+      Review.counter_culture_fix_counts(skip_unsupported: true, only: :product)
+
+      product.reload
+
+      expect(product.updated_at).to eq old_product_updated_at
+    end
+  end
+
+  it 'should update the timestamp of a custom column when fixing counts with touch: rexiews_updated_at' do
+    product = Product.create
+    review = Review.create product: product
+
+    product.update_column :rexiews_count, 2
+
+    product.reload
+
+    old_rexiews_updated_at = product.rexiews_updated_at
+
+    Timecop.travel(1.second.from_now) do
+      Review.counter_culture_fix_counts(skip_unsupported: true, touch: :rexiews_updated_at)
+
+      product.reload
+
+      expect(product.rexiews_updated_at).to be > old_rexiews_updated_at
+    end
+  end
+
   it "should fix a simple counter cache correctly" do
     user = User.create
     product = Product.create
