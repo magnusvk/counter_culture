@@ -1,3 +1,8 @@
+## 1.9.1 (March 1, 2017)
+
+Bugfixes:
+  - Address an edge-case test regression caused by Rails 5.1.5 that was causing counts to be off when saving changes from an `after_create` callback
+
 ## 1.9.0 (November 29, 2017)
 
 Improvements:
