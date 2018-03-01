@@ -14,13 +14,13 @@ group :development, :test do
 
   rails = case ENV["RAILS_VERSION"]
   when "master"
-    {github: "rails/rails"}
+    { github: "rails/rails" }
   when nil, ""
     ">= 3.1.0"
   else
-    "~> #{ENV["RAILS_VERSION"]}"
+    ENV["RAILS_VERSION"]
   end
-  gem "rails", rails
+  gem "rails", ENV['RAILS_VERSION']
 
   gem "rspec", "~> 3.0"
   gem "awesome_print"

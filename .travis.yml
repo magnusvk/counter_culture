@@ -3,12 +3,14 @@ rvm:
   - "2.2.5"
   - "2.3.1"
 env:
-  - "RAILS_VERSION=3.2.0"
-  - "RAILS_VERSION=4.0.0"
-  - "RAILS_VERSION=4.1.0"
-  - "RAILS_VERSION=4.2.0"
-  - "RAILS_VERSION=5.0.0"
-  - "RAILS_VERSION=5.1.0"
+  - 'RAILS_VERSION="~> 3.2.0"'
+  - 'RAILS_VERSION="~> 4.0.0"'
+  - 'RAILS_VERSION="~> 4.1.0"'
+  - 'RAILS_VERSION="~> 4.2.0"'
+  - 'RAILS_VERSION="~> 5.0.0"'
+  - 'RAILS_VERSION="= 5.1.4"'
+  - 'RAILS_VERSION="= 5.1.5"'
+  - 'RAILS_VERSION="~> 5.1.5"'
 install:
   - bundle update
 script: TRAVIS=true bundle exec rake spec
