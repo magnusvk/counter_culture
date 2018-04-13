@@ -1302,7 +1302,7 @@ describe "CounterCulture" do
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(3) }
 
-    SimpleMain.order('random()').limit(A_FEW).update_all simple_dependents_count: 1
+    SimpleMain.order(Arel.sql('random()')).limit(A_FEW).update_all simple_dependents_count: 1
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(3) }
@@ -1320,7 +1320,7 @@ describe "CounterCulture" do
 
     ConditionalMain.find_each { |main| expect(main.conditional_dependents_count).to eq(main.id % 2 == 0 ? 3 : 0) }
 
-    ConditionalMain.order('random()').limit(A_FEW).update_all :conditional_dependents_count => 1
+    ConditionalMain.order(Arel.sql('random()')).limit(A_FEW).update_all :conditional_dependents_count => 1
     ConditionalDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     ConditionalMain.find_each { |main| expect(main.conditional_dependents_count).to eq(main.id % 2 == 0 ? 3 : 0) }
@@ -1338,7 +1338,7 @@ describe "CounterCulture" do
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(main.id % 4) }
 
-    SimpleMain.order('random()').limit(A_FEW).update_all simple_dependents_count: 1
+    SimpleMain.order(Arel.sql('random()')).limit(A_FEW).update_all simple_dependents_count: 1
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(main.id % 4) }
