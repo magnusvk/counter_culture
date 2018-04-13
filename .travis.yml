@@ -11,6 +11,7 @@ env:
   - 'RAILS_VERSION="= 5.1.4"'
   - 'RAILS_VERSION="= 5.1.5"'
   - 'RAILS_VERSION="~> 5.1.5"'
+  - 'RAILS_VERSION="~> 5.2.0"'
 install:
   - bundle update
 script: TRAVIS=true bundle exec rake spec
