@@ -1663,6 +1663,39 @@ describe "CounterCulture" do
       sd.restore
       expect(company.reload.soft_deletes_count).to eq(1)
     end
+
+    it "runs destroy callback only once" do
+      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+      company = Company.create!
+      sd = SoftDelete.create!(company_id: company.id)
+
+      expect(company.reload.soft_deletes_count).to eq(1)
+
+      sd.destroy
+      expect(company.reload.soft_deletes_count).to eq(0)
+
+      sd.destroy
+      expect(company.reload.soft_deletes_count).to eq(0)
+    end
+
+    it "runs restore callback only once" do
+      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+      company = Company.create!
+      sd = SoftDelete.create!(company_id: company.id)
+
+      expect(company.reload.soft_deletes_count).to eq(1)
+
+      sd.destroy
+      expect(company.reload.soft_deletes_count).to eq(0)
+
+      sd.restore
+      expect(company.reload.soft_deletes_count).to eq(1)
+
+      sd.restore
+      expect(company.reload.soft_deletes_count).to eq(1)
+    end
   end
 
   describe "with polymorphic_associations" do
