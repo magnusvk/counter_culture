@@ -1,4 +1,9 @@
-## 1.9.1 (March 1, 2017)
+## 1.9.2 (April 13, 2018)
+
+Bugfixes:
+  - When using paranoia, call increment / decrement only once when calling destroy or restore on the same model multiple times
+
+## 1.9.1 (March 1, 2018)
 
 Bugfixes:
   - Address an edge-case test regression caused by Rails 5.1.5 that was causing counts to be off when saving changes from an `after_create` callback
