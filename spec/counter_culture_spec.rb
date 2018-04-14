@@ -1873,8 +1873,11 @@ describe "CounterCulture" do
 
   describe "with papertrail support", versioning: true do
     it "creates a papertrail version when changed" do
-      if Rails.version > "4.0.0" && Rails.version < "4.1.0"
+      if Rails.version < "5.0.0"
         skip("Unsupported in this version of Rails")
+      end
+      if RUBY_VERSION < "2.3.0" && Rails.version >= "5.2.0"
+        skip("Unsupported in this combination of Ruby and Rails")
       end
 
       user = User.create
@@ -1892,8 +1895,11 @@ describe "CounterCulture" do
     end
 
     it "does not create a papertrail version when papertrail flag not set" do
-      if Rails.version > "4.0.0" && Rails.version < "4.1.0"
+      if Rails.version < "5.0.0"
         skip("Unsupported in this version of Rails")
+      end
+      if RUBY_VERSION < "2.3.0" && Rails.version >= "5.2.0"
+        skip("Unsupported in this combination of Ruby and Rails")
       end
 
       user = User.create

@@ -3,5 +3,7 @@ class Product < ActiveRecord::Base
 
   counter_culture :category, :foreign_key_values => proc {|foreign_key_value| Category.pluck(:id) }
 
-  has_paper_trail
+  if Rails.version >= "5.0.0"
+    has_paper_trail
+  end
 end

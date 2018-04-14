@@ -9,7 +9,9 @@ class User < ActiveRecord::Base
   has_many :reviews
   accepts_nested_attributes_for :reviews, :allow_destroy => true
 
-  has_paper_trail
+  if Rails.version >= "5.0.0"
+    has_paper_trail
+  end
 
   default_scope do
     if _default_scope_enabled

@@ -20,7 +20,7 @@ group :development, :test do
   else
     ENV["RAILS_VERSION"]
   end
-  gem "rails", ENV['RAILS_VERSION']
+  gem "rails", rails
 
   gem "rspec", "~> 3.0"
   gem "awesome_print"
@@ -28,7 +28,11 @@ group :development, :test do
 
   # to test the integration
   gem "paranoia"
-  gem "paper_trail"
+  if RUBY_VERSION < "2.3.0"
+    gem "paper_trail", "< 9.0.0"
+  else
+    gem "paper_trail"
+  end
 end
 
 group :development do

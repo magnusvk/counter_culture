@@ -71,7 +71,7 @@ module CounterCulture
           if @with_papertrail
             instance = klass.where(primary_key => id_to_change).first
             if instance
-              if PaperTrail::VERSION::MAJOR >= 8
+              if PaperTrail::VERSION::MAJOR >= 9
                 instance.touch
               else
                 instance.paper_trail.touch_with_version
