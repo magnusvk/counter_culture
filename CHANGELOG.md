@@ -3,6 +3,15 @@
 Bugfixes:
   - When using paranoia, call increment / decrement only once when calling destroy or restore on the same model multiple times
 
+Improvements:
+  - Address deprecation warning when enabling paper_trail touch in paper_trail version 9.0
+  - Address `Arel` deprecation warnings in Rails 5.2
+
+Changes:
+  - Test against Ruby 2.2 through 2.5, Rails 3.2 through 5.2
+  - Don't test Rails 3.2 through 4.1 against Ruby 2.4 or 2.5 as those versions of Rails will not work with those versions of Ruby
+  - Avoid various deprecation warnings being triggered in the test
+
 ## 1.9.1 (March 1, 2018)
 
 Bugfixes:
