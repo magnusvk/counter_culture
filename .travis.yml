@@ -17,19 +17,21 @@ env:
 matrix:
   exclude:
     - rvm: "2.2.10"
-      env:
-        - 'RAILS_VERSION="= 5.1.4"'
-        - 'RAILS_VERSION="= 5.1.5"'
+      env: 'RAILS_VERSION="= 5.1.4"'
+    - rvm: "2.2.10"
+      env: 'RAILS_VERSION="= 5.1.5"'
     - rvm: "2.4.4"
-      env:
-        - 'RAILS_VERSION="~> 3.2.0"'
-        - 'RAILS_VERSION="~> 4.0.0"'
-        - 'RAILS_VERSION="~> 4.1.0"'
+      env: 'RAILS_VERSION="~> 3.2.0"'
+    - rvm: "2.4.4"
+      env: 'RAILS_VERSION="~> 4.0.0"'
+    - rvm: "2.4.4"
+      env: 'RAILS_VERSION="~> 4.1.0"'
     - rvm: "2.5.1"
-      env:
-        - 'RAILS_VERSION="~> 3.2.0"'
-        - 'RAILS_VERSION="~> 4.0.0"'
-        - 'RAILS_VERSION="~> 4.1.0"'
+      env: - 'RAILS_VERSION="~> 3.2.0"'
+    - rvm: "2.5.1"
+      env: 'RAILS_VERSION="~> 4.0.0"'
+    - rvm: "2.5.1"
+      env: 'RAILS_VERSION="~> 4.1.0"'
 install:
   - bundle update
 script: TRAVIS=true bundle exec rake spec
