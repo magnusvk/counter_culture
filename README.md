@@ -272,6 +272,18 @@ Product.counter_culture_fix_counts batch_size: 100
 
 ```counter_culture_fix_counts``` is optimized to minimize the number of queries and runs very quickly.
 
+Similarly to `counter_culture`, it is possible to update the records' timestamps, when fixing counts. If you would like to update the default timestamp field, pass `touch: true` option:
+
+```ruby
+Product.counter_culture_fix_counts touch: true
+```
+
+If you have specified a custom timestamps column, pass its name as the value for the `touch` option:
+
+```ruby
+Product.counter_culture_fix_counts touch: category_count_changed
+```
+
 #### Handling dynamic column names
 
 Manually populating counter caches with dynamic column names requires additional configuration:

@@ -114,8 +114,20 @@ module CounterCulture
 
             track_change(record, column_name, count)
 
-            # use update_all because it's faster and because a fixed counter-cache shouldn't update the timestamp
-            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(column_name => count)
+            updates = []
+            # this updates the actual counter
+            updates << "#{column_name} = #{count}"
+            # and here we update the timestamp, if so desired
+            if options[:touch]
+              current_time = record.send(:current_time_from_proper_timezone)
+              timestamp_columns = record.send(:timestamp_attributes_for_update_in_model)
+              timestamp_columns << options[:touch] if options[:touch] != true
+              timestamp_columns.each do |timestamp_column|
+                updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
+              end
+            end
+
+            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
           end
         end
       end
