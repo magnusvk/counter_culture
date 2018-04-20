@@ -1,3 +1,8 @@
+## 1.10.1 (April 20, 2018)
+
+Improvements:
+  - Added the ability to update timestamps while fixing count by passing `touch: true` to `counter_culture_fix_counts` (#212)
+
 ## 1.9.2 (April 13, 2018)
 
 Bugfixes:
