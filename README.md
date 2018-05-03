@@ -301,6 +301,14 @@ class Product < ActiveRecord::Base
 end
 ```
 
+If you would like to avoid this configuration and simply skip counter caches with
+dynamic column names, while still fixing those counters on the model that are not
+dynamic, you can pass `skip_unsupported`:
+
+```ruby
+Product.counter_culture_fix_counts skip_unsupported: true
+```
+
 #### Handling over-written, dynamic foreign keys
 
 Manually populating counter caches with dynamically over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
