@@ -315,8 +315,9 @@ Manually populating counter caches with dynamically over-written foreign keys (`
 
 ### Soft-deletes / `paranoia` gem
 
-This gem will keep counters correctly updated when using the `paranoia` gem for
-soft-delete support. However, to ensure that counts are incremented after a
+This gem will keep counters correctly updated when using the
+[`paranoia` gem](https://github.com/rubysherpas/paranoia)
+for soft-delete support. However, to ensure that counts are incremented after a
 restore you have to make sure that the call to `acts_as_paranoid` comes before
 the call to `counter_culture` in your model:
 
@@ -326,6 +327,22 @@ class SoftDelete < ActiveRecord::Base
 
   belongs_to :company
   counter_culture :company
+end
+```
+
+### PaperTrail integration
+
+If you are using the [`paper_trail` gem](https://github.com/airblade/paper_trail)
+and would like new versions to be created when the counter cache columns are
+changed by counter_culture, you can set the `with_papertrail` option:
+
+```ruby
+class Review < ActiveRecord::Base
+  counter_culture :product, with_papertrail: true
+end
+
+class Product < ActiveRecord::Base
+  has_paper_trail
 end
 ```
 
