@@ -71,8 +71,9 @@ module CounterCulture
           if @with_papertrail
             instance = klass.where(primary_key => id_to_change).first
             if instance
-              if PaperTrail::VERSION::MAJOR >= 9
-                instance.touch
+              if instance.paper_trail.respond_to?(:save_with_version)
+                # touch_with_version is deprecated starting in PaperTrail 9.0.0
+                instance.paper_trail.save_with_version(validate: false)
               else
                 instance.paper_trail.touch_with_version
               end

@@ -1,3 +1,8 @@
+## 1.11.0 (May 4, 2018)
+
+Bugfixes:
+  - Fix `with_papertrail` behavior while still addressing the deprecation warning, and actually recording the correct counts (#218, see [airblade/paper_trail#1076](https://github.com/airblade/paper_trail/issues/1076))
+
 ## 1.10.1 (April 20, 2018)
 
 Improvements:

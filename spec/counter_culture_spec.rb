@@ -1949,6 +1949,21 @@ describe "CounterCulture" do
 
       expect(product.reviews_count).to eq(1)
       expect(product.versions.count).to eq(2)
+
+      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      # should be the value before the counter change
+      expect(attrs_from_versions['reviews_count']).to eq(0)
+
+      user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+      product.reload
+
+      expect(product.reviews_count).to eq(2)
+      expect(product.versions.count).to eq(3)
+
+      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      # should be the value before the counter change
+      expect(attrs_from_versions['reviews_count']).to eq(1)
     end
 
     it "does not create a papertrail version when papertrail flag not set" do
