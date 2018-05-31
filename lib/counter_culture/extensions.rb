@@ -19,6 +19,7 @@ module CounterCulture
 
           # initialize callbacks only once
           after_create :_update_counts_after_create
+
           before_destroy :_update_counts_after_destroy, if: -> (model) do
             if model.respond_to?(:paranoia_destroyed?)
               !model.paranoia_destroyed?
@@ -26,10 +27,20 @@ module CounterCulture
               true
             end
           end
+
           after_update :_update_counts_after_update
+
           if respond_to?(:before_restore)
             before_restore :_update_counts_after_create,
               if: -> (model) { model.deleted? }
+          end
+
+          if defined?(Discard::Model) && include?(Discard::Model)
+            before_discard :_update_counts_after_destroy,
+              if: ->(model) { !model.discarded? }
+
+            before_undiscard :_update_counts_after_create,
+              if: ->(model) { model.discarded? }
           end
 
           # we keep a list of all counter caches we must maintain

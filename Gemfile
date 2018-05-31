@@ -27,6 +27,7 @@ group :development, :test do
   gem "timecop"
 
   # to test the integration
+  gem "discard"
   gem "paranoia"
   if RUBY_VERSION < "2.3.0"
     gem "paper_trail", "< 9.0.0"
