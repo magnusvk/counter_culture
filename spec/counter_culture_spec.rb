@@ -1699,7 +1699,7 @@ describe "CounterCulture" do
     end
   end
 
-  describe "when using acts_as_paranoia" do
+  describe "when using paranoia" do
     it "works" do
       skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
       company = Company.create!
