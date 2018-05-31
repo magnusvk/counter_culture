@@ -1,4 +1,4 @@
-class SoftDelete < ActiveRecord::Base
+class SoftDeleteParanoia < ActiveRecord::Base
   acts_as_paranoid
 
   belongs_to :company

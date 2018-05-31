@@ -21,7 +21,7 @@ require 'models/another_post'
 require 'models/another_post_comment'
 require 'models/person'
 require 'models/transaction'
-require 'models/soft_delete'
+require 'models/soft_delete_paranoia'
 require 'models/conversation'
 require 'models/candidate_profile'
 require 'models/candidate'
@@ -1703,55 +1703,55 @@ describe "CounterCulture" do
     it "works" do
       skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
       company = Company.create!
-      expect(company.soft_deletes_count).to eq(0)
-      sd = SoftDelete.create!(company_id: company.id)
-      expect(company.reload.soft_deletes_count).to eq(1)
+      expect(company.soft_delete_paranoia_count).to eq(0)
+      sd = SoftDeleteParanoia.create!(company_id: company.id)
+      expect(company.reload.soft_delete_paranoia_count).to eq(1)
 
       sd.destroy
       sd.reload
       expect(sd.deleted_at).to be_truthy
-      expect(company.reload.soft_deletes_count).to eq(0)
+      expect(company.reload.soft_delete_paranoia_count).to eq(0)
 
-      company.update_attributes(soft_deletes_count: 100)
-      expect(company.reload.soft_deletes_count).to eq(100)
-      SoftDelete.counter_culture_fix_counts
-      expect(company.reload.soft_deletes_count).to eq(0)
+      company.update_attributes(soft_delete_paranoia_count: 100)
+      expect(company.reload.soft_delete_paranoia_count).to eq(100)
+      SoftDeleteParanoia.counter_culture_fix_counts
+      expect(company.reload.soft_delete_paranoia_count).to eq(0)
 
       sd.restore
-      expect(company.reload.soft_deletes_count).to eq(1)
+      expect(company.reload.soft_delete_paranoia_count).to eq(1)
     end
 
     it "runs destroy callback only once" do
       skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
 
       company = Company.create!
-      sd = SoftDelete.create!(company_id: company.id)
+      sd = SoftDeleteParanoia.create!(company_id: company.id)
 
-      expect(company.reload.soft_deletes_count).to eq(1)
-
-      sd.destroy
-      expect(company.reload.soft_deletes_count).to eq(0)
+      expect(company.reload.soft_delete_paranoia_count).to eq(1)
 
       sd.destroy
-      expect(company.reload.soft_deletes_count).to eq(0)
+      expect(company.reload.soft_delete_paranoia_count).to eq(0)
+
+      sd.destroy
+      expect(company.reload.soft_delete_paranoia_count).to eq(0)
     end
 
     it "runs restore callback only once" do
       skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
 
       company = Company.create!
-      sd = SoftDelete.create!(company_id: company.id)
+      sd = SoftDeleteParanoia.create!(company_id: company.id)
 
-      expect(company.reload.soft_deletes_count).to eq(1)
+      expect(company.reload.soft_delete_paranoia_count).to eq(1)
 
       sd.destroy
-      expect(company.reload.soft_deletes_count).to eq(0)
+      expect(company.reload.soft_delete_paranoia_count).to eq(0)
 
       sd.restore
-      expect(company.reload.soft_deletes_count).to eq(1)
+      expect(company.reload.soft_delete_paranoia_count).to eq(1)
 
       sd.restore
-      expect(company.reload.soft_deletes_count).to eq(1)
+      expect(company.reload.soft_delete_paranoia_count).to eq(1)
     end
   end
 
