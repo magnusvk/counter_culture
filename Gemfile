@@ -26,9 +26,18 @@ group :development, :test do
   gem "awesome_print"
   gem "timecop"
 
-  # to test the integration
-  gem "discard"
-  gem "paranoia"
+  # To test integrations
+
+  # Both the paranoia and discard integrations require Rails > 4.2
+  # Actually parsing the resolved rails version is complicated, so
+  # we're basing this on the incompatible Rails version strings from
+  # .travis.yml
+
+  unless ['~> 3.2.0', '~> 4.0.0', '~> 4.1.0'].include?(rails)
+    gem "discard"
+    gem "paranoia"
+  end
+
   if RUBY_VERSION < "2.3.0"
     gem "paper_trail", "< 9.0.0"
   else
