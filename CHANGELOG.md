@@ -1,3 +1,8 @@
+## 1.12.0 (June 8, 2018)
+
+Improvements:
+  - Adds support for the [Discard](https://github.com/jhawthorn/discard) soft-delete gem (#220)
+
 ## 1.11.0 (May 4, 2018)
 
 Bugfixes:
