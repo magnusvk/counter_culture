@@ -313,17 +313,31 @@ Product.counter_culture_fix_counts skip_unsupported: true
 
 Manually populating counter caches with dynamically over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.
 
-### Soft-deletes / `paranoia` gem
+### Soft-deletes with `paranoia` or `discard`
 
-This gem will keep counters correctly updated when using the
-[`paranoia` gem](https://github.com/rubysherpas/paranoia)
-for soft-delete support. However, to ensure that counts are incremented after a
-restore you have to make sure that the call to `acts_as_paranoid` comes before
-the call to `counter_culture` in your model:
+This gem will keep counters correctly updated in Rails 4.2 or later when using
+[paranoia](https://github.com/rubysherpas/paranoia) or
+[discard](https://github.com/jhawthorn/discard) for soft-delete support.
+However, to ensure that counts are incremented after a restore you have
+to make sure that the to set up soft deletion (via `acts_as_paranoid` or
+`include Discard::Model`) before the call to `counter_culture` in your model:
+
+#### Paranoia
 
 ```ruby
 class SoftDelete < ActiveRecord::Base
   acts_as_paranoid
+
+  belongs_to :company
+  counter_culture :company
+end
+```
+
+#### Discard
+
+```ruby
+class SoftDelete < ActiveRecord::Base
+  include Discard::Model
 
   belongs_to :company
   counter_culture :company

@@ -226,6 +226,14 @@ module CounterCulture
             if model.column_names.include?('deleted_at')
               joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
             end
+
+            # respect the discard column if it exists
+            if defined?(Discard::Model) &&
+               model.include?(Discard::Model) &&
+               model.column_names.include?(model.discard_column.to_s)
+
+              joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
+            end
           end
           joins_sql
         end
