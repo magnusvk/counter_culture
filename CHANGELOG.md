@@ -1,3 +1,11 @@
+## 1.13.0 (June 12, 2018)
+
+Bugfixes:
+  - Multiple updates in one transaction will now be processed correctly (#222)
+
+Deprecations:
+  - execute_after_commit is now deprecated and will be removed in gem version 2.0
+
 ## 1.12.0 (June 8, 2018)
 
 Improvements:
