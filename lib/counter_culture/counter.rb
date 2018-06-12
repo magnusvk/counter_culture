@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude]
     ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
@@ -9,13 +9,16 @@ module CounterCulture
       @model = model
       @relation = relation.is_a?(Enumerable) ? relation : [relation]
 
+      if options.fetch(:execute_after_commit, false)
+        fail("execute_after_commit was removed; updates now run within the transaction")
+      end
+
       @counter_cache_name = options.fetch(:column_name, "#{model.name.tableize}_count")
       @column_names = options[:column_names]
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
-      @execute_after_commit = options.fetch(:execute_after_commit, false)
       @with_papertrail = options.fetch(:with_papertrail, false)
     end
 
@@ -29,7 +32,6 @@ module CounterCulture
     #   :delta_column => override the default count delta (1) with the value of this column in the counted record
     #   :was => whether to get the current value or the old value of the
     #      first part of the relation
-    #   :execute_after_commit => execute the column update outside of the transaction to avoid deadlocks
     #   :with_papertrail => update the column via Papertrail touch_with_version method
     def change_counter_cache(obj, options)
       change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
@@ -45,43 +47,41 @@ module CounterCulture
                           else
                             counter_delta_magnitude_for(obj)
                           end
-        execute_change_counter_cache(obj, options) do
-          # increment or decrement?
-          operator = options[:increment] ? '+' : '-'
+        # increment or decrement?
+        operator = options[:increment] ? '+' : '-'
 
-          # we don't use Rails' update_counters because we support changing the timestamp
-          quoted_column = model.connection.quote_column_name(change_counter_column)
+        # we don't use Rails' update_counters because we support changing the timestamp
+        quoted_column = model.connection.quote_column_name(change_counter_column)
 
-          updates = []
-          # this updates the actual counter
-          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
-          # and here we update the timestamp, if so desired
-          if touch
-            current_time = obj.send(:current_time_from_proper_timezone)
-            timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
-            timestamp_columns << touch if touch != true
-            timestamp_columns.each do |timestamp_column|
-              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
-            end
+        updates = []
+        # this updates the actual counter
+        updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+        # and here we update the timestamp, if so desired
+        if touch
+          current_time = obj.send(:current_time_from_proper_timezone)
+          timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
+          timestamp_columns << touch if touch != true
+          timestamp_columns.each do |timestamp_column|
+            updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
           end
-
-          klass = relation_klass(relation, source: obj, was: options[:was])
-          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
-
-          if @with_papertrail
-            instance = klass.where(primary_key => id_to_change).first
-            if instance
-              if instance.paper_trail.respond_to?(:save_with_version)
-                # touch_with_version is deprecated starting in PaperTrail 9.0.0
-                instance.paper_trail.save_with_version(validate: false)
-              else
-                instance.paper_trail.touch_with_version
-              end
-            end
-          end
-
-          klass.where(primary_key => id_to_change).update_all updates.join(', ')
         end
+
+        klass = relation_klass(relation, source: obj, was: options[:was])
+        primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+
+        if @with_papertrail
+          instance = klass.where(primary_key => id_to_change).first
+          if instance
+            if instance.paper_trail.respond_to?(:save_with_version)
+              # touch_with_version is deprecated starting in PaperTrail 9.0.0
+              instance.paper_trail.save_with_version(validate: false)
+            else
+              instance.paper_trail.touch_with_version
+            end
+          end
+        end
+
+        klass.where(primary_key => id_to_change).update_all updates.join(', ')
       end
     end
 
@@ -278,14 +278,6 @@ module CounterCulture
     end
 
     private
-    def execute_change_counter_cache(obj, options)
-      if execute_after_commit
-        obj.execute_after_commit { yield }
-      else
-        yield
-      end
-    end
-
     def attribute_was(obj, attr)
       changes_method =
         if ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0")

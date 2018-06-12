@@ -20,6 +20,7 @@ class Review < ActiveRecord::Base
   after_create :update_some_text
 
   def update_some_text
+    return unless Gem::Version.new(Rails.version) >= Gem::Version.new('5.1.5')
     update_attribute(:some_text, rand(36**12).to_s(36))
   end
 

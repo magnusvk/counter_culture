@@ -51,12 +51,6 @@ module CounterCulture
           raise ":column_names must be a Hash of conditions and column names"
         end
 
-        if options[:execute_after_commit]
-           ActiveSupport::Deprecation.warn(
-             'execute_after_commit is deprecated and will be removed from '\
-             'counter_culture 2.0')
-        end
-
         # add the counter to our collection
         @after_commit_counter_cache << Counter.new(self, relation, options)
       end
