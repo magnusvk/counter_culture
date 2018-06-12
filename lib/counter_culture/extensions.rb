@@ -97,7 +97,6 @@ module CounterCulture
     private
     # called by after_create callback
     def _update_counts_after_create
-      @_counter_culture_active = true
       self.class.after_commit_counter_cache.each do |counter|
         # increment counter cache
         counter.change_counter_cache(self, :increment => true)
@@ -106,7 +105,6 @@ module CounterCulture
 
     # called by after_destroy callback
     def _update_counts_after_destroy
-      @_counter_culture_active = true
       self.class.after_commit_counter_cache.each do |counter|
         # decrement counter cache
         counter.change_counter_cache(self, :increment => false)
@@ -124,8 +122,6 @@ module CounterCulture
         if counter.first_level_relation_changed?(self) ||
             (counter.delta_column && counter.attribute_changed?(self, counter.delta_column)) ||
             counter_cache_name != counter_cache_name_was
-
-          @_counter_culture_active = true
 
           # increment the counter cache of the new value
           counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)
