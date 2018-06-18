@@ -216,16 +216,6 @@ You may also specify a custom timestamp column that gets updated only when a par
 
 With this option, any time the `category_counter_cache` changes both the `category_count_changed` and `updated_at` columns will get updated.
 
-### Executing counter cache updates after commit
-
-By default, counter_culture will run counter cache updates inside of the same ActiveRecord transaction that triggered it. (Note that this bevavior [changed from version 0.2.3 to 1.0.0](CHANGELOG.md#100-november-15-2016).) If you would like to run counter cache updates outside of that transaction, for example because you are experiencing [deadlocks with older versions of PostgreSQL](http://mina.naguib.ca/blog/2010/11/22/postgresql-foreign-key-deadlocks.html), you can enable that behavior:
-```ruby
-  counter_culture :category, execute_after_commit: true
-```
-
-Please note that using `execute_after_commit` in conjunction with transactional
-fixtures will lead to your tests no longer seeing updated counter values.
-
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.

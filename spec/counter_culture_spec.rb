@@ -148,6 +148,34 @@ describe "CounterCulture" do
     expect(user2.reload.review_approvals_count).to eq(69)
   end
 
+  it "works with multiple saves in one transcation" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    Review.transaction do
+      review1 = Review.create!(user_id: user.id, product_id: product.id, approvals: 0)
+
+      user.reload
+      expect(user.reviews_count).to eq(1)
+      expect(user.review_approvals_count).to eq(0)
+
+      review1.update_attributes!(approvals: 42)
+
+      user.reload
+      expect(user.reviews_count).to eq(1)
+      expect(user.review_approvals_count).to eq(42)
+
+      review2 = Review.create!(user_id: user.id, product_id: product.id, approvals: 1)
+
+      user.reload
+      expect(user.reviews_count).to eq(2)
+      expect(user.review_approvals_count).to eq(43)
+    end
+  end
+
   it "treats null delta column values as 0" do
     user = User.create
     product = Product.create

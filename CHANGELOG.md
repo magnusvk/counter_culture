@@ -1,3 +1,15 @@
+## 2.0.0 (June 12, 2018)
+
+Breaking changes:
+  - execute_after_commit was removed
+  - Removed workaround for incorrect counts when triggering updates from an `after_create` hook. Your options if this applies to you:
+    * continue using counter_culture 1.12.0
+    * upgrade to Rails 5.1.5 which fixes the underlying issue in Rails
+    * avoid triggering further updates on the same model in `after_create`; simply set the attribute in `before_create` instead
+
+Bugfixes:
+  - Multiple updates in one transaction will now be processed correctly (#222)
+
 ## 1.12.0 (June 8, 2018)
 
 Improvements:
