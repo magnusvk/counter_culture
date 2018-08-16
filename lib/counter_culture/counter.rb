@@ -74,6 +74,13 @@ module CounterCulture
           if instance
             if instance.paper_trail.respond_to?(:save_with_version)
               # touch_with_version is deprecated starting in PaperTrail 9.0.0
+
+              current_time = obj.send(:current_time_from_proper_timezone)
+              timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
+              timestamp_columns.each do |timestamp_column|
+                instance.send("#{timestamp_column}=", current_time)
+              end
+
               instance.paper_trail.save_with_version(validate: false)
             else
               instance.paper_trail.touch_with_version
