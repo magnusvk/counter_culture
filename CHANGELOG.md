@@ -1,3 +1,8 @@
+## 2.0.1 (August 19, 2018)
+
+Bugfixes:
+  - Properly set timestamps of PaperTrail versions (#224, #225, #226)
+
 ## 2.0.0 (June 12, 2018)
 
 Breaking changes:
