@@ -2015,10 +2015,7 @@ describe "CounterCulture" do
 
   describe "with papertrail support", versioning: true do
     it "creates a papertrail version when changed" do
-      if Rails.version < "5.0.0"
-        skip("Unsupported in this version of Rails")
-      end
-      if RUBY_VERSION < "2.3.0" && Rails.version >= "5.2.0"
+      unless papertrail_supported_here?
         skip("Unsupported in this combination of Ruby and Rails")
       end
 
@@ -2055,6 +2052,10 @@ describe "CounterCulture" do
       let!(:main_obj) { SimpleMain.create(created_at: 1.day.ago, updated_at: 1.day.ago) }
 
       it "updates the updated_at of the parent variant" do
+        unless papertrail_supported_here?
+          skip("Unsupported in this combination of Ruby and Rails")
+        end
+
         the_time = Time.now.utc
         Timecop.freeze(the_time) do
           main_obj.simple_dependents.create!
@@ -2063,20 +2064,20 @@ describe "CounterCulture" do
       end
 
       it "sets the created_at time of the new version row to the current time" do
+        unless papertrail_supported_here?
+          skip("Unsupported in this combination of Ruby and Rails")
+        end
+
         the_time = Time.now.utc
         Timecop.freeze(the_time) do
           main_obj.simple_dependents.create!
           expect(main_obj.versions.last.created_at.to_i).to eq(the_time.to_i)
         end
       end
-
     end
 
     it "does not create a papertrail version when papertrail flag not set" do
-      if Rails.version < "5.0.0"
-        skip("Unsupported in this version of Rails")
-      end
-      if RUBY_VERSION < "2.3.0" && Rails.version >= "5.2.0"
+      unless papertrail_supported_here?
         skip("Unsupported in this combination of Ruby and Rails")
       end
 
@@ -2093,5 +2094,12 @@ describe "CounterCulture" do
       expect(user.reviews_count).to eq(1)
       expect(user.versions.count).to eq(1)
     end
+  end
+
+  private
+  def papertrail_supported_here?
+    return false if Rails.version < "5.0.0"
+    return false if RUBY_VERSION < "2.3.0" && Rails.version >= "5.2.0"
+    true
   end
 end
