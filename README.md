@@ -7,7 +7,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Can keep a running count, or a running total
 
-Tested against Ruby 2.2.5 and 2.3.1 and against the latest patch releases of Rails 3.2, 4.0, 4.1, 4.2, 5.0 and 5.1.
+Tested against Ruby 2.2.10, 2.3.7, 2.4.4 and 2.5.1 and against the latest patch releases of Rails 3.2, 4.0, 4.1, 4.2, 5.0, 5.1 and 5.2.
 
 ## Installation
 
