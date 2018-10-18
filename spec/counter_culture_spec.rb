@@ -2106,7 +2106,7 @@ describe "CounterCulture" do
       model2.reload
       expect(model2.model1s_count).to eq(5)
 
-      model2.update_columns(model1s_count: -1)
+      model2.update_column(:model1s_count, -1)
 
       WithModule::Model1.counter_culture_fix_counts
 
