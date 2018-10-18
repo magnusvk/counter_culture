@@ -13,7 +13,7 @@ module CounterCulture
         fail("execute_after_commit was removed; updates now run within the transaction")
       end
 
-      @counter_cache_name = options.fetch(:column_name, "#{model.name.tableize}_count")
+      @counter_cache_name = options.fetch(:column_name, "#{model.name.demodulize.tableize}_count")
       @column_names = options[:column_names]
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]

@@ -232,10 +232,10 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   add_index :versions, [:item_id, :item_type]
 
   create_table :with_module_model1s, :force => true do |t|
-    t.integer :with_module_model1_id
+    t.integer :model2_id
   end
 
   create_table :with_module_model2s, :force => true do |t|
-    t.integer :with_module_model2_count
+    t.integer :model1s_count
   end
 end
