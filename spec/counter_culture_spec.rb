@@ -26,6 +26,8 @@ require 'models/soft_delete_paranoia'
 require 'models/conversation'
 require 'models/candidate_profile'
 require 'models/candidate'
+require 'models/with_module/model1'
+require 'models/with_module/model2'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -2093,6 +2095,23 @@ describe "CounterCulture" do
 
       expect(user.reviews_count).to eq(1)
       expect(user.versions.count).to eq(1)
+    end
+  end
+
+  describe "with a module for the model" do
+    it "works" do
+      model2 = WithModule::Model2.create!
+      5.times { WithModule::Model1.create!(model2: model2) }
+
+      model2.reload
+      expect(model2.model1s_count).to eq(5)
+
+      model2.update_column(:model1s_count, -1)
+
+      WithModule::Model1.counter_culture_fix_counts
+
+      model2.reload
+      expect(model2.model1s_count).to eq(5)
     end
   end
 
