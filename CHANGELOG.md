@@ -1,3 +1,8 @@
+## 2.1.0 (October 19, 2018)
+
+Bugfixes:
+  - Better guess counter cache names for models with a module namespace (#234)
+
 ## 2.0.1 (August 19, 2018)
 
 Bugfixes:
