@@ -1,3 +1,8 @@
+## 2.1.0 (October 19, 2018)
+
+Bugfixes:
+  - Fix behavior with Models that are part of a module (ex: `Users::Admin`) (#234)
+
 ## 2.0.1 (August 19, 2018)
 
 Bugfixes:
