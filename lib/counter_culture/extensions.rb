@@ -23,6 +23,8 @@ module CounterCulture
           before_destroy :_update_counts_after_destroy, if: -> (model) do
             if model.respond_to?(:paranoia_destroyed?)
               !model.paranoia_destroyed?
+            elsif defined?(Discard::Model) && model.class.include?(Discard::Model)
+              !model.discarded?
             else
               true
             end

@@ -1784,6 +1784,35 @@ describe "CounterCulture" do
       sd.undiscard
       expect(company.reload.soft_delete_discards_count).to eq(1)
     end
+
+    describe "when calling hard-destroy" do
+      it "does not run destroy callback for discarded records" do
+        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+        company = Company.create!
+        sd = SoftDeleteDiscard.create!(company_id: company.id)
+
+        expect(company.reload.soft_delete_discards_count).to eq(1)
+
+        sd.discard
+        expect(company.reload.soft_delete_discards_count).to eq(0)
+
+        sd.destroy
+        expect(company.reload.soft_delete_discards_count).to eq(0)
+      end
+
+      it "runs destroy callback for undiscarded records" do
+        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+        company = Company.create!
+        sd = SoftDeleteDiscard.create!(company_id: company.id)
+
+        expect(company.reload.soft_delete_discards_count).to eq(1)
+
+        sd.destroy
+        expect(company.reload.soft_delete_discards_count).to eq(0)
+      end
+    end
   end
 
   describe "when using paranoia for soft deletes" do
