@@ -1,3 +1,8 @@
+## 2.1.1 (November 7, 2018)
+
+Bugfixes:
+  - Don't double-decrement when discarding and then hard-destroying a record (#237)
+
 ## 2.1.0 (October 19, 2018)
 
 Bugfixes:
