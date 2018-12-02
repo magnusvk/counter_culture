@@ -1869,6 +1869,35 @@ describe "CounterCulture" do
       sd.restore
       expect(company.reload.soft_delete_paranoia_count).to eq(1)
     end
+
+    describe "when calling paranoia really destroy" do
+      it "does not run destroy callback for paranoia destroyed records" do
+        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+        company = Company.create!
+        sd = SoftDeleteParanoia.create!(company_id: company.id)
+
+        expect(company.reload.soft_delete_paranoia_count).to eq(1)
+
+        sd.destroy
+        expect(company.reload.soft_delete_paranoia_count).to eq(0)
+
+        sd.really_destroy!
+        expect(company.reload.soft_delete_paranoia_count).to eq(0)
+      end
+
+      it "runs really destroy callback for paranoia undestroyed records" do
+        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+        company = Company.create!
+        expect(company.soft_delete_paranoia_count).to eq(0)
+        sd = SoftDeleteParanoia.create!(company_id: company.id)
+        expect(company.reload.soft_delete_paranoia_count).to eq(1)
+
+        sd.really_destroy!
+        expect{ sd.reload }.to raise_error(ActiveRecord::RecordNotFound)
+        expect(company.reload.soft_delete_paranoia_count).to eq(0)
+      end
+    end
   end
 
   describe "with polymorphic_associations" do
