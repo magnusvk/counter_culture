@@ -30,6 +30,11 @@ module CounterCulture
             end
           end
 
+          if respond_to?(:before_real_destroy)
+            before_real_destroy :_update_counts_after_destroy,
+              if: -> (model) { !model.paranoia_destroyed? }
+          end
+
           after_update :_update_counts_after_update
 
           if respond_to?(:before_restore)
