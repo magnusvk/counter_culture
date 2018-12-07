@@ -1,3 +1,8 @@
+## 2.1.2 (December 7, 2018)
+
+Bugfixes:
+  - Properly handle `destroy` and `really_destroy` when using Paranoia (#239)
+
 ## 2.1.1 (November 7, 2018)
 
 Bugfixes:
