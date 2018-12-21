@@ -1,58 +1,33 @@
-source "https://rubygems.org"
-# Add dependencies required to use your gem here.
-# Example:
-#   gem "activesupport", ">= 2.3.5"
+source 'https://rubygems.org'
 
-gem "after_commit_action", "~> 1.0"
-gem "activerecord", ">= 3.0.0"
-gem "activesupport", ">= 3.0.0"
+git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
+
+# Specify your gem's dependencies in counter_culture.gemspec
+gemspec
+
+rails_version = ENV['RAILS_VERSION'].to_s
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
 group :development, :test do
-  gem "rake"
-
-  rails = case ENV["RAILS_VERSION"]
-  when "master"
-    { github: "rails/rails" }
-  when nil, ""
-    ">= 3.1.0"
-  else
-    ENV["RAILS_VERSION"]
+  if rails_version == 'master'
+    gem 'rails', github: 'rails/rails'
+  elsif rails_version != ''
+    gem 'rails', rails_version
   end
-  gem "rails", rails
-
-  gem "rspec", "~> 3.0"
-  gem "awesome_print"
-  gem "timecop"
-
-  # To test integrations
 
   # Both the paranoia and discard integrations require Rails > 4.2
   # Actually parsing the resolved rails version is complicated, so
   # we're basing this on the incompatible Rails version strings from
   # .travis.yml
-
-  unless ['~> 3.2.0', '~> 4.0.0', '~> 4.1.0'].include?(rails)
-    gem "discard"
-    gem "paranoia"
+  unless ['~> 3.2.0', '~> 4.0.0', '~> 4.1.0'].include?(rails_version)
+    gem 'discard'
+    gem 'paranoia'
   end
 
-  if RUBY_VERSION < "2.3.0"
-    gem "paper_trail", "< 9.0.0"
+  if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.3.0')
+    gem 'paper_trail', '< 9.0.0'
   else
-    gem "paper_trail"
+    gem 'paper_trail'
   end
-end
-
-group :development do
-  gem "rdoc", "~> 3.12"
-  gem "bundler", ">= 1.2.0"
-  gem "jeweler", "~> 2.1"
-end
-
-group :test do
-  gem "sqlite3"
-  gem "rspec-extra-formatters"
-  gem "database_cleaner", ">= 1.1.1"
 end

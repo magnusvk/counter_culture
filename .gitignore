@@ -1,19 +1,14 @@
-# rcov generated
-coverage
-coverage.data
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
 
-# rdoc generated
-rdoc
-
-# yard generated
-doc
-.yardoc
-
-# bundler
-.bundle
-
-# jeweler generated
-pkg
+# rspec failure tracking
+.rspec_status
 
 # this changes all the time when we change multiple Rails versions
 Gemfile.lock
@@ -22,7 +17,7 @@ Gemfile.lock
 .ruby-version
 .ruby-gemset
 
-# Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore: 
+# Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore:
 #
 # * Create a file at ~/.gitignore
 # * Include files you want ignored

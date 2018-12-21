@@ -1,5 +1,3 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-
 require 'models/company'
 require 'models/industry'
 require 'models/product'
@@ -29,12 +27,13 @@ require 'models/candidate'
 require 'models/with_module/model1'
 require 'models/with_module/model2'
 
-require 'database_cleaner'
-DatabaseCleaner.strategy = :deletion
-
-describe "CounterCulture" do
+RSpec.describe "CounterCulture" do
   before(:each) do
     DatabaseCleaner.clean
+  end
+
+  it "has a version number" do
+    expect(CounterCulture::VERSION).not_to be nil
   end
 
   it "should use relation foreign_key correctly" do
