@@ -107,7 +107,7 @@ module CounterCulture
       private
 
       def update_count_for_batch(column_name, records)
-        ActiveRecord::Base.transaction do
+        ::ActiveRecord::Base.transaction do
           records.each do |record|
             count = record.read_attribute('count') || 0
             next if record.read_attribute(column_name) == count
