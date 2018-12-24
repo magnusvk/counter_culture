@@ -1,6 +1,6 @@
 require 'rails/generators/active_record'
 
-class CounterCultureGenerator < ActiveRecord::Generators::Base
+class CounterCultureGenerator < ::ActiveRecord::Generators::Base
 
   desc "Create a migration that adds counter-cache columns to a model"
 

@@ -1958,6 +1958,30 @@ describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(2)
       end
 
+      it "#size should use cache counter (NON POLY)" do
+        company = Company.create!
+        Company.where(id: company.id).update_all(children_count: 99)
+        company.reload
+
+        expect(company.children_count).to eq(99)
+        expect(company.children.size).to  eq(99)
+      end
+
+      it "#size should use cache counter column (like in ActiveRecord)" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+
+        mess_up_counts
+
+        expect(product2.reload.poly_images_count).to eq(0)
+        expect(product1.reload.poly_images_count).to eq(100)
+        expect(employee.reload.poly_images_count).to eq(100)
+
+        expect(product2.reload.poly_images.size).to eq(0)
+        expect(product1.reload.poly_images.size).to eq(100)
+        expect(employee.reload.poly_images.size).to eq(100)
+      end
+
       it "can handle nil values" do
         img = PolyImage.create(imageable: employee)
         PolyImage.create(imageable: nil)
