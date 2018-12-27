@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :condition ]
     ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
@@ -20,6 +20,7 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @with_papertrail = options.fetch(:with_papertrail, false)
+      @condition = options.fetch(:if) { proc { true } }
     end
 
     # increments or decrements a counter cache
@@ -34,6 +35,8 @@ module CounterCulture
     #      first part of the relation
     #   :with_papertrail => update the column via Papertrail touch_with_version method
     def change_counter_cache(obj, options)
+      return unless condition.call(obj)
+
       change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
 
       # default to the current foreign key value
