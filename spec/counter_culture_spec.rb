@@ -1813,6 +1813,39 @@ describe "CounterCulture" do
         expect(company.reload.soft_delete_discards_count).to eq(0)
       end
     end
+
+    describe "dynamic column names with totaling instead of counting" do
+      describe 'when updating discarded records' do
+        it 'does not update sum' do
+          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+          company = Company.create!
+          sd = SoftDeleteDiscard.create!(company_id: company.id, value: 5)
+
+          expect(company.reload.soft_delete_discard_values_sum).to eq(5)
+
+          sd.discard
+          expect(company.reload.soft_delete_discard_values_sum).to eq(0)
+
+          sd.update value: 10
+          expect(company.reload.soft_delete_discard_values_sum).to eq(0)
+        end
+      end
+
+      describe 'when updating undiscarded records' do
+        it 'updates sum' do
+          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+          company = Company.create!
+          sd = SoftDeleteDiscard.create!(company_id: company.id, value: 5)
+
+          expect(company.reload.soft_delete_discard_values_sum).to eq(5)
+
+          sd.update value: 10
+          expect(company.reload.soft_delete_discard_values_sum).to eq(10)
+        end
+      end
+    end
   end
 
   describe "when using paranoia for soft deletes" do
