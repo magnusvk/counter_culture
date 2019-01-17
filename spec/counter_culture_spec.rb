@@ -1931,6 +1931,39 @@ describe "CounterCulture" do
         expect(company.reload.soft_delete_paranoia_count).to eq(0)
       end
     end
+
+    describe "dynamic column names with totaling instead of counting" do
+      describe 'when updating soft deleted records' do
+        it 'does not update sum' do
+          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+          company = Company.create!
+          sd = SoftDeleteParanoia.create!(company_id: company.id, value: 5)
+
+          expect(company.reload.soft_delete_paranoia_values_sum).to eq(5)
+
+          sd.destroy
+          expect(company.reload.soft_delete_paranoia_values_sum).to eq(0)
+
+          sd.update value: 10
+          expect(company.reload.soft_delete_paranoia_values_sum).to eq(0)
+        end
+      end
+
+      describe 'when updating undestroyed records' do
+        it 'updates sum' do
+          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
+
+          company = Company.create!
+          sd = SoftDeleteParanoia.create!(company_id: company.id, value: 5)
+
+          expect(company.reload.soft_delete_paranoia_values_sum).to eq(5)
+
+          sd.update value: 10
+          expect(company.reload.soft_delete_paranoia_values_sum).to eq(10)
+        end
+      end
+    end
   end
 
   describe "with polymorphic_associations" do

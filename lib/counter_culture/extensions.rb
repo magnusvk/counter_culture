@@ -37,7 +37,9 @@ module CounterCulture
           end
 
           after_update :_update_counts_after_update, if: -> (model) do
-            if defined?(Discard::Model) && model.class.include?(Discard::Model)
+            if model.respond_to?(:paranoia_destroyed?)
+              !model.paranoia_destroyed?
+            elsif defined?(Discard::Model) && model.class.include?(Discard::Model)
               !model.discarded?
             else
               true
