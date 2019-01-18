@@ -32,6 +32,9 @@ matrix:
     env: 'RAILS_VERSION="~> 4.0.0"'
   - rvm: "2.5.1"
     env: 'RAILS_VERSION="~> 4.1.0"'
+before_install:
+  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
+  - gem install bundler -v '< 2'
 install:
   - bundle update
 script: TRAVIS=true bundle exec rake spec
