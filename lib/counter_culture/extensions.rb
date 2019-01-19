@@ -20,15 +20,7 @@ module CounterCulture
           # initialize callbacks only once
           after_create :_update_counts_after_create
 
-          before_destroy :_update_counts_after_destroy, if: -> (model) do
-            if model.respond_to?(:paranoia_destroyed?)
-              !model.paranoia_destroyed?
-            elsif defined?(Discard::Model) && model.class.include?(Discard::Model)
-              !model.discarded?
-            else
-              true
-            end
-          end
+          before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
 
           if respond_to?(:before_real_destroy) &&
               new.respond_to?(:paranoia_destroyed?)
@@ -36,15 +28,7 @@ module CounterCulture
               if: -> (model) { !model.paranoia_destroyed? }
           end
 
-          after_update :_update_counts_after_update, if: -> (model) do
-            if model.respond_to?(:paranoia_destroyed?)
-              !model.paranoia_destroyed?
-            elsif defined?(Discard::Model) && model.class.include?(Discard::Model)
-              !model.discarded?
-            else
-              true
-            end
-          end
+          after_update :_update_counts_after_update, unless: :destroyed_for_counter_culture?
 
           if respond_to?(:before_restore)
             before_restore :_update_counts_after_create,
@@ -138,6 +122,17 @@ module CounterCulture
           # decrement the counter cache of the old value
           counter.change_counter_cache(self, :increment => false, :was => true, :counter_column => counter_cache_name_was)
         end
+      end
+    end
+
+    # check if record is soft-deleted
+    def destroyed_for_counter_culture?
+      if respond_to?(:paranoia_destroyed?)
+        paranoia_destroyed?
+      elsif defined?(Discard::Model) && self.class.include?(Discard::Model)
+        discarded?
+      else
+        false
       end
     end
 
