@@ -25,7 +25,9 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "parent_id"
     t.integer  "children_count",      :default => 0, :null => false
     t.integer  "soft_delete_paranoia_count",  :default => 0, :null => false
+    t.integer  "soft_delete_paranoia_values_sum", :default => 0, :null => false
     t.integer  "soft_delete_discards_count",  :default => 0, :null => false
+    t.integer  "soft_delete_discard_values_sum", :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -179,11 +181,13 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
 
   create_table "soft_delete_paranoia", :force => true do |t|
     t.integer "company_id", :null => false
+    t.integer "value", :default => 0
     t.timestamp "deleted_at"
   end
 
   create_table "soft_delete_discards", :force => true do |t|
     t.integer "company_id", :null => false
+    t.integer "value", :default => 0
     t.timestamp "discarded_at"
   end
 

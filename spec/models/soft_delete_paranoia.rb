@@ -3,4 +3,5 @@ class SoftDeleteParanoia < ActiveRecord::Base
 
   belongs_to :company
   counter_culture :company
+  counter_culture :company, column_name: 'soft_delete_paranoia_values_sum', delta_column: 'value'
 end
