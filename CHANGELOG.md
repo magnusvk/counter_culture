@@ -1,3 +1,8 @@
+## 2.1.3 (January 19, 2019)
+
+Bugfixes:
+  - Don't update running total on soft-deleted records (#244)
+
 ## 2.1.2 (December 7, 2018)
 
 Bugfixes:
