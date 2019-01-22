@@ -23,7 +23,7 @@ module CounterCulture
           before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
 
           if respond_to?(:before_real_destroy) &&
-              new.respond_to?(:paranoia_destroyed?)
+              instance_methods.include?(:paranoia_destroyed?)
             before_real_destroy :_update_counts_after_destroy,
               if: -> (model) { !model.paranoia_destroyed? }
           end
