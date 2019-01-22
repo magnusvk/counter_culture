@@ -1,3 +1,8 @@
+## 2.1.4 (January 21, 2019)
+
+Improvements:
+  - Avoid instantiating model class during `counter_culture` call (#246)
+
 ## 2.1.3 (January 19, 2019)
 
 Bugfixes:
