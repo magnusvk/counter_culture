@@ -18,6 +18,12 @@ module CounterCulture
           }
         end
         alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
+
+        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#cached_counter_attribute_name`
+        def cached_counter_culture_attribute_name
+          counter_cache_name = counter_culture_counter.counter_cache_name
+          counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
+        end
       end
     end
 
@@ -45,20 +51,14 @@ module CounterCulture
         # Method inspired from `ActiveRecord::Associations:HasManyAssociation#has_cached_counter?`
         def has_cached_counter_culture?(reflection = reflection())
           if (inverse = reflection.inverse_which_updates_counter_culture_cache)
-            owner.attribute_present?(cached_counter_culture_attribute_name(reflection))
+            owner.attribute_present?(reflection.cached_counter_culture_attribute_name)
           end
-        end
-
-        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#cached_counter_attribute_name`
-        def cached_counter_culture_attribute_name(reflection = reflection())
-          counter_cache_name = reflection.counter_culture_counter.counter_cache_name
-          counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
         end
 
         # Overwrite method of `ActiveRecord::Associations:HasManyAssociation`
         def cached_counter_attribute_name(reflection = reflection())
           if reflection.inverse_updates_counter_culture_cache? &&
-              (counter_cache_name = cached_counter_culture_attribute_name(reflection))
+              (counter_cache_name = reflection.cached_counter_culture_attribute_name)
             counter_cache_name
           else
             super
