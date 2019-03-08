@@ -1,5 +1,17 @@
 module CounterCulture
   module ActiveRecord
+    module Reflection
+      module HasManyReflection
+        def counter_culture_counter
+          klass.after_commit_counter_cache.find do |counter|
+            counter.model.name == class_name &&
+              (counter.relation.include?(inverse_of&.name) ||
+                counter.relation.include?(options[:as]))
+          end
+        end
+      end
+    end
+
     module Associations
       module HasManyAssociation
 
@@ -32,14 +44,14 @@ module CounterCulture
         def inverse_which_updates_counter_culture_cache(reflection = reflection())
           reflection.klass._reflections.values.find { |inverse_reflection|
             inverse_reflection.belongs_to? &&
-            counter_culture_counter(reflection)
+            reflection.counter_culture_counter
           }
         end
         alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
 
         # Method inspired from `ActiveRecord::Associations:HasManyAssociation#cached_counter_attribute_name`
         def cached_counter_culture_attribute_name(reflection = reflection())
-          counter_cache_name = counter_culture_counter(reflection).counter_cache_name
+          counter_cache_name = reflection.counter_culture_counter.counter_cache_name
           counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
         end
 
@@ -52,16 +64,6 @@ module CounterCulture
             super
           end
         end
-
-        # Method to get the `CounterCulture::Counter` instance
-        def counter_culture_counter(reflection = reflection())
-          reflection.klass.after_commit_counter_cache.find do |counter|
-            counter.model.name == reflection.class_name &&
-              (counter.relation.include?(reflection.inverse_of&.name) ||
-                counter.relation.include?(reflection.options[:as]))
-          end
-        end
-
       end
     end
   end
