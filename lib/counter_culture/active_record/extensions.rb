@@ -5,7 +5,7 @@ module CounterCulture
         def counter_culture_counter
           klass.after_commit_counter_cache.find do |counter|
             counter.model.name == class_name &&
-              (counter.relation.include?(inverse_of&.name) ||
+              (counter.relation.include?(inverse_of && inverse_of.name) ||
                 counter.relation.include?(options[:as]))
           end
         end
