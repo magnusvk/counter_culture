@@ -25,6 +25,8 @@ module CounterCulture
 
       # Method inspired from `ActiveRecord::Associations::HasManyAssociation#cached_counter_attribute_name`
       def cached_counter_culture_attribute_name
+        return unless counter_culture_counter
+
         counter_cache_name = counter_culture_counter.counter_cache_name
         counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
       end
@@ -35,14 +37,13 @@ module CounterCulture
 
         private
 
-        # Overwrite method of `ActiveRecord::Associations::HasManyAssociation`
+        # Wrap `ActiveRecord::Associations::HasManyAssociation#count_records`
         def count_records
-          if has_cached_counter_culture? &&
-             counter_culture_attribute_name = reflection.cached_counter_culture_attribute_name
+          if name = counter_culture_attribute_name
             count = if Rails.version < '4.2.0'
-                      owner.read_attribute(counter_culture_attribute_name).to_i
+                      owner.read_attribute(name).to_i
                     else
-                      owner._read_attribute(counter_culture_attribute_name).to_i
+                      owner._read_attribute(name).to_i
                     end
 
             # If there's nothing in the database and @target has no new records
@@ -56,11 +57,23 @@ module CounterCulture
           end
         end
 
-        # Method inspired from `ActiveRecord::Associations::HasManyAssociation#has_cached_counter?`
-        def has_cached_counter_culture?(reflection = reflection())
-          return false unless reflection.inverse_which_updates_counter_culture_cache
+        def counter_culture_attribute_name
+          return unless has_cached_counter_culture?
 
-          owner.attribute_present?(reflection.cached_counter_culture_attribute_name)
+          counter_culture_reflection.cached_counter_culture_attribute_name
+        end
+
+        # Method inspired in `ActiveRecord::Associations::HasManyAssociation#has_cached_counter?`
+        def has_cached_counter_culture?
+          return false unless counter_culture_reflection.inverse_which_updates_counter_culture_cache
+
+          owner.attribute_present?(counter_culture_reflection.cached_counter_culture_attribute_name)
+        end
+
+        def counter_culture_reflection(reflection = reflection())
+          return reflection unless reflection.is_a?(::ActiveRecord::Reflection::ThroughReflection)
+
+          reflection.through_reflection
         end
       end
     end
