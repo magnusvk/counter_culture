@@ -1,34 +1,32 @@
 module CounterCulture
   module ActiveRecord
     module Reflection
-      module HasManyReflection
-        def counter_culture_counter
-          klass.after_commit_counter_cache.find do |counter|
-            counter.model.name == class_name &&
-              (counter.relation.include?(inverse_of && inverse_of.name) ||
-                counter.relation.include?(options[:as]))
-          end
+      def counter_culture_counter
+        klass.after_commit_counter_cache.find do |counter|
+          counter.model.name == class_name &&
+            (counter.relation.include?(inverse_of && inverse_of.name) ||
+              counter.relation.include?(options[:as]))
         end
+      end
 
-        # Method inspired from `ActiveRecord::Associations::HasManyAssociation#inverse_which_updates_counter_cache`
-        def inverse_which_updates_counter_culture_cache
-          reflections = if Rails.version < '4.1.0'
-                          klass.reflections
-                        else
-                          klass._reflections
-                        end
-          reflections.values.find { |inverse_reflection|
-            inverse_reflection.belongs_to? &&
-            counter_culture_counter
-          }
-        end
-        alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
+      # Method inspired from `ActiveRecord::Associations::HasManyAssociation#inverse_which_updates_counter_cache`
+      def inverse_which_updates_counter_culture_cache
+        reflections = if Rails.version < '4.1.0'
+                        klass.reflections
+                      else
+                        klass._reflections
+                      end
+        reflections.values.find { |inverse_reflection|
+          inverse_reflection.belongs_to? &&
+          counter_culture_counter
+        }
+      end
+      alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
 
-        # Method inspired from `ActiveRecord::Associations::HasManyAssociation#cached_counter_attribute_name`
-        def cached_counter_culture_attribute_name
-          counter_cache_name = counter_culture_counter.counter_cache_name
-          counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
-        end
+      # Method inspired from `ActiveRecord::Associations::HasManyAssociation#cached_counter_attribute_name`
+      def cached_counter_culture_attribute_name
+        counter_cache_name = counter_culture_counter.counter_cache_name
+        counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
       end
     end
 

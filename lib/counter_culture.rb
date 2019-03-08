@@ -22,9 +22,6 @@ ActiveSupport.on_load(:active_record) do
   include CounterCulture::Extensions
   ActiveRecord::Associations::HasManyAssociation.send :prepend, CounterCulture::ActiveRecord::Associations::HasManyAssociation
 
-  if Rails.version < '4.2.0'
-    ActiveRecord::Reflection::AssociationReflection.send :include, CounterCulture::ActiveRecord::Reflection::HasManyReflection
-  else
-    ActiveRecord::Reflection::HasManyReflection.send :include, CounterCulture::ActiveRecord::Reflection::HasManyReflection
-  end
+  ActiveRecord::Reflection::AssociationReflection.send :include, CounterCulture::ActiveRecord::Reflection
+  ActiveRecord::Reflection::ThroughReflection.send :include, CounterCulture::ActiveRecord::Reflection
 end
