@@ -9,6 +9,15 @@ module CounterCulture
                 counter.relation.include?(options[:as]))
           end
         end
+
+        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#inverse_which_updates_counter_cache`
+        def inverse_which_updates_counter_culture_cache
+          klass._reflections.values.find { |inverse_reflection|
+            inverse_reflection.belongs_to? &&
+            counter_culture_counter
+          }
+        end
+        alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
       end
     end
 
@@ -35,19 +44,10 @@ module CounterCulture
 
         # Method inspired from `ActiveRecord::Associations:HasManyAssociation#has_cached_counter?`
         def has_cached_counter_culture?(reflection = reflection())
-          if (inverse = inverse_which_updates_counter_culture_cache(reflection))
+          if (inverse = reflection.inverse_which_updates_counter_culture_cache)
             owner.attribute_present?(cached_counter_culture_attribute_name(reflection))
           end
         end
-
-        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#inverse_which_updates_counter_cache`
-        def inverse_which_updates_counter_culture_cache(reflection = reflection())
-          reflection.klass._reflections.values.find { |inverse_reflection|
-            inverse_reflection.belongs_to? &&
-            reflection.counter_culture_counter
-          }
-        end
-        alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
 
         # Method inspired from `ActiveRecord::Associations:HasManyAssociation#cached_counter_attribute_name`
         def cached_counter_culture_attribute_name(reflection = reflection())
@@ -57,7 +57,7 @@ module CounterCulture
 
         # Overwrite method of `ActiveRecord::Associations:HasManyAssociation`
         def cached_counter_attribute_name(reflection = reflection())
-          if inverse_updates_counter_culture_cache?(reflection) &&
+          if reflection.inverse_updates_counter_culture_cache? &&
               (counter_cache_name = cached_counter_culture_attribute_name(reflection))
             counter_cache_name
           else
