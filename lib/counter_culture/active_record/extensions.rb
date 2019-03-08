@@ -12,7 +12,12 @@ module CounterCulture
 
         # Method inspired from `ActiveRecord::Associations:HasManyAssociation#inverse_which_updates_counter_cache`
         def inverse_which_updates_counter_culture_cache
-          klass._reflections.values.find { |inverse_reflection|
+          reflections = if Rails.version < '4.0.0'
+                          klass.reflections
+                        else
+                          klass._reflections
+                        end
+          reflections.values.find { |inverse_reflection|
             inverse_reflection.belongs_to? &&
             counter_culture_counter
           }
@@ -35,7 +40,11 @@ module CounterCulture
         # Overwrite method of `ActiveRecord::Associations:HasManyAssociation`
         def count_records
           if has_cached_counter_culture?
-            count = owner._read_attribute cached_counter_attribute_name
+            count = if Rails.version < '4.2.0'
+                      owner.read_attribute cached_counter_attribute_name
+                    else
+                      owner._read_attribute cached_counter_attribute_name
+                    end
 
             # If there's nothing in the database and @target has no new records
             # we are certain the current target is an empty array. This is a
