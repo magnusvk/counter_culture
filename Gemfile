@@ -52,7 +52,7 @@ group :development do
 end
 
 group :test do
-  gem "sqlite3"
+  gem "sqlite3", "~> 1.3.6"
   gem "rspec-extra-formatters"
   gem "database_cleaner", ">= 1.1.1"
 end
