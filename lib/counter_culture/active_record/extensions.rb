@@ -10,9 +10,9 @@ module CounterCulture
           end
         end
 
-        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#inverse_which_updates_counter_cache`
+        # Method inspired from `ActiveRecord::Associations::HasManyAssociation#inverse_which_updates_counter_cache`
         def inverse_which_updates_counter_culture_cache
-          reflections = if Rails.version < '4.0.0'
+          reflections = if Rails.version < '4.1.0'
                           klass.reflections
                         else
                           klass._reflections
@@ -24,7 +24,7 @@ module CounterCulture
         end
         alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
 
-        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#cached_counter_attribute_name`
+        # Method inspired from `ActiveRecord::Associations::HasManyAssociation#cached_counter_attribute_name`
         def cached_counter_culture_attribute_name
           counter_cache_name = counter_culture_counter.counter_cache_name
           counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
@@ -37,13 +37,14 @@ module CounterCulture
 
         private
 
-        # Overwrite method of `ActiveRecord::Associations:HasManyAssociation`
+        # Overwrite method of `ActiveRecord::Associations::HasManyAssociation`
         def count_records
-          if has_cached_counter_culture?
+          if has_cached_counter_culture? &&
+             counter_culture_attribute_name = reflection.cached_counter_culture_attribute_name
             count = if Rails.version < '4.2.0'
-                      owner.read_attribute cached_counter_attribute_name
+                      owner.read_attribute(counter_culture_attribute_name).to_i
                     else
-                      owner._read_attribute cached_counter_attribute_name
+                      owner._read_attribute(counter_culture_attribute_name).to_i
                     end
 
             # If there's nothing in the database and @target has no new records
@@ -57,21 +58,11 @@ module CounterCulture
           end
         end
 
-        # Method inspired from `ActiveRecord::Associations:HasManyAssociation#has_cached_counter?`
+        # Method inspired from `ActiveRecord::Associations::HasManyAssociation#has_cached_counter?`
         def has_cached_counter_culture?(reflection = reflection())
-          if (inverse = reflection.inverse_which_updates_counter_culture_cache)
-            owner.attribute_present?(reflection.cached_counter_culture_attribute_name)
-          end
-        end
+          return false unless reflection.inverse_which_updates_counter_culture_cache
 
-        # Overwrite method of `ActiveRecord::Associations:HasManyAssociation`
-        def cached_counter_attribute_name(reflection = reflection())
-          if reflection.inverse_updates_counter_culture_cache? &&
-              (counter_cache_name = reflection.cached_counter_culture_attribute_name)
-            counter_cache_name
-          else
-            super
-          end
+          owner.attribute_present?(reflection.cached_counter_culture_attribute_name)
         end
       end
     end
