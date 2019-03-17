@@ -7,9 +7,7 @@ class PolyImage < ActiveRecord::Base
         ["poly_images.url LIKE ?", '%special%'] => 'special_poly_images_count',
     }
 
-
   def special?
     url && url.include?('special')
   end
-
 end

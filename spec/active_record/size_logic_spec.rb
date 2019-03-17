@@ -40,7 +40,7 @@ describe 'ActiveRecord#size' do
     DatabaseCleaner.clean
   end
 
-  context 'Company has_many Children' do
+  context 'regular has_many' do
     it '#size should return the number of the cache column' do
       company = Company.create!
       Company.where(id: company.id).update_all(children_count: 99)
@@ -51,7 +51,7 @@ describe 'ActiveRecord#size' do
     end
   end
 
-  context 'Product (is Imageable and) has_many PolyImages' do
+  context 'polymorphic has_many' do
     it '#size should return the number of the cache column' do
       poly_product = PolyProduct.create!
       PolyProduct.where(pp_pk_id: poly_product.pp_pk_id).update_all(poly_images_count: 99)
@@ -62,15 +62,26 @@ describe 'ActiveRecord#size' do
     end
   end
 
-  context 'ConditionalMain has_many ConditionalDependent' do
+  context 'conditional counter_cache' do
     it '#size should return the number of the cache column' do
       main = ConditionalMain.create!
       ConditionalMain.where(id: main.id).update_all(conditional_dependents_count: 99)
       main.reload
 
       expect(main.conditional_dependents_count).to eq(99)
-      # skip 'This fails because klass.new.condition? returns false then the column name is nil.'
       expect(main.conditional_dependents.size).to  eq(99)
+    end
+  end
+
+  context 'has_many_through' do
+    it '#size should return the number of the cache column' do
+      main = Industry.create!
+      main.companies.create!
+      Industry.where(id: main.id).update_all(managers_count: 99)
+      main.reload
+
+      expect(main.managers_count).to eq(99)
+      expect(main.managers.size).to  eq(99)
     end
   end
 end

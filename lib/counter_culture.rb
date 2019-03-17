@@ -20,8 +20,5 @@ end
 # extend ActiveRecord with our own code here
 ActiveSupport.on_load(:active_record) do
   include CounterCulture::Extensions
-  ActiveRecord::Associations::HasManyAssociation.send :prepend, CounterCulture::ActiveRecord::Associations::HasManyAssociation
-
-  ActiveRecord::Reflection::AssociationReflection.send :include, CounterCulture::ActiveRecord::Reflection
-  ActiveRecord::Reflection::ThroughReflection.send :include, CounterCulture::ActiveRecord::Reflection
+  ActiveRecord::Reflection::AbstractReflection.send :prepend, CounterCulture::ActiveRecord::Reflection
 end

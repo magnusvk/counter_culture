@@ -1,27 +1,19 @@
 module CounterCulture
   module ActiveRecord
     module Reflection
-      def counter_culture_counter
-        klass.after_commit_counter_cache.find do |counter|
-          counter.model.name == class_name &&
-            (counter.relation.include?(inverse_of && inverse_of.name) ||
-              counter.relation.include?(options[:as]))
-        end
+      # Wrapping ActiveRecord::Reflection::AbstractReflection public method
+      def has_cached_counter?
+        has_cached_counter_culture? || super
       end
 
-      # Method inspired from `ActiveRecord::Associations::HasManyAssociation#inverse_which_updates_counter_cache`
-      def inverse_which_updates_counter_culture_cache
-        reflections = if Rails.version < '4.1.0'
-                        klass.reflections
-                      else
-                        klass._reflections
-                      end
-        reflections.values.find { |inverse_reflection|
-          inverse_reflection.belongs_to? &&
-          counter_culture_counter
-        }
+      # Wrapping ActiveRecord::Reflection::AbstractReflection public method
+      def counter_cache_column
+        if has_cached_counter_culture?
+          cached_counter_culture_attribute_name
+        else
+          super
+        end
       end
-      alias inverse_updates_counter_culture_cache? inverse_which_updates_counter_culture_cache
 
       # Method inspired from `ActiveRecord::Associations::HasManyAssociation#cached_counter_attribute_name`
       def cached_counter_culture_attribute_name
@@ -30,50 +22,44 @@ module CounterCulture
         counter_cache_name = counter_culture_counter.counter_cache_name
         counter_cache_name.is_a?(Proc) ? counter_cache_name.call(klass.new) : counter_cache_name
       end
-    end
 
-    module Associations
-      module HasManyAssociation
+      private
 
-        private
+      def has_cached_counter_culture?
+        return false unless inverse_which_updates_counter_culture_cache
 
-        # Wrap `ActiveRecord::Associations::HasManyAssociation#count_records`
-        def count_records
-          if name = counter_culture_attribute_name
-            count = if Rails.version < '4.2.0'
-                      owner.read_attribute(name).to_i
-                    else
-                      owner._read_attribute(name).to_i
-                    end
+        active_record.new.attribute_present?(cached_counter_culture_attribute_name)
+      end
 
-            # If there's nothing in the database and @target has no new records
-            # we are certain the current target is an empty array. This is a
-            # documented side-effect of the method that may avoid an extra SELECT.
-            @target ||= [] and loaded! if count == 0
+      def counter_culture_reflection
+        return self unless is_a?(::ActiveRecord::Reflection::ThroughReflection)
 
-            [association_scope.limit_value, count].compact.min
-          else
-            super
-          end
-        end
+        through_reflection
+      end
 
-        def counter_culture_attribute_name
-          return unless has_cached_counter_culture?
+      def inverse_which_updates_counter_culture_cache
+        return if polymorphic?
 
-          counter_culture_reflection.cached_counter_culture_attribute_name
-        end
+        counter = counter_culture_counter
+        return unless counter
 
-        # Method inspired in `ActiveRecord::Associations::HasManyAssociation#has_cached_counter?`
-        def has_cached_counter_culture?
-          return false unless counter_culture_reflection.inverse_which_updates_counter_culture_cache
+        reflections = if Rails.version < '4.1.0'
+                        klass.reflections
+                      else
+                        klass._reflections
+                      end
 
-          owner.attribute_present?(counter_culture_reflection.cached_counter_culture_attribute_name)
-        end
+        reflections.values.find { |inverse_reflection|
+          inverse_reflection.belongs_to? &&
+          counter.relation.include?(inverse_reflection.name)
+        }
+      end
 
-        def counter_culture_reflection(reflection = reflection())
-          return reflection unless reflection.is_a?(::ActiveRecord::Reflection::ThroughReflection)
-
-          reflection.through_reflection
+      def counter_culture_counter
+        klass.after_commit_counter_cache.find do |counter|
+          counter.model.name == class_name &&
+            (counter.relation.include?(counter_culture_reflection.inverse_of && counter_culture_reflection.inverse_of.name) ||
+              counter.relation.include?(options[:as]))
         end
       end
     end
