@@ -39,6 +39,8 @@ If you are adding counter caches to existing data, you must add code to [manuall
 
 ### Simple counter-cache
 
+#### Has many association
+
 ```ruby
 class Product < ActiveRecord::Base
   belongs_to :category
@@ -51,6 +53,30 @@ end
 ```
 
 Now, the ```Category``` model will keep an up-to-date counter-cache in the ```products_count``` column of the ```categories``` table.
+
+#### Many to many association
+
+```ruby
+class User < ActiveRecord::Base
+  has_many :group_memberships
+  has_many :groups, through: :group_memberships
+end
+
+class Group < ActiveRecord::Base
+  has_many :group_memberships
+  has_many :members, through: :group_memberships, class: "User"
+end
+
+class Membership < ActiveRecord::Base
+  belongs_to :group
+  belongs_to :member, class: "User"
+  counter_cuture :group, column: "members_count"
+  # If you'd like to also touch the group when `members_count` is updated
+  # counter_culture :group, column: "members_count", touch: true
+end
+```
+
+Now, the `Group` model will have an up to date count of its members in the `members_count` column
 
 ### Multi-level counter-cache
 
