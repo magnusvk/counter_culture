@@ -81,7 +81,7 @@ module CounterCulture
           next if options[:exclude] && options[:exclude].include?(counter.relation)
           next if options[:only] && !options[:only].include?(counter.relation)
 
-          reconciler = CounterCulture::Reconciler.new(counter, options.slice(:skip_unsupported, :batch_size, :touch))
+          reconciler = CounterCulture::Reconciler.new(counter, options.slice(:skip_unsupported, :batch_size, :touch, :verbose))
           reconciler.reconcile!
           reconciler.changes
         end.compact
