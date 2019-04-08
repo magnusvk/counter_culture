@@ -4,8 +4,8 @@ source "https://rubygems.org"
 #   gem "activesupport", ">= 2.3.5"
 
 gem "after_commit_action", "~> 1.0"
-gem "activerecord", ">= 3.0.0"
-gem "activesupport", ">= 3.0.0"
+gem "activerecord", ">= 4.2.0"
+gem "activesupport", ">= 4.2.0"
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
@@ -16,7 +16,7 @@ group :development, :test do
   when "master"
     { github: "rails/rails" }
   when nil, ""
-    ">= 3.1.0"
+    ">= 4.2.0"
   else
     ENV["RAILS_VERSION"]
   end
@@ -33,16 +33,7 @@ group :development, :test do
   # we're basing this on the incompatible Rails version strings from
   # .travis.yml
 
-  unless ['~> 3.2.0', '~> 4.0.0', '~> 4.1.0'].include?(rails)
-    gem "discard"
-    gem "paranoia"
-  end
-
-  if RUBY_VERSION < "2.3.0"
-    gem "paper_trail", "< 9.0.0"
-  else
-    gem "paper_trail"
-  end
+  gem "paper_trail"
 end
 
 group :development do

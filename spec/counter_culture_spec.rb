@@ -1319,8 +1319,6 @@ describe "CounterCulture" do
   end
 
   it "should work correctly with string keys" do
-    skip("Unsupported in this version of Rails") if Rails.version < "4.0.0"
-
     string_id = HasStringId.create(id: "1")
     string_id2 = HasStringId.create(id: "abc")
 
@@ -1562,8 +1560,6 @@ describe "CounterCulture" do
   end
 
   it "should use primary key on counted records table correctly when fixing counts" do
-    skip("Unsupported in this version of Rails") if Rails.version < "4.0.0"
-
     subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
     post = Post.new
     post.subcateg = subcateg
@@ -1580,8 +1576,6 @@ describe "CounterCulture" do
   end
 
   it "should use multi-level relation primary key on counter destination table correctly when fixing counts" do
-    skip("Unsupported in this version of Rails") if Rails.version < "4.0.0"
-
     categ = Categ.create :cat_id => Categ::CAT_1
     subcateg = Subcateg.new :subcat_id => Subcateg::SUBCAT_1
     subcateg.categ = categ
@@ -1732,7 +1726,6 @@ describe "CounterCulture" do
 
   describe "when using discard for soft deletes" do
     it "works" do
-      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
       company = Company.create!
       expect(company.soft_delete_discards_count).to eq(0)
       sd = SoftDeleteDiscard.create!(company_id: company.id)
@@ -1753,7 +1746,6 @@ describe "CounterCulture" do
     end
 
     it "runs destroy callback only once" do
-      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
 
       company = Company.create!
       sd = SoftDeleteDiscard.create!(company_id: company.id)
@@ -1768,8 +1760,6 @@ describe "CounterCulture" do
     end
 
     it "runs restore callback only once" do
-      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
       company = Company.create!
       sd = SoftDeleteDiscard.create!(company_id: company.id)
 
@@ -1787,8 +1777,6 @@ describe "CounterCulture" do
 
     describe "when calling hard-destroy" do
       it "does not run destroy callback for discarded records" do
-        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
         company = Company.create!
         sd = SoftDeleteDiscard.create!(company_id: company.id)
 
@@ -1802,8 +1790,6 @@ describe "CounterCulture" do
       end
 
       it "runs destroy callback for undiscarded records" do
-        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
         company = Company.create!
         sd = SoftDeleteDiscard.create!(company_id: company.id)
 
@@ -1817,8 +1803,6 @@ describe "CounterCulture" do
     describe "dynamic column names with totaling instead of counting" do
       describe 'when updating discarded records' do
         it 'does not update sum' do
-          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
           company = Company.create!
           sd = SoftDeleteDiscard.create!(company_id: company.id, value: 5)
 
@@ -1834,8 +1818,6 @@ describe "CounterCulture" do
 
       describe 'when updating undiscarded records' do
         it 'updates sum' do
-          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
           company = Company.create!
           sd = SoftDeleteDiscard.create!(company_id: company.id, value: 5)
 
@@ -1850,7 +1832,6 @@ describe "CounterCulture" do
 
   describe "when using paranoia for soft deletes" do
     it "works" do
-      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
       company = Company.create!
       expect(company.soft_delete_paranoia_count).to eq(0)
       sd = SoftDeleteParanoia.create!(company_id: company.id)
@@ -1871,8 +1852,6 @@ describe "CounterCulture" do
     end
 
     it "runs destroy callback only once" do
-      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
       company = Company.create!
       sd = SoftDeleteParanoia.create!(company_id: company.id)
 
@@ -1886,8 +1865,6 @@ describe "CounterCulture" do
     end
 
     it "runs restore callback only once" do
-      skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
       company = Company.create!
       sd = SoftDeleteParanoia.create!(company_id: company.id)
 
@@ -1905,8 +1882,6 @@ describe "CounterCulture" do
 
     describe "when calling paranoia really destroy" do
       it "does not run destroy callback for paranoia destroyed records" do
-        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
         company = Company.create!
         sd = SoftDeleteParanoia.create!(company_id: company.id)
 
@@ -1920,7 +1895,6 @@ describe "CounterCulture" do
       end
 
       it "runs really destroy callback for paranoia undestroyed records" do
-        skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
         company = Company.create!
         expect(company.soft_delete_paranoia_count).to eq(0)
         sd = SoftDeleteParanoia.create!(company_id: company.id)
@@ -1935,8 +1909,6 @@ describe "CounterCulture" do
     describe "dynamic column names with totaling instead of counting" do
       describe 'when updating soft deleted records' do
         it 'does not update sum' do
-          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
           company = Company.create!
           sd = SoftDeleteParanoia.create!(company_id: company.id, value: 5)
 
@@ -1952,8 +1924,6 @@ describe "CounterCulture" do
 
       describe 'when updating undestroyed records' do
         it 'updates sum' do
-          skip("Unsupported in this version of Rails") if Rails.version < "4.2.0"
-
           company = Company.create!
           sd = SoftDeleteParanoia.create!(company_id: company.id, value: 5)
 
@@ -2242,7 +2212,6 @@ describe "CounterCulture" do
   private
   def papertrail_supported_here?
     return false if Rails.version < "5.0.0"
-    return false if RUBY_VERSION < "2.3.0" && Rails.version >= "5.2.0"
     true
   end
 end
