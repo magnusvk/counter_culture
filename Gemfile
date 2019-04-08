@@ -27,12 +27,8 @@ group :development, :test do
   gem "timecop"
 
   # To test integrations
-
-  # Both the paranoia and discard integrations require Rails > 4.2
-  # Actually parsing the resolved rails version is complicated, so
-  # we're basing this on the incompatible Rails version strings from
-  # .travis.yml
-
+  gem "discard"
+  gem "paranoia"
   gem "paper_trail"
 end
 
@@ -43,7 +39,10 @@ group :development do
 end
 
 group :test do
-  gem "sqlite3"
+  # something's going on with sqlite 1.4 that doesn't work with ActiveRecord, see
+  # https://stackoverflow.com/questions/54527277/cant-activate-sqlite3-1-3-6-already-activated-sqlite3-1-4-0
+  # this seems like a hack but it works, so...
+  gem 'sqlite3', '~> 1.3.13'
   gem "rspec-extra-formatters"
   gem "database_cleaner", ">= 1.1.1"
 end
