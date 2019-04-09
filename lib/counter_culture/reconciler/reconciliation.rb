@@ -78,21 +78,25 @@ module CounterCulture
 
             track_change(record, column_name, count)
 
-            updates = []
             # this updates the actual counter
-            updates << "#{column_name} = #{count}"
+            updates = ["#{column_name} = #{count}"]
             # and here we update the timestamp, if so desired
-            if options[:touch]
-              current_time = record.send(:current_time_from_proper_timezone)
-              timestamp_columns = record.send(:timestamp_attributes_for_update_in_model)
-              timestamp_columns << options[:touch] if options[:touch] != true
-              timestamp_columns.each do |timestamp_column|
-                updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
-              end
-            end
+            updates.push(*touch_clauses(record)) if options[:touch]
 
-            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+            relation_class
+              .where(relation_class.primary_key => record.send(relation_class.primary_key))
+              .update_all(updates.join(', '))
           end
+        end
+      end
+
+      def touch_clauses(record)
+        current_time = record.send(:current_time_from_proper_timezone)
+        timestamp_columns = record.send(:timestamp_attributes_for_update_in_model)
+        timestamp_columns << options[:touch] if options[:touch] != true
+
+        timestamp_columns.map do |timestamp_column|
+          "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
         end
       end
 
