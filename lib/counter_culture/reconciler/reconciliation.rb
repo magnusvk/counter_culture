@@ -35,7 +35,7 @@ module CounterCulture
         counter_column_names = column_names || { nil => counter_cache_name }
 
         # iterate over all the possible counter cache column names
-        counter_column_names.each do |where, column_name|
+        counter_column_names.each do |join_where, column_name|
           # if the column name is nil, that means those records don't affect
           # counts; we don't need to do anything in that case. but we allow
           # specifying that condition regardless to make the syntax less
@@ -46,7 +46,7 @@ module CounterCulture
           # instances and we try to load all their counts at once
           batch_size = options.fetch(:batch_size, CounterCulture.config.batch_size)
 
-          counts_query(where, column_name).find_in_batches(batch_size: batch_size) do |records|
+          counts_query(join_where, column_name).find_in_batches(batch_size: batch_size) do |records|
             # now iterate over all the models and see whether their counts are right
             update_count_for_batch(column_name, records)
           end
@@ -57,10 +57,11 @@ module CounterCulture
 
       private
 
-      def counts_query(where, column_name)
+      def counts_query(join_where, column_name)
         # select join column and count (from above) as well as cache column ('column_name') for later comparison
         relation_class
-          .joins(join_clauses(where))
+          .where(options[:where])
+          .joins(join_clauses(join_where))
           .group(full_primary_key(relation_class))
           .select(
             "#{relation_class_table_name}.#{relation_class.primary_key}, " \
