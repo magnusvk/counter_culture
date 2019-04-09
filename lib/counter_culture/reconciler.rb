@@ -86,7 +86,12 @@ module CounterCulture
           relation_class_table_name = quote_table_name(relation_class.table_name)
 
           # select join column and count (from above) as well as cache column ('column_name') for later comparison
-          counts_query = scope.select("#{relation_class_table_name}.#{relation_class.primary_key}, #{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, #{count_select} AS count, #{relation_class_table_name}.#{column_name}")
+          counts_query = scope.select(
+            "#{relation_class_table_name}.#{relation_class.primary_key}, " \
+            "#{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, " \
+            "#{count_select} AS count, " \
+            "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
+          )
 
           # we need to join together tables until we get back to the table this class itself lives in
           join_clauses(where).each do |join|

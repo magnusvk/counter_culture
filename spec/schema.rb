@@ -79,6 +79,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "custom_delta_count",         :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
     t.string   "has_string_id_id"
+    t.integer  "has_non_pk_id_id"
     t.float    "review_value_sum",    :default => 0.0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -91,6 +92,15 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "has_non_pk_ids", :force => true, :id => false do |t|
+    t.integer  "id", :default => '', :null => false
+    t.string   "something"
+    t.integer  "users_count",        :null => false, :default => 0
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+  add_index "has_non_pk_ids", :id, :unique => true
 
   create_table "has_string_ids", :force => true, :id => false do |t|
     t.string   "id", :default => '', :null => false
