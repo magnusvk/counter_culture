@@ -4,15 +4,16 @@ require_relative 'reconciler/reconciliation'
 
 module CounterCulture
   class Reconciler
-    ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
+    ACTIVE_RECORD_VERSION = Gem.loaded_specs['activerecord'].version
 
     attr_reader :counter, :options, :changes
 
-    delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
-    delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
+    delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, to: :counter
+    delegate(*CounterCulture::Counter::CONFIG_OPTIONS, to: :counter)
 
-    def initialize(counter, options={})
-      @counter, @options = counter, options
+    def initialize(counter, options = {})
+      @counter = counter
+      @options = options
 
       @changes = []
       @reconciled = false
@@ -22,11 +23,11 @@ module CounterCulture
       return false if @reconciled
 
       if options[:skip_unsupported]
-        return false if (foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc))
+        return false if foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc)
       else
-        raise "Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true" if foreign_key_values
+        raise 'Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true' if foreign_key_values
         raise "Must provide :column_names option for relation #{relation.inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if counter_cache_name.is_a?(Proc) && !column_names
-        raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
+        raise 'Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true' if delta_magnitude.is_a?(Proc)
       end
 
       associated_model_classes.each do |associated_model_class|

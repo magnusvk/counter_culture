@@ -10,13 +10,14 @@ module CounterCulture
 
       attr_reader :counter, :options, :relation_class
 
-      delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
+      delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, to: :counter
       delegate :connection, to: :relation_class
       delegate :quote_table_name, to: :connection
-      delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
+      delegate(*CounterCulture::Counter::CONFIG_OPTIONS, to: :counter)
 
       def initialize(counter, changes_holder, options, relation_class)
-        @counter, @options, = counter, options
+        @counter = counter
+        @options = options
         @relation_class = relation_class
         @changes_holder = changes_holder
       end
@@ -25,7 +26,7 @@ module CounterCulture
         # if we're provided a custom set of column names with conditions, use them; just use the
         # column name otherwise
         # which class does this relation ultimately point to? that's where we have to start
-        counter_column_names = column_names || {nil => counter_cache_name}
+        counter_column_names = column_names || { nil => counter_cache_name }
 
         # iterate over all the possible counter cache column names
         counter_column_names.each do |where, column_name|
@@ -105,6 +106,7 @@ module CounterCulture
       def count_select
         # if a delta column is provided use SUM, otherwise use COUNT
         return @count_select if @count_select
+
         if delta_column
           @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
         else
@@ -156,11 +158,13 @@ module CounterCulture
             polymorphic_clause
           ]
 
-          clauses.push(
-            where_clause, # conditions must be applied to the join on which we are counting
-            paranoia_clause, # respect the deleted_at column if it exists
-            discard_clause, # respect the discard column if it exists
-          ) if counting_join?
+          if counting_join?
+            clauses.push(
+              where_clause, # conditions must be applied to the join on which we are counting
+              paranoia_clause, # respect the deleted_at column if it exists
+              discard_clause, # respect the discard column if it exists
+            )
+          end
 
           clauses.compact.join(' AND ')
         end

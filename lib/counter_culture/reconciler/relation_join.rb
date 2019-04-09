@@ -28,11 +28,13 @@ module CounterCulture
           polymorphic_clause
         ]
 
-        clauses.push(
-          where_clause, # conditions must be applied to the join on which we are counting
-          paranoia_clause, # respect the deleted_at column if it exists
-          discard_clause, # respect the discard column if it exists
-        ) if counting_join?
+        if counting_join?
+          clauses.push(
+            where_clause, # conditions must be applied to the join on which we are counting
+            paranoia_clause, # respect the deleted_at column if it exists
+            discard_clause, # respect the discard column if it exists
+          )
+        end
 
         clauses.compact.join(' AND ')
       end
