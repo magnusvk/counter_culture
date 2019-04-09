@@ -22,9 +22,8 @@ module CounterCulture
     def reconcile!
       return false if @reconciled
 
-      if options[:skip_unsupported]
-        return false if foreign_key_values || (counter_cache_name.is_a?(Proc) && !column_names) || delta_magnitude.is_a?(Proc)
-      else
+      if unsupported?
+        return false if options[:skip_unsupported]
         raise 'Fixing counter caches is not supported when using :foreign_key_values; you may skip this relation with :skip_unsupported => true' if foreign_key_values
         raise "Must provide :column_names option for relation #{relation.inspect} when :column_name is a Proc; you may skip this relation with :skip_unsupported => true" if counter_cache_name.is_a?(Proc) && !column_names
         raise 'Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true' if delta_magnitude.is_a?(Proc)
@@ -38,6 +37,12 @@ module CounterCulture
     end
 
     private
+
+    def unsupported?
+      foreign_key_values \
+        || (counter_cache_name.is_a?(Proc) && !column_names) \
+        || delta_magnitude.is_a?(Proc)
+    end
 
     def associated_model_classes
       if polymorphic?
