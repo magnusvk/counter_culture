@@ -1,3 +1,9 @@
+## 2.2.0 (April 8, 2019)
+
+Changes:
+  - Dropped support for Ruby 2.2
+  - Dropped support for Rails 3.2, 4.0 and 4.1
+
 ## 2.1.4 (January 21, 2019)
 
 Improvements:

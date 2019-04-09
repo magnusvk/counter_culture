@@ -1,37 +1,16 @@
 language: ruby
 rvm:
-  - "2.2.10"
-  - "2.3.7"
-  - "2.4.4"
-  - "2.5.1"
+  - "2.3.8"
+  - "2.4.6"
+  - "2.5.5"
+  - "2.6.2"
 env:
-  - 'RAILS_VERSION="~> 3.2.0"'
-  - 'RAILS_VERSION="~> 4.0.0"'
-  - 'RAILS_VERSION="~> 4.1.0"'
   - 'RAILS_VERSION="~> 4.2.0"'
   - 'RAILS_VERSION="~> 5.0.0"'
   - 'RAILS_VERSION="= 5.1.4"'
   - 'RAILS_VERSION="= 5.1.5"'
   - 'RAILS_VERSION="~> 5.1.5"'
   - 'RAILS_VERSION="~> 5.2.0"'
-matrix:
-  exclude:
-  - rvm: "2.2.10"
-    env: 'RAILS_VERSION="= 5.1.4"'
-  - rvm: "2.2.10"
-    env: 'RAILS_VERSION="= 5.1.5"'
-  - rvm: "2.4.4"
-    env: 'RAILS_VERSION="~> 3.2.0"'
-  - rvm: "2.4.4"
-    env: 'RAILS_VERSION="~> 4.0.0"'
-  - rvm: "2.4.4"
-    env: 'RAILS_VERSION="~> 4.1.0"'
-  - rvm: "2.5.1"
-    env: 'RAILS_VERSION="~> 3.2.0"'
-  - rvm: "2.5.1"
-    env: 'RAILS_VERSION="~> 4.0.0"'
-  - rvm: "2.5.1"
-    env: 'RAILS_VERSION="~> 4.1.0"'
 before_install:
   - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
   - gem install bundler -v '< 2'
