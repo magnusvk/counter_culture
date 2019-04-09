@@ -40,24 +40,11 @@ module CounterCulture
           # confusing
           next unless column_name
 
-          # select join column and count (from above) as well as cache column ('column_name') for later comparison
-          counts_query = relation_class.select(
-            "#{relation_class_table_name}.#{relation_class.primary_key}, " \
-            "#{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, " \
-            "#{count_select} AS count, " \
-            "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
-          )
-
-          relation_joins(where).each do |join|
-            # apply each join clause to the query
-            counts_query = counts_query.joins(join.join_clause)
-          end
-
           # iterate in batches; otherwise we might run out of memory when there's a lot of
           # instances and we try to load all their counts at once
           batch_size = options.fetch(:batch_size, CounterCulture.config.batch_size)
 
-          counts_query.group(full_primary_key(relation_class)).find_in_batches(batch_size: batch_size) do |records|
+          counts_query(where, column_name).find_in_batches(batch_size: batch_size) do |records|
             # now iterate over all the models and see whether their counts are right
             update_count_for_batch(column_name, records)
           end
@@ -65,6 +52,19 @@ module CounterCulture
       end
 
       private
+
+      def counts_query(where, column_name)
+        # select join column and count (from above) as well as cache column ('column_name') for later comparison
+        relation_class
+          .joins(join_clauses(where))
+          .group(full_primary_key(relation_class))
+          .select(
+            "#{relation_class_table_name}.#{relation_class.primary_key}, " \
+            "#{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, " \
+            "#{count_select} AS count, " \
+            "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
+          )
+      end
 
       def relation_class_table_name
         @relation_class_table_name ||= quote_table_name(relation_class.table_name)
@@ -136,6 +136,10 @@ module CounterCulture
         relation.length.downto(1).map do |chunk_size|
           RelationJoin.new(counter, relation_class, relation[0, chunk_size], where)
         end
+      end
+
+      def join_clauses(where)
+        relation_joins(where).map(&:join_clause)
       end
     end
   end
