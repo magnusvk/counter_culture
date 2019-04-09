@@ -113,24 +113,21 @@ module CounterCulture
 
       def count_select
         # if a delta column is provided use SUM, otherwise use COUNT
-        return @count_select if @count_select
-
-        if delta_column
-          @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
-        else
-          @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
-        end
+        @count_select ||= if delta_column
+                            "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
+                          else
+                            "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
+                          end
       end
 
       def self_table_name
-        return @self_table_name if @self_table_name
-
-        @self_table_name = parameterize(model.table_name)
-        if relation_class.table_name == model.table_name
-          @self_table_name = "#{@self_table_name}_#{@self_table_name}"
-        end
-        @self_table_name = quote_table_name(@self_table_name)
-        @self_table_name
+        @self_table_name ||= quote_table_name(
+          if relation_class.table_name == model.table_name
+            "#{parameterize(model.table_name)}_#{parameterize(model.table_name)}"
+          else
+            parameterize(model.table_name)
+          end
+        )
       end
 
       def relation_joins(where)
