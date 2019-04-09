@@ -1395,6 +1395,19 @@ describe "CounterCulture" do
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
   end
 
+  it "should correctly fix the counter caches with conditionals" do
+    updated = SimpleMain.create
+    updated.simple_dependents.create
+    not_updated = SimpleMain.create
+    not_updated.simple_dependents.create
+    SimpleMain.all.update_all simple_dependents_count: 3
+
+    SimpleDependent.counter_culture_fix_counts only: :simple_main, where: { simple_mains: { id: updated.id } }
+
+    expect(updated.reload.simple_dependents_count).to eq(1)
+    expect(not_updated.reload.simple_dependents_count).to eq(3)
+  end
+
   it "should correctly fix the counter caches with thousands of records" do
     # first, clean up
     SimpleDependent.delete_all

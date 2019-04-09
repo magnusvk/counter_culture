@@ -240,6 +240,9 @@ Product.counter_culture_fix_counts only: [[:subcategory, :category]]
 
 Product.counter_culture_fix_counts verbose: true
 # prints some logs to STDOUT
+
+Product.counter_culture_fix_counts only: :category, where: { categories: { id: 1 } }
+# will automatically fix counts only on the :category with id 1 relation on Product
 ```
 
 The ```counter_culture_fix_counts``` counts method uses batch processing of records to keep the memory consumption low. The default batch size is 1000 but is configurable like so
