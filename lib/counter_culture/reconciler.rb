@@ -55,13 +55,6 @@ module CounterCulture
     end
 
     module TableNameHelpers
-      # This is only needed in relatively unusal cases, for example if you are
-      # using Postgres with schema-namespaced tables. But then it's required,
-      # and otherwise it's just a no-op, so why not do it?
-      def quote_table_name(table_name)
-        relation_class.connection.quote_table_name(table_name)
-      end
-
       def parameterize(string)
         if ACTIVE_RECORD_VERSION < Gem::Version.new("5.0")
           string.parameterize('_')
@@ -77,6 +70,8 @@ module CounterCulture
       attr_reader :counter, :options, :relation_class
 
       delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
+      delegate :connection, to: :relation_class
+      delegate :quote_table_name, to: :connection
       delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
 
       def initialize(counter, changes_holder, options, relation_class)
@@ -225,6 +220,8 @@ module CounterCulture
         attr_reader :counter, :reflection, :relation_class, :where, :cur_relation
 
         delegate :model, :relation_reflect, :polymorphic?, to: :counter
+        delegate :connection, to: :relation_class
+        delegate :quote_table_name, to: :connection
 
         def initialize(counter, relation_class, cur_relation, where)
           @counter = counter
@@ -307,7 +304,8 @@ module CounterCulture
         end
 
         def sti_child
-          reflection.active_record.column_names.include?('type') && !model.descends_from_active_record?
+          reflection.active_record.column_names.include?('type') &&
+            !model.descends_from_active_record?
         end
 
         def foreign_type
