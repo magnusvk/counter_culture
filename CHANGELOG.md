@@ -1,4 +1,8 @@
-## 2.2.0 (April 8, 2019)
+## 2.2.0 (April 9, 2019)
+
+Improvements:
+  - Add `where` option to `counter_culture_fix_counts` (#250)
+  - Add `verbose` option to `counter_culture_fix_counts` (#251)
 
 Changes:
   - Dropped support for Ruby 2.2
