@@ -54,7 +54,26 @@ module CounterCulture
       counter.relation_klass(counter.relation)
     end
 
+    module TableNameHelpers
+      # This is only needed in relatively unusal cases, for example if you are
+      # using Postgres with schema-namespaced tables. But then it's required,
+      # and otherwise it's just a no-op, so why not do it?
+      def quote_table_name(table_name)
+        relation_class.connection.quote_table_name(table_name)
+      end
+
+      def parameterize(string)
+        if ACTIVE_RECORD_VERSION < Gem::Version.new("5.0")
+          string.parameterize('_')
+        else
+          string.parameterize(separator: '_')
+        end
+      end
+    end
+
     class Reconciliation
+      include TableNameHelpers
+
       attr_reader :counter, :options, :relation_class
 
       delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
@@ -71,9 +90,6 @@ module CounterCulture
         # if we're provided a custom set of column names with conditions, use them; just use the
         # column name otherwise
         # which class does this relation ultimately point to? that's where we have to start
-
-        scope = relation_class
-
         counter_column_names = column_names || {nil => counter_cache_name}
 
         # iterate over all the possible counter cache column names
@@ -84,19 +100,17 @@ module CounterCulture
           # confusing
           next unless column_name
 
-          relation_class_table_name = quote_table_name(relation_class.table_name)
-
           # select join column and count (from above) as well as cache column ('column_name') for later comparison
-          counts_query = scope.select(
+          counts_query = relation_class.select(
             "#{relation_class_table_name}.#{relation_class.primary_key}, " \
             "#{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, " \
             "#{count_select} AS count, " \
             "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
           )
 
-          # we need to join together tables until we get back to the table this class itself lives in
-          join_clauses(where).each do |join|
-            counts_query = counts_query.joins(join)
+          relation_joins(where).each do |join|
+            # apply each join clause to the query
+            counts_query = counts_query.joins(join.join_clause)
           end
 
           # iterate in batches; otherwise we might run out of memory when there's a lot of
@@ -115,6 +129,10 @@ module CounterCulture
       end
 
       private
+
+      def relation_class_table_name
+        @relation_class_table_name ||= quote_table_name(relation_class.table_name)
+      end
 
       def update_count_for_batch(column_name, records)
         log_without_newline "."
@@ -192,136 +210,154 @@ module CounterCulture
         @self_table_name
       end
 
-      def join_clauses(where)
-        join_contexts.map { |jc| join_clause(where: where, **jc) }
-      end
-
-      def reverse_relation
+      def relation_joins(where)
         # we need to work our way back from the end-point of the relation to
         # this class itself; make a list of arrays pointing to the
         # second-to-last, third-to-last, etc.
-        @reverse_relation ||= (1..relation.length)
-                              .to_a
-                              .reverse
-                              .each_with_object([]) { |i, a| a << relation[0, i] }
-      end
-
-      def source_table(reflection)
-        quote_table_name(
-          if polymorphic?
-            # NB: polymorphic only supports one level of relation (at present)
-            relation_class.table_name
-          else
-            reflection.table_name
-          end
-        )
-      end
-
-      def target_table(reflection)
-        quote_table_name(reflection.active_record.table_name)
-      end
-
-      def target_table_alias(reflection)
-        table_alias = parameterize(target_table(reflection))
-
-        if relation_class.table_name == reflection.active_record.table_name
-          # join with alias to avoid ambiguous table name in
-          # self-referential models
-          table_alias += "_#{table_alias}"
-        end
-
-        table_alias
-      end
-
-      def association_primary_key(reflection)
-        # NB: polymorphic only supports one level of relation (at present)
-        return reflection.association_primary_key(relation_class) if polymorphic?
-
-        reflection.association_primary_key
-      end
-
-      def source_table_key(reflection)
-        return association_primary_key(reflection) if reflection.belongs_to?
-
-        reflection.foreign_key
-      end
-
-      def target_table_key(reflection)
-        return reflection.foreign_key if reflection.belongs_to?
-
-        association_primary_key(reflection)
-      end
-
-      def join_contexts
-        # store joins in an array so that we can later apply column-specific
-        # conditions
-        reverse_relation.each_with_index.map do |cur_relation, index|
-          reflect = relation_reflect(cur_relation)
-
-          {
-            target_table: target_table(reflect),
-            target_table_alias: target_table_alias(reflect),
-            target_table_key: target_table_key(reflect),
-            source_table: source_table(reflect),
-            source_table_key: source_table_key(reflect),
-            sti_child: reflect.active_record.column_names.include?('type') && !model.descends_from_active_record?,
-            foreign_type: polymorphic? && reflect.foreign_type,
-            counting_join: index == reverse_relation.size - 1
-          }
+        relation.length.downto(1).map do |chunk_size|
+          RelationJoin.new(counter, relation_class, relation[0, chunk_size], where)
         end
       end
 
-      def join_clause(where:, target_table:, target_table_alias:, target_table_key:, source_table:, source_table_key:, sti_child:, foreign_type:, counting_join:)
-        joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
-          "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
+      class RelationJoin
+        include TableNameHelpers
+
+        attr_reader :counter, :reflection, :relation_class, :where, :cur_relation
+
+        delegate :model, :relation_reflect, :polymorphic?, to: :counter
+
+        def initialize(counter, relation_class, cur_relation, where)
+          @counter = counter
+          @relation_class = relation_class
+          @where = where
+          @cur_relation = cur_relation
+          @reflection = relation_reflect(cur_relation)
+        end
+
+        def join_clause
+          clauses = [
+            basic_join_clause,
+            sti_clause,
+            polymorphic_clause
+          ]
+
+          clauses.push(
+            where_clause, # conditions must be applied to the join on which we are counting
+            paranoia_clause, # respect the deleted_at column if it exists
+            discard_clause, # respect the discard column if it exists
+          ) if counting_join?
+
+          clauses.compact.join(' AND ')
+        end
+
+        private
+
+        def counting_join?
+          cur_relation.size == 1
+        end
+
+        def basic_join_clause
+          "LEFT JOIN #{target_table} AS #{target_table_alias} "\
+            "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
+        end
 
         # adds 'type' condition to JOIN clause if the current model is a
         # child in a Single Table Inheritance
-        if sti_child
-          joins_sql += " AND #{target_table}.type IN ('#{model.name}')"
+        def sti_clause
+          return unless sti_child
+
+          "#{target_table}.type IN ('#{model.name}')"
         end
 
-        if polymorphic?
-          # adds 'type' condition to JOIN clause if the current model is a
-          # polymorphic relation
-          # NB only works for one-level relations
-          joins_sql += " AND #{target_table}.#{foreign_type} = '#{relation_class.name}'"
+        # adds 'type' condition to JOIN clause if the current model is a
+        # polymorphic relation
+        # NB only works for one-level relations
+        def polymorphic_clause
+          return unless polymorphic?
+
+          "#{target_table}.#{foreign_type} = '#{relation_class.name}'"
         end
 
-        if counting_join
-          # conditions must be applied to the join on which we are counting
-          if where
-            joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
-          end
-          # respect the deleted_at column if it exists
-          if model.column_names.include?('deleted_at')
-            joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
-          end
+        def where_clause
+          return unless where
 
-          # respect the discard column if it exists
-          if defined?(Discard::Model) &&
-             model.include?(Discard::Model) &&
-             model.column_names.include?(model.discard_column.to_s)
-
-            joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
-          end
+          "(#{model.send(:sanitize_sql_for_conditions, where)})"
         end
 
-        joins_sql
-      end
+        def paranoia_clause
+          return unless using_paranoia?
 
-      # This is only needed in relatively unusal cases, for example if you are
-      # using Postgres with schema-namespaced tables. But then it's required,
-      # and otherwise it's just a no-op, so why not do it?
-      def quote_table_name(table_name)
-        relation_class.connection.quote_table_name(table_name)
-      end
+          "#{target_table_alias}.deleted_at IS NULL"
+        end
 
-      def parameterize(string)
-        if ACTIVE_RECORD_VERSION < Gem::Version.new("5.0")
-          string.parameterize('_')
-        else
-          string.parameterize(separator: '_')
+        def discard_clause
+          return unless using_discard?
+
+          "#{target_table_alias}.#{model.discard_column} IS NULL"
+        end
+
+        def using_paranoia?
+          model.column_names.include?('deleted_at')
+        end
+
+        def using_discard?
+          defined?(Discard::Model) &&
+            model.include?(Discard::Model) &&
+            model.column_names.include?(model.discard_column.to_s)
+        end
+
+        def sti_child
+          reflection.active_record.column_names.include?('type') && !model.descends_from_active_record?
+        end
+
+        def foreign_type
+          polymorphic? && reflection.foreign_type
+        end
+
+        def source_table
+          quote_table_name(
+            if polymorphic?
+              # NB: polymorphic only supports one level of relation (at present)
+              relation_class.table_name
+            else
+              reflection.table_name
+            end
+          )
+        end
+
+        def target_table
+          quote_table_name(reflection.active_record.table_name)
+        end
+
+        def target_table_alias
+          table_alias = parameterize(target_table)
+
+          if relation_class.table_name == reflection.active_record.table_name
+            # join with alias to avoid ambiguous table name in
+            # self-referential models
+            table_alias += "_#{table_alias}"
+          end
+
+          table_alias
+        end
+
+        def association_primary_key
+          # NB: polymorphic only supports one level of relation (at present)
+          return reflection.association_primary_key(relation_class) if polymorphic?
+
+          reflection.association_primary_key
+        end
+
+        def source_table_key
+          return association_primary_key if reflection.belongs_to?
+
+          reflection.foreign_key
+        end
+
+        def target_table_key
+          return reflection.foreign_key if reflection.belongs_to?
+
+          association_primary_key
         end
       end
     end
