@@ -1357,6 +1357,25 @@ describe "CounterCulture" do
     expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
   end
 
+  it "should log if verbose option is true" do
+    logger = Rails.logger
+    io = StringIO.new
+    io_logger = Logger.new(io)
+    Rails.logger = io_logger
+
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    main = SimpleMain.create
+    3.times { main.simple_dependents.create }
+
+    SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH, verbose: true
+
+    expect(io.string).to eq("Performing reconciling of SimpleDependent#simple_main.\n.\nFinished reconciling of SimpleDependent#simple_main.\n")
+    Rails.logger = logger
+  end
+
   MANY = CI_TEST_RUN ? 1000 : 20
   A_FEW = CI_TEST_RUN ? 50:  10
   A_BATCH = CI_TEST_RUN ? 100: 10

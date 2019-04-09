@@ -238,6 +238,9 @@ Product.counter_culture_fix_counts only: [[:subcategory, :category]]
 
 # :except and :only also accept arrays
 
+Product.counter_culture_fix_counts verbose: true
+# prints some logs to STDOUT
+
 Product.counter_culture_fix_counts only: :category, where: { categories: { id: 1 } }
 # will automatically fix counts only on the :category with id 1 relation on Product
 ```

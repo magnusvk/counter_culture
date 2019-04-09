@@ -67,6 +67,7 @@ module CounterCulture
       end
 
       def perform
+        log "Performing reconciling of #{counter.model}##{counter.relation.to_sentence}.\n"
         # if we're provided a custom set of column names with conditions, use them; just use the
         # column name otherwise
         # which class does this relation ultimately point to? that's where we have to start
@@ -104,11 +105,15 @@ module CounterCulture
             update_count_for_batch(column_name, records)
           end
         end
+        log "\n"
+        log "Finished reconciling of #{counter.model}##{counter.relation.to_sentence}.\n"
       end
 
       private
 
       def update_count_for_batch(column_name, records)
+        log "."
+
         ActiveRecord::Base.transaction do
           records.each do |record|
             count = record.read_attribute('count') || 0
@@ -132,6 +137,16 @@ module CounterCulture
             relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
           end
         end
+      end
+
+      def log(message)
+        return unless log?
+
+        Rails.logger << message
+      end
+
+      def log?
+        !options[:verbose].nil? && !Rails.logger.nil?
       end
 
       # keep track of what we fixed, e.g. for a notification email
