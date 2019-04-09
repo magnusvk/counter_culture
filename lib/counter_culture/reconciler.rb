@@ -31,7 +31,7 @@ module CounterCulture
       end
 
       associated_model_classes.each do |associated_model_class|
-        Reconciliation.new(counter, changes, options, associated_model_class).perform
+        Reconciliation.perform(counter, changes, options, associated_model_class)
       end
 
       @reconciled = true

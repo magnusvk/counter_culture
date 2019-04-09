@@ -15,6 +15,10 @@ module CounterCulture
       delegate :quote_table_name, to: :connection
       delegate(*CounterCulture::Counter::CONFIG_OPTIONS, to: :counter)
 
+      def self.perform(counter, changes_holder, options, relation_class)
+        new(counter, changes_holder, options, relation_class).perform
+      end
+
       def initialize(counter, changes_holder, options, relation_class)
         @counter = counter
         @options = options
