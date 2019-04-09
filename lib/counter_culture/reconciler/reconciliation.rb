@@ -27,6 +27,8 @@ module CounterCulture
       end
 
       def perform
+        log "Performing reconciliation of #{model}##{relation.to_sentence}."
+
         # if we're provided a custom set of column names with conditions, use them; just use the
         # column name otherwise
         # which class does this relation ultimately point to? that's where we have to start
@@ -48,6 +50,8 @@ module CounterCulture
             # now iterate over all the models and see whether their counts are right
             update_count_for_batch(column_name, records)
           end
+
+          log "Finished reconciliation of #{model}##{relation.to_sentence}."
         end
       end
 
@@ -98,6 +102,16 @@ module CounterCulture
         timestamp_columns.map do |timestamp_column|
           "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
         end
+      end
+
+      def log(message)
+        return unless verbose?
+
+        Rails.logger.info(message)
+      end
+
+      def verbose?
+        options[:verbose] && Rails.logger
       end
 
       # keep track of what we fixed, e.g. for a notification email
