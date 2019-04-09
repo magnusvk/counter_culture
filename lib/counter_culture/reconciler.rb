@@ -142,11 +142,11 @@ module CounterCulture
       def log(message)
         return unless log?
 
-        Rails.logger << message
+        Rails.logger.info(message)
       end
 
       def log?
-        !options[:verbose].nil? && !Rails.logger.nil?
+        options[:verbose] && Rails.logger
       end
 
       # keep track of what we fixed, e.g. for a notification email

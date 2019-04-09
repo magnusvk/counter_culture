@@ -1372,7 +1372,10 @@ describe "CounterCulture" do
 
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH, verbose: true
 
-    expect(io.string).to eq("Performing reconciling of SimpleDependent#simple_main.\n.\nFinished reconciling of SimpleDependent#simple_main.\n")
+    expect(io.string).to include(
+      "Performing reconciling of SimpleDependent#simple_main.")
+    expect(io.string).to include(
+      "Finished reconciling of SimpleDependent#simple_main.")
     Rails.logger = logger
   end
 
