@@ -67,7 +67,7 @@ module CounterCulture
       end
 
       def perform
-        log "Performing reconciling of #{counter.model}##{counter.relation.to_sentence}.\n"
+        log "Performing reconciling of #{counter.model}##{counter.relation.to_sentence}."
         # if we're provided a custom set of column names with conditions, use them; just use the
         # column name otherwise
         # which class does this relation ultimately point to? that's where we have to start
@@ -105,14 +105,14 @@ module CounterCulture
             update_count_for_batch(column_name, records)
           end
         end
-        log "\n"
-        log "Finished reconciling of #{counter.model}##{counter.relation.to_sentence}.\n"
+        log_without_newline "\n"
+        log "Finished reconciling of #{counter.model}##{counter.relation.to_sentence}."
       end
 
       private
 
       def update_count_for_batch(column_name, records)
-        log "."
+        log_without_newline "."
 
         ActiveRecord::Base.transaction do
           records.each do |record|
@@ -143,6 +143,12 @@ module CounterCulture
         return unless log?
 
         Rails.logger.info(message)
+      end
+
+      def log_without_newline(message)
+        return unless log?
+
+        Rails.logger << message if Rails.logger.info?
       end
 
       def log?
