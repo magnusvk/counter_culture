@@ -1367,13 +1367,17 @@ describe "CounterCulture" do
     SimpleDependent.delete_all
     SimpleMain.delete_all
 
-    main = SimpleMain.create
-    3.times { main.simple_dependents.create }
+    2.times do
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
 
-    SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH, verbose: true
+    SimpleDependent.counter_culture_fix_counts :batch_size => 1, verbose: true
 
     expect(io.string).to include(
       "Performing reconciling of SimpleDependent#simple_main.")
+    expect(io.string).to include(
+      "..")
     expect(io.string).to include(
       "Finished reconciling of SimpleDependent#simple_main.")
     Rails.logger = logger
