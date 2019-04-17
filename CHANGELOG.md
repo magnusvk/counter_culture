@@ -1,3 +1,8 @@
+## 2.2.1 (April 17, 2019)
+
+Improvements:
+  - Improve logging when `verbose` is set (#256)
+
 ## 2.2.0 (April 9, 2019)
 
 Improvements:
