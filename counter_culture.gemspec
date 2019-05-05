@@ -124,7 +124,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/magnusvk/counter_culture".freeze
   s.licenses = ["MIT".freeze]
   s.required_ruby_version = Gem::Requirement.new(">= 2.3.0".freeze)
-  s.rubygems_version = "3.0.3".freeze
+  s.rubygems_version = "2.7.6.2".freeze
   s.summary = "Turbo-charged counter caches for your Rails app.".freeze
 
   if s.respond_to? :specification_version then
