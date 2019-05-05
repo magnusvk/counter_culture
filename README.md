@@ -37,7 +37,7 @@ Which will generate a migration with code like the following:
 ```ruby
 add_column :categories, :products_count, :integer, null: false, default: 0
 ```
-Note that the column must be either be `NULL` or have a default of zero for the gem to work correctly.
+Note that the column must be ```NOT NULL``` and have a default of zero for this gem to work correctly.
 
 If you are adding counter caches to existing data, you must add code to [manually populate their values](#manually-populating-counter-cache-values) to the generated migration.
 
