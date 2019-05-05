@@ -1,3 +1,8 @@
+## 2.2.2 (May 5, 2019)
+
+Bugfixes:
+  - Don't fail reconciliation in PostgreSQL if the Rails-level primary key is not a DB primary key (#254)
+
 ## 2.2.1 (April 17, 2019)
 
 Improvements:
