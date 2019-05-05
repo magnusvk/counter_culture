@@ -9,6 +9,7 @@ require 'models/twitter_review'
 require 'models/user'
 require 'models/category'
 require 'models/has_string_id'
+require 'models/has_non_pk_id'
 require 'models/simple_main'
 require 'models/simple_dependent'
 require 'models/conditional_main'
@@ -1270,6 +1271,31 @@ describe "CounterCulture" do
 
     string_id.reload
     expect(string_id.users_count).to eq(2)
+  end
+
+  it "should fix a counter cache with no DB-level primary_key index correctly" do
+    non_pk_id = HasNonPkId.create(id: (HasNonPkId.maximum(:id) || 1) + 1)
+
+    user = User.create(has_non_pk_id_id: non_pk_id.id)
+
+    non_pk_id.reload
+    expect(non_pk_id.users_count).to eq(1)
+
+    user2 = User.create(has_non_pk_id_id: non_pk_id.id)
+
+    non_pk_id.reload
+    expect(non_pk_id.users_count).to eq(2)
+
+    non_pk_id.users_count = 123
+    non_pk_id.save!
+
+    non_pk_id.reload
+    expect(non_pk_id.users_count).to eq(123)
+
+    User.counter_culture_fix_counts
+
+    non_pk_id.reload
+    expect(non_pk_id.users_count).to eq(2)
   end
 
   it "should fix a static delta magnitude column correctly" do
