@@ -134,6 +134,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<after_commit_action>.freeze, ["~> 1.0"])
       s.add_runtime_dependency(%q<activerecord>.freeze, [">= 4.2.0"])
       s.add_runtime_dependency(%q<activesupport>.freeze, [">= 4.2.0"])
+      s.add_development_dependency('appraisal'.freeze, ['> 2.0.0'])
       s.add_development_dependency(%q<rake>.freeze, [">= 0"])
       s.add_development_dependency(%q<rails>.freeze, [">= 4.2.0"])
       s.add_development_dependency(%q<rspec>.freeze, ["~> 3.0"])

@@ -1,7 +1,5 @@
 source 'https://rubygems.org'
 
-gemspec
+gem 'sqlite3'
 
-group :test do
-  gem 'sqlite3'
-end
+gemspec
