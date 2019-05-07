@@ -3,10 +3,11 @@ ENV['RAILS_ENV'] = 'test'
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-require "rails_app/config/environment"
+require 'paper_trail'
+require 'rails_app/config/environment'
 
 require 'rspec'
-require 'counter_culture'
+require 'timecop'
 require 'paper_trail/frameworks/rspec'
 
 CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') || (ENV['CIRCLECI'] && 'CIRCLE') || ENV["CI"] && 'CI'

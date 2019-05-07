@@ -1,3 +1,5 @@
+require 'discard'
+
 class SoftDeleteDiscard < ActiveRecord::Base
   include Discard::Model if defined?(Discard::Model)
 
