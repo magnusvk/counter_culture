@@ -76,6 +76,8 @@ module CounterCulture
       end
 
       def update_count_for_batch(column_name, records)
+        log_without_newline '.'
+
         ActiveRecord::Base.transaction do
           records.each do |record|
             count = record.read_attribute('count') || 0
@@ -106,12 +108,18 @@ module CounterCulture
       end
 
       def log(message)
-        return unless verbose?
+        return unless log?
 
         Rails.logger.info(message)
       end
 
-      def verbose?
+      def log_without_newline(message)
+        return unless log?
+
+        Rails.logger << message if Rails.logger.info?
+      end
+
+      def log?
         options[:verbose] && Rails.logger
       end
 
