@@ -1,4 +1,7 @@
 language: ruby
+services:
+  - postgresql
+  - mysql
 rvm:
   - "2.3.8"
   - "2.4.6"
@@ -10,9 +13,15 @@ gemfile:
   - gemfiles/rails_5.1.gemfile
   - gemfiles/rails_5.2.gemfile
 env:
+  - DB=postgresql
+  - DB=sqlite3
+  - DB=mysql2
 before_install:
   - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
   - gem install bundler -v '< 2'
 install:
   - bundle update
+before_script:
+  - psql -c 'create database counter_culture_test;' -U postgres
+  - mysql -e 'CREATE DATABASE counter_culture_test;'
 script: TRAVIS=true bundle exec rake spec

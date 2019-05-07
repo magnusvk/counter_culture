@@ -1,25 +1,29 @@
-# SQLite version 3.x
-#   gem install sqlite3
-#
-#   Ensure the SQLite 3 gem is defined in your Gemfile
-#   gem 'sqlite3'
-development:
+sqlite3: &sqlite3
   adapter: sqlite3
-  database: db/development.sqlite3
-  pool: 5
-  timeout: 5000
+  database: db/<%= Rails.env %>.sqlite3
 
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
-test:
-  adapter: sqlite3
-  database: db/test.sqlite3
+mysql2: &mysql2
+  adapter: mysql2
+  username: travis
+  encoding: utf8
+
+postgresql: &postgresql
+  adapter: postgresql
+  username: postgres
+  min_messages: ERROR
+
+defaults: &defaults
   pool: 5
   timeout: 5000
+  host: localhost
+  database: counter_culture_test
+  <<: *<%= ENV['DB'] || 'sqlite3' %>
+
+development:
+  <<: *defaults
+
+test:
+  <<: *defaults
 
 production:
-  adapter: sqlite3
-  database: db/production.sqlite3
-  pool: 5
-  timeout: 5000
+  <<: *defaults
