@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require_relative 'spec_helper'
 
 require 'models/company'
 require 'models/industry'
@@ -33,7 +33,7 @@ require 'models/with_module/model2'
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
 
-describe "CounterCulture" do
+RSpec.describe "CounterCulture" do
   before(:each) do
     DatabaseCleaner.clean
   end
