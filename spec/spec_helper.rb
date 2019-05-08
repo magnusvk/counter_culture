@@ -10,6 +10,15 @@ require 'rspec'
 require 'timecop'
 require 'paper_trail/frameworks/rspec'
 
+case ENV['DB']
+when 'postgresql'
+  require 'pg'
+when 'mysql2'
+  require 'mysql2'
+else
+  require 'sqlite3'
+end
+
 DB_CONFIG = {
   defaults: {
     pool: 5,
