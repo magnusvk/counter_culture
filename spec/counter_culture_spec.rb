@@ -497,7 +497,12 @@ RSpec.describe "CounterCulture" do
         expect(user.using_count).to eq(0)
         expect(user.tried_count).to eq(0)
 
-        review = Review.create :user_id => user.id, :product_id => product.id, :review_type => "using"
+        review = Review.create(
+          user_id: user.id,
+          product_id: product.id,
+          review_type: 'using'
+        )
+
         user.reload
 
         expect(user.using_count).to eq(1)
@@ -1453,7 +1458,7 @@ RSpec.describe "CounterCulture" do
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(3) }
 
-    SimpleMain.order(Arel.sql('random()')).limit(A_FEW).update_all simple_dependents_count: 1
+    SimpleMain.order(db_random).limit(A_FEW).update_all simple_dependents_count: 1
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(3) }
@@ -1471,7 +1476,7 @@ RSpec.describe "CounterCulture" do
 
     ConditionalMain.find_each { |main| expect(main.conditional_dependents_count).to eq(main.id % 2 == 0 ? 3 : 0) }
 
-    ConditionalMain.order(Arel.sql('random()')).limit(A_FEW).update_all :conditional_dependents_count => 1
+    ConditionalMain.order(db_random).limit(A_FEW).update_all :conditional_dependents_count => 1
     ConditionalDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     ConditionalMain.find_each { |main| expect(main.conditional_dependents_count).to eq(main.id % 2 == 0 ? 3 : 0) }
@@ -1489,7 +1494,7 @@ RSpec.describe "CounterCulture" do
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(main.id % 4) }
 
-    SimpleMain.order(Arel.sql('random()')).limit(A_FEW).update_all simple_dependents_count: 1
+    SimpleMain.order(db_random).limit(A_FEW).update_all simple_dependents_count: 1
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     SimpleMain.find_each { |main| expect(main.simple_dependents_count).to eq(main.id % 4) }
@@ -1601,16 +1606,20 @@ RSpec.describe "CounterCulture" do
   end
 
   it "should use relation primary_key correctly" do
-    subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
+    subcateg = Subcateg.create!
+    subcateg.update(subcat_id: Subcateg::SUBCAT_1)
+
     post = Post.new
     post.subcateg = subcateg
     post.save!
+
     subcateg.reload
     expect(subcateg.posts_count).to eq(1)
   end
 
   it "should use relation primary key on counter destination table correctly when fixing counts" do
-    subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
+    subcateg = Subcateg.create!
+    subcateg.update(subcat_id: Subcateg::SUBCAT_1)
     post = Post.new
     post.subcateg = subcateg
     post.save!
@@ -1625,7 +1634,8 @@ RSpec.describe "CounterCulture" do
   end
 
   it "should use primary key on counted records table correctly when fixing counts" do
-    subcateg = Subcateg.create :subcat_id => Subcateg::SUBCAT_1
+    subcateg = Subcateg.create!
+    subcateg.update(subcat_id: Subcateg::SUBCAT_1)
     post = Post.new
     post.subcateg = subcateg
     post.save!
@@ -1641,17 +1651,18 @@ RSpec.describe "CounterCulture" do
   end
 
   it "should use multi-level relation primary key on counter destination table correctly when fixing counts" do
-    categ = Categ.create :cat_id => Categ::CAT_1
-    subcateg = Subcateg.new :subcat_id => Subcateg::SUBCAT_1
-    subcateg.categ = categ
-    subcateg.save!
+    categ = Categ.create!
+    categ.update(cat_id: Categ::CAT_1)
 
-    post = Post.new
-    post.subcateg = subcateg
-    post.save!
+    subcateg = Subcateg.create!
+    subcateg.update(
+      subcat_id: Subcateg::SUBCAT_1,
+      categ: categ
+    )
 
-    categ.posts_count = -1
-    categ.save!
+    Post.create!(subcateg: subcateg)
+
+    categ.update(posts_count: -1)
 
     fixed = Post.counter_culture_fix_counts :only => [[:subcateg, :categ]]
 

@@ -94,7 +94,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   end
 
   create_table "has_non_pk_ids", :force => true, :id => false do |t|
-    t.integer  "id", :default => '', :null => false
+    t.integer  "id", :null => false
     t.string   "something"
     t.integer  "users_count",        :null => false, :default => 0
     t.datetime "created_at"

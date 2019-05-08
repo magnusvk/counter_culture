@@ -42,13 +42,18 @@ DB_CONFIG = {
   }
 }.with_indifferent_access.freeze
 
-ActiveRecord::Base.raise_in_transactional_callbacks = true if Rails.version < '5.0.0'
+if Rails.version < '5.0.0'
+  ActiveRecord::Base.raise_in_transactional_callbacks = true
+end
 
 ActiveRecord::Base.establish_connection(
   DB_CONFIG[:defaults].merge(DB_CONFIG[ENV['DB'] || :sqlite3])
 )
 
-CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') || (ENV['CIRCLECI'] && 'CIRCLE') || ENV["CI"] && 'CI'
+CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') \
+                || (ENV['CIRCLECI'] && 'CIRCLE') \
+                || ENV['CI'] \
+                && 'CI'
 
 begin
   was, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false unless ENV['SHOW_MIGRATION_MESSAGES']
@@ -64,7 +69,14 @@ Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 ActiveRecord::Base.logger = Logger.new(STDOUT)
 ActiveRecord::Base.logger.level = 1
 
+module DbRandom
+  def db_random
+    Arel.sql(ENV['DB'] == 'mysql2' ? 'rand()' : 'random()')
+  end
+end
+
 RSpec.configure do |config|
+  config.include DbRandom
   config.fail_fast = true unless CI_TEST_RUN
   config.filter_run focus: true
   config.run_all_when_everything_filtered = true
