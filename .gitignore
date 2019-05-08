@@ -1,7 +1,7 @@
 # appraisal lockfiles
 gemfiles/*.lock
 
-# rcov generated
+# spec coverage
 coverage
 coverage.data
 
@@ -24,6 +24,12 @@ Gemfile.lock
 # allow people to manage their own Ruby versions / gemsets
 .ruby-version
 .ruby-gemset
+
+# rspec pass/fail status
+.rspec_status
+
+# sqlite3 db
+db
 
 # Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore:
 #
@@ -57,5 +63,3 @@ Gemfile.lock
 
 # For rubinius:
 #*.rbc
-.rspec_status
-db
