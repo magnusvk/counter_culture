@@ -1,17 +1,41 @@
 require 'bundler/setup'
 require 'counter_culture'
 
-ENV['RAILS_ENV'] = 'test'
-
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 require 'paper_trail'
-require 'rails_app/config/environment'
-
+require 'rails'
 require 'rspec'
 require 'timecop'
 require 'paper_trail/frameworks/rspec'
+
+DB_CONFIG = {
+  defaults: {
+    pool: 5,
+    timeout: 5000,
+    host: 'localhost',
+    database: 'counter_culture_test'
+  },
+  sqlite3: {
+    adapter: 'sqlite3',
+    database: 'db/test.sqlite3'
+  },
+  mysql2: {
+    adapter: 'mysql2',
+    username: 'travis',
+    encoding: 'utf8'
+  },
+  postgresql: {
+    adapter: 'postgresql',
+    username: 'postgres',
+    min_messages: 'ERROR'
+  }
+}.with_indifferent_access.freeze
+
+ActiveRecord::Base.establish_connection(
+  DB_CONFIG[:defaults].merge(DB_CONFIG[ENV['DB'] || :sqlite3])
+)
 
 CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') || (ENV['CIRCLECI'] && 'CIRCLE') || ENV["CI"] && 'CI'
 

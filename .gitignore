@@ -58,3 +58,4 @@ Gemfile.lock
 # For rubinius:
 #*.rbc
 .rspec_status
+db
