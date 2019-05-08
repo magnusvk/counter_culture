@@ -33,6 +33,8 @@ DB_CONFIG = {
   }
 }.with_indifferent_access.freeze
 
+ActiveRecord::Base.raise_in_transactional_callbacks = true if Rails.version < '5.0.0'
+
 ActiveRecord::Base.establish_connection(
   DB_CONFIG[:defaults].merge(DB_CONFIG[ENV['DB'] || :sqlite3])
 )
