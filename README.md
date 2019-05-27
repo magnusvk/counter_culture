@@ -76,7 +76,7 @@ end
 class Membership < ActiveRecord::Base
   belongs_to :group
   belongs_to :member, class: "User"
-  counter_cuture :group, column: "members_count"
+  counter_culture :group, column: "members_count"
   # If you'd like to also touch the group when `members_count` is updated
   # counter_culture :group, column: "members_count", touch: true
 end
