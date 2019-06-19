@@ -103,7 +103,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   add_index "has_non_pk_ids", :id, :unique => true
 
   create_table "has_string_ids", :force => true, :id => false do |t|
-    t.string   "id", :default => '', :null => false
+    t.string   "id", :default => '', :null => false, :limit => 191
     t.string   "something"
     t.integer  "users_count",        :null => false, :default => 0
     t.datetime "created_at"
@@ -235,7 +235,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   end
 
   create_table :versions, :force => true do |t|
-    t.string   :item_type
+    t.string   :item_type, limit: 191
     t.integer  :item_id,   null: false
     t.string   :event,     null: false
     t.integer  :whodunnit
