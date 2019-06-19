@@ -1,4 +1,7 @@
-# rcov generated
+# appraisal lockfiles
+gemfiles/*.lock
+
+# spec coverage
 coverage
 coverage.data
 
@@ -22,7 +25,13 @@ Gemfile.lock
 .ruby-version
 .ruby-gemset
 
-# Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore: 
+# rspec pass/fail status
+.rspec_status
+
+# sqlite3 db
+db
+
+# Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore:
 #
 # * Create a file at ~/.gitignore
 # * Include files you want ignored

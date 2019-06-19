@@ -50,9 +50,18 @@ module CounterCulture
         # increment or decrement?
         operator = options[:increment] ? '+' : '-'
 
-        # we don't use Rails' update_counters because we support changing the timestamp
-        quoted_column = model.connection.quote_column_name(change_counter_column)
+        klass = relation_klass(relation, source: obj, was: options[:was])
 
+        # MySQL throws an ambiguous column error if any joins are present and we don't include the
+        # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
+        # throws an exception if the table name is present after UPDATE.
+        quoted_column = if ActiveRecord::Base.connection.adapter_name == 'Mysql2'
+                          "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
+                        else
+                          "#{model.connection.quote_column_name(change_counter_column)}"
+                        end
+
+        # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
         # this updates the actual counter
         updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
@@ -66,7 +75,6 @@ module CounterCulture
           end
         end
 
-        klass = relation_klass(relation, source: obj, was: options[:was])
         primary_key = relation_primary_key(relation, source: obj, was: options[:was])
 
         if @with_papertrail
