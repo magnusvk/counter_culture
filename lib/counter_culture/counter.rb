@@ -55,7 +55,7 @@ module CounterCulture
         # MySQL throws an ambiguous column error if any joins are present and we don't include the
         # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
         # throws an exception if the table name is present after UPDATE.
-        quoted_column = if ActiveRecord::Base.connection.adapter_name == 'Mysql2'
+        quoted_column = if klass.connection.adapter_name == 'Mysql2'
                           "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
                         else
                           "#{model.connection.quote_column_name(change_counter_column)}"
