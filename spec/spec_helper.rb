@@ -22,26 +22,31 @@ else
   require 'sqlite3'
 end
 
+CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') \
+                || (ENV['CIRCLECI'] && 'CIRCLE') \
+                || ENV['CI'] \
+                && 'CI'
+
 DB_CONFIG = {
   defaults: {
     pool: 5,
     timeout: 5000,
     host: 'localhost',
-    database: 'counter_culture_test'
+    database: 'counter_culture_test',
   },
   sqlite3: {
     adapter: 'sqlite3',
-    database: 'db/test.sqlite3'
+    database: 'db/test.sqlite3',
   },
   mysql2: {
     adapter: 'mysql2',
-    username: 'travis',
-    encoding: 'utf8'
+    username: CI_TEST_RUN ? 'travis' : 'root',
+    encoding: 'utf8',
   },
   postgresql: {
     adapter: 'postgresql',
-    username: 'postgres',
-    min_messages: 'ERROR'
+    username: CI_TEST_RUN ? 'postgres' : '',
+    min_messages: 'ERROR',
   }
 }.with_indifferent_access.freeze
 
@@ -52,11 +57,6 @@ end
 ActiveRecord::Base.establish_connection(
   DB_CONFIG[:defaults].merge(DB_CONFIG[ENV['DB'] || :sqlite3])
 )
-
-CI_TEST_RUN = (ENV['TRAVIS'] && 'TRAVIS') \
-                || (ENV['CIRCLECI'] && 'CIRCLE') \
-                || ENV['CI'] \
-                && 'CI'
 
 begin
   was, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false unless ENV['SHOW_MIGRATION_MESSAGES']
