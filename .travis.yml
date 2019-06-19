@@ -2,6 +2,8 @@ language: ruby
 services:
   - postgresql
   - mysql
+addons:
+  postgresql: "9.6"
 rvm:
   - "2.3.8"
   - "2.4.6"
@@ -12,10 +14,17 @@ gemfile:
   - gemfiles/rails_5.0.gemfile
   - gemfiles/rails_5.1.gemfile
   - gemfiles/rails_5.2.gemfile
+  - gemfiles/rails_6.0.0.rc1.gemfile
 env:
   - DB=postgresql
   - DB=sqlite3
   - DB=mysql2
+matrix:
+  exclude:
+    - rvm: "2.3.8"
+      gemfile: gemfiles/rails_6.0.0.rc1.gemfile
+    - rvm: "2.4.6"
+      gemfile: gemfiles/rails_6.0.0.rc1.gemfile
 before_install:
   - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
   - gem install bundler -v '< 2'

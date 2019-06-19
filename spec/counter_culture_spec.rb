@@ -165,7 +165,7 @@ RSpec.describe "CounterCulture" do
       expect(user.reviews_count).to eq(1)
       expect(user.review_approvals_count).to eq(0)
 
-      review1.update_attributes!(approvals: 42)
+      review1.update!(approvals: 42)
 
       user.reload
       expect(user.reviews_count).to eq(1)
@@ -1316,7 +1316,7 @@ RSpec.describe "CounterCulture" do
     user.reload
     expect(user.custom_delta_count).to eq(3)
 
-    user.update_attributes(:custom_delta_count => 5)
+    user.update(:custom_delta_count => 5)
 
     Review.counter_culture_fix_counts(:skip_unsupported => true)
 
@@ -1812,7 +1812,7 @@ RSpec.describe "CounterCulture" do
       expect(sd).to be_discarded
       expect(company.reload.soft_delete_discards_count).to eq(0)
 
-      company.update_attributes(soft_delete_discards_count: 100)
+      company.update(soft_delete_discards_count: 100)
       expect(company.reload.soft_delete_discards_count).to eq(100)
       SoftDeleteDiscard.counter_culture_fix_counts
       expect(company.reload.soft_delete_discards_count).to eq(0)
@@ -1918,7 +1918,7 @@ RSpec.describe "CounterCulture" do
       expect(sd.deleted_at).to be_truthy
       expect(company.reload.soft_delete_paranoia_count).to eq(0)
 
-      company.update_attributes(soft_delete_paranoia_count: 100)
+      company.update(soft_delete_paranoia_count: 100)
       expect(company.reload.soft_delete_paranoia_count).to eq(100)
       SoftDeleteParanoia.counter_culture_fix_counts
       expect(company.reload.soft_delete_paranoia_count).to eq(0)
@@ -2173,13 +2173,13 @@ RSpec.describe "CounterCulture" do
 
       it "can deal with changes to condition" do
         img1 = PolyImage.create(imageable: employee)
-        expect {img1.update_attributes!(url: special_url)}
+        expect {img1.update!(url: special_url)}
           .to change { employee.reload.special_poly_images_count }.from(0).to(1)
       end
 
       it "can deal with changes to condition" do
         img1 = PolyImage.create(imageable: employee, url: special_url)
-        expect {img1.update_attributes!(url: "normal url")}
+        expect {img1.update!(url: "normal url")}
           .to change { employee.reload.special_poly_images_count }.from(1).to(0)
       end
     end
