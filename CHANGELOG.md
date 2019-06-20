@@ -1,3 +1,11 @@
+## 2.2.3 (June 20, 2019)
+
+Improvements:
+  - Start testing against MySQL and PostgreSQL as well as sqlite3 (#257)
+
+Bugfixes:
+  - Fix edge cases in MySQL (#257)
+
 ## 2.2.2 (May 5, 2019)
 
 Bugfixes:
