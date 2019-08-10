@@ -111,6 +111,35 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(0)
   end
 
+  it "does not duplicate decrements counter cache on destroy" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 69
+    same_review = Review.find(review.id)
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(69)
+
+    review.destroy
+    same_review.destroy
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+  end
+
   it "updates counter cache on update" do
     user1 = User.create
     user2 = User.create
