@@ -20,7 +20,7 @@ module CounterCulture
           # initialize callbacks only once
           after_create :_update_counts_after_create
 
-          before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
+          after_commit :_update_counts_after_destroy, on: :destroy, unless: :destroyed_for_counter_culture?
 
           if respond_to?(:before_real_destroy) &&
               instance_methods.include?(:paranoia_destroyed?)
