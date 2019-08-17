@@ -20,27 +20,27 @@ module CounterCulture
           # initialize callbacks only once
           after_create :_update_counts_after_create
 
-          after_commit :_update_counts_after_destroy, on: :destroy, unless: :destroyed_for_counter_culture?
-
-          if respond_to?(:before_real_destroy) &&
-              instance_methods.include?(:paranoia_destroyed?)
-            before_real_destroy :_update_counts_after_destroy,
-              if: -> (model) { !model.paranoia_destroyed? }
-          end
-
-          after_update :_update_counts_after_update, unless: :destroyed_for_counter_culture?
-
-          if respond_to?(:before_restore)
+          if instance_methods.include?(:paranoia_destroyed?)
             before_restore :_update_counts_after_create,
-              if: -> (model) { model.deleted? }
-          end
-
-          if defined?(Discard::Model) && include?(Discard::Model)
+              if: ->(model) { model.deleted? }
+            after_update :_update_counts_after_update,
+              if: ->(model) { !model.paranoia_destroyed? }
+            before_real_destroy :_update_counts_after_destroy,
+              if: ->(model) { !model.paranoia_destroyed? }
+            before_destroy :_update_counts_after_destroy,
+              if: ->(model) { !model.paranoia_destroyed? }
+          elsif defined?(Discard::Model) && include?(Discard::Model)
             before_discard :_update_counts_after_destroy,
               if: ->(model) { !model.discarded? }
-
             before_undiscard :_update_counts_after_create,
               if: ->(model) { model.discarded? }
+            after_update :_update_counts_after_update,
+              if: ->(model) { !model.discarded? }
+            after_commit :_update_counts_after_destroy, on: :destroy,
+              if: ->(model) { !model.discarded? }
+          else
+            after_update :_update_counts_after_update
+            after_commit :_update_counts_after_destroy, on: :destroy
           end
 
           # we keep a list of all counter caches we must maintain
@@ -124,17 +124,5 @@ module CounterCulture
         end
       end
     end
-
-    # check if record is soft-deleted
-    def destroyed_for_counter_culture?
-      if respond_to?(:paranoia_destroyed?)
-        paranoia_destroyed?
-      elsif defined?(Discard::Model) && self.class.include?(Discard::Model)
-        discarded?
-      else
-        false
-      end
-    end
-
   end
 end
