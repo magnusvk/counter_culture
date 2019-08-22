@@ -1,3 +1,8 @@
+## 2.2.4 (August 21, 2019)
+
+Bugfixes:
+  - Test and fix behavior in Rails 6.0.0 release (#268)
+
 ## 2.2.3 (June 20, 2019)
 
 Improvements:
