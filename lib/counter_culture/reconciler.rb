@@ -133,7 +133,11 @@ module CounterCulture
             if options[:touch]
               current_time = record.send(:current_time_from_proper_timezone)
               timestamp_columns = record.send(:timestamp_attributes_for_update_in_model)
-              timestamp_columns << options[:touch] if options[:touch] != true
+              if options[:touch] != true
+                # starting in Rails 6 this is frozen
+                timestamp_columns = timestamp_columns.dup
+                timestamp_columns << options[:touch]
+              end
               timestamp_columns.each do |timestamp_column|
                 updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
               end

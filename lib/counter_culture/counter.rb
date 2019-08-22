@@ -69,7 +69,11 @@ module CounterCulture
         if touch
           current_time = obj.send(:current_time_from_proper_timezone)
           timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
-          timestamp_columns << touch if touch != true
+          if touch != true
+            # starting in Rails 6 this is frozen
+            timestamp_columns = timestamp_columns.dup
+            timestamp_columns << touch
+          end
           timestamp_columns.each do |timestamp_column|
             updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
           end

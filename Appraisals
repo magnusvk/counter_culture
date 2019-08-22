@@ -3,7 +3,7 @@
   5.0
   5.1
   5.2
-  6.0.0.rc1
+  6.0
 ].each do |rails_version|
   gem_rails_version = Gem::Version.new(rails_version)
   if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.5.0') &&
