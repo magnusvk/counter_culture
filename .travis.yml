@@ -23,7 +23,7 @@ matrix:
   exclude:
     - rvm: "2.3.8"
       gemfile: gemfiles/rails_6.0.gemfile
-    - rvm: "2.4.6"
+    - rvm: "2.4.7"
       gemfile: gemfiles/rails_6.0.gemfile
 before_install:
   - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
