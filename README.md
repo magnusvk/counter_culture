@@ -7,7 +7,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Can keep a running count, or a running total
 
-Tested against Ruby 2.3.8, 2.4.6, 2.5.5 and 2.6.2 and against the latest patch releases of Rails 4.2, 5.0, 5.1 and 5.2.
+Tested against Ruby 2.3.8, 2.4.7, 2.5.6 and 2.6.4 and against the latest patch releases of Rails 4.2, 5.0, 5.1, 5.2 and 6.0.
 
 Please note that -- unlike Rails' built-in counter-caches -- counter_culture does not currently change the behavior of the `.size` method on ActiveRecord associations. If you want to avoid a database query and read the cached value, please use the attribute name containing the counter cache directly.
 ```
