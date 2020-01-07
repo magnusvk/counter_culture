@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude]
+    CONFIG_OPTIONS = [:column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :precision]
     ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
@@ -20,6 +20,7 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @with_papertrail = options.fetch(:with_papertrail, false)
+      @precision = options[:precision]
     end
 
     # increments or decrements a counter cache
@@ -64,7 +65,7 @@ module CounterCulture
         # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
         # this updates the actual counter
-        updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+        updates << update_query(quoted_column, operator, delta_magnitude)
         # and here we update the timestamp, if so desired
         if touch
           current_time = obj.send(:current_time_from_proper_timezone)
@@ -297,6 +298,7 @@ module CounterCulture
     end
 
     private
+
     def attribute_was(obj, attr)
       changes_method =
         if ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0")
@@ -305,6 +307,15 @@ module CounterCulture
           "_was"
         end
       obj.public_send("#{attr}#{changes_method}")
+    end
+
+    def update_query(quoted_column, operator, delta_magnitude)
+      # Check if precision option is provided, then use round query. Else use normal update query
+      if precision.present?
+        "#{quoted_column} = round((COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude})::DECIMAL, #{precision})"
+      else
+        "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+      end
     end
   end
 end
