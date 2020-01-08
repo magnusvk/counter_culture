@@ -65,7 +65,7 @@ module CounterCulture
         # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
         # this updates the actual counter
-        updates << update_query(quoted_column, operator, delta_magnitude)
+        updates << update_query(klass, quoted_column, operator, delta_magnitude)
         # and here we update the timestamp, if so desired
         if touch
           current_time = obj.send(:current_time_from_proper_timezone)
@@ -309,10 +309,14 @@ module CounterCulture
       obj.public_send("#{attr}#{changes_method}")
     end
 
-    def update_query(quoted_column, operator, delta_magnitude)
+    def update_query(klass, quoted_column, operator, delta_magnitude)
       # Check if precision option is provided, then use round query. Else use normal update query
       if precision.present?
-        "#{quoted_column} = round((COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude})::DECIMAL, #{precision})"
+        if klass.connection.adapter_name == 'PostgreSQL'
+          "#{quoted_column} = round((COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude})::DECIMAL, #{precision})"
+        else
+          "#{quoted_column} = round((COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}), #{precision})"
+        end
       else
         "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
       end

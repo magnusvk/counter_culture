@@ -1534,6 +1534,30 @@ RSpec.describe "CounterCulture" do
     expect(user.review_value_sum.round(1)).to eq(0)
   end
 
+  it "should correctly sum up float values with precision provided" do
+    user = User.create
+
+    r1 = Review.create :user_id => user.id, :value => 0.1
+
+    user.reload
+    expect(user.review_value_sum).to eq(0.1)
+
+    r2 = Review.create :user_id => user.id, :value => 0.2
+
+    user.reload
+    expect(user.review_value_sum).to eq(0.3)
+
+    r2.destroy
+
+    user.reload
+    expect(user.review_value_sum).to eq(0.1)
+
+    r1.destroy
+
+    user.reload
+    expect(user.review_value_sum).to eq(0)
+  end
+
   it "should correctly fix float values that came out of sync" do
     user = User.create
 

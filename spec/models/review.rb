@@ -7,7 +7,7 @@ class Review < ActiveRecord::Base
   counter_culture :user
   counter_culture :user, :column_name => proc { |model| model.review_type && model.review_type != 'null' ? "#{model.review_type}_count" : nil }, :column_names => {"reviews.review_type = 'using'" => 'using_count', "reviews.review_type = 'tried'" => 'tried_count', "reviews.review_type = 'null'" => nil}
   counter_culture :user, :column_name => 'review_approvals_count', :delta_column => 'approvals'
-  counter_culture :user, :column_name => 'review_value_sum', :delta_column => 'value'
+  counter_culture :user, :column_name => 'review_value_sum', :delta_column => 'value', :precision => 2
   counter_culture :user, :column_name => 'dynamic_delta_count', delta_magnitude: proc {|model| model.weight }
   counter_culture :user, :column_name => 'custom_delta_count', delta_magnitude: 3
   counter_culture [:user, :manages_company]

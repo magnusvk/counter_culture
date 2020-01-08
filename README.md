@@ -211,6 +211,31 @@ The value in the counter cache will be the sum of the ```weight_ounces``` values
 
 The ```:delta_column``` option supports all numeric column types, not just ```:integer```. Specifically, ```:float``` is supported and tested.
 
+#### Rounding off float values while totaling
+
+Following is a classic example of adding 2 float values resulting in recurring decimal points which are not rounded off.
+
+```ruby
+0.1 + 0.2
+=> 0.30000000000000004
+```
+
+Use the ```:precision``` option to round off values while totaling and updating the ```delta_column```.
+
+
+```ruby
+class Review < ActiveRecord::Base
+  belongs_to :user
+  counter_culture :user, column_name: 'review_value_sum', delta_column: 'value', precision: 2
+end
+
+class User < ActiveRecord::Base
+  has_many :reviews
+end
+```
+
+Now, the value in the counter cache will be sum of ```value``` with a precision of ```2```. In above example, result would be rounded off to ```0.3```.
+
 ### Dynamically over-writing affected foreign keys
 
 ```ruby
