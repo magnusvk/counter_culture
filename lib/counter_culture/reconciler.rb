@@ -252,7 +252,11 @@ module CounterCulture
           if index == reverse_relation.size - 1
             # conditions must be applied to the join on which we are counting
             if where
-              joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
+              if where.is_a? Symbol
+                joins_sql += " AND #{target_table_alias}.#{model.primary_key} IN (#{model.send(where).pluck(model.primary_key).join(',')})"
+              else
+                joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
+              end
             end
             # respect the deleted_at column if it exists
             if model.column_names.include?('deleted_at')
