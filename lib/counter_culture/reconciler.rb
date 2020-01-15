@@ -252,8 +252,8 @@ module CounterCulture
           if index == reverse_relation.size - 1
             # conditions must be applied to the join on which we are counting
             if where
-              if where.is_a? Symbol
-                joins_sql += " AND #{target_table_alias}.#{model.primary_key} IN (#{model.send(where).pluck(model.primary_key).join(',')})"
+              if where.respond_to?(:to_sql)
+                joins_sql += " AND #{target_table_alias}.#{model.primary_key} IN (#{where.select(model.primary_key).to_sql})"
               else
                 joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
               end
