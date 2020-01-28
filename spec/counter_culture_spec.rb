@@ -29,6 +29,8 @@ require 'models/candidate_profile'
 require 'models/candidate'
 require 'models/with_module/model1'
 require 'models/with_module/model2'
+require 'models/prefecture'
+require 'models/city'
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
@@ -2283,6 +2285,17 @@ RSpec.describe "CounterCulture" do
       model2.reload
       expect(model2.model1s_count).to eq(5)
     end
+  end
+
+  it "can fix counts by scope" do
+    prefecture = Prefecture.new name: 'Tokyo', big_cities_count: 0
+    prefecture.save!
+    City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
+    City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
+
+    City.counter_culture_fix_counts
+
+    expect(prefecture.reload.big_cities_count).to eq(1)
   end
 
   private

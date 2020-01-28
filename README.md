@@ -329,6 +329,23 @@ class Product < ActiveRecord::Base
 end
 ```
 
+You can specify scope instead of where condition string.
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  scope :awesomes, ->{ where "products.product_type = ?", 'awesome' }
+  scope :suckys, ->{ where "products.product_type = ?", 'sucky' }
+
+  counter_culture :category,
+      column_name: proc {|model| "#{model.product_type}_count" },
+      column_names: {
+          Product.awesomes => :awesome_count,
+          Product.suckys => :sucky_count
+      }
+end
+```
+
 If you would like to avoid this configuration and simply skip counter caches with
 dynamic column names, while still fixing those counters on the model that are not
 dynamic, you can pass `skip_unsupported`:

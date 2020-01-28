@@ -252,4 +252,15 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table :with_module_model2s, :force => true do |t|
     t.integer :model1s_count
   end
+
+  create_table :prefectures, :force => true do |t|
+    t.string :name
+    t.integer :big_cities_count, null: false, default: 0
+  end
+
+  create_table :cities, :force => true do |t|
+    t.string :name
+    t.integer :prefecture_id, null: false
+    t.integer :population, null: false
+  end
 end
