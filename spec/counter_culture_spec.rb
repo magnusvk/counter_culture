@@ -2288,7 +2288,7 @@ RSpec.describe "CounterCulture" do
   end
 
   it "can fix counts by scope" do
-    prefecture = Prefecture.new name: 'Tokyo'
+    prefecture = Prefecture.new name: 'Tokyo', big_cities_count: 0
     prefecture.save!
     City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
     City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
