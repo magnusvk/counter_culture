@@ -329,7 +329,7 @@ class Product < ActiveRecord::Base
 end
 ```
 
-You can specify scope instead of where condition string.
+You can specify a scope instead of a where condition string for `column_names`:
 
 ```ruby
 class Product < ActiveRecord::Base

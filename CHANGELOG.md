@@ -1,3 +1,8 @@
+## 2.3.0 (January 28, 2020)
+
+Improvements:
+  - Allow using scopes in `column_names` (#272)
+
 ## 2.2.4 (August 21, 2019)
 
 Bugfixes:
