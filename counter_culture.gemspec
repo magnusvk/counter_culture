@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'appraisal', '> 2.0.0'
   spec.add_development_dependency 'awesome_print'
-  spec.add_development_dependency 'bundler', '~> 1.17'
+  spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'database_cleaner', '>= 1.1.1'
   spec.add_development_dependency 'discard'
   spec.add_development_dependency 'paper_trail'
