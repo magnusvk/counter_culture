@@ -309,7 +309,7 @@ Product.counter_culture_fix_counts touch: true
 If you have specified a custom timestamps column, pass its name as the value for the `touch` option:
 
 ```ruby
-Product.counter_culture_fix_counts touch: category_count_changed
+Product.counter_culture_fix_counts touch: 'category_count_changed'
 ```
 
 #### Handling dynamic column names
