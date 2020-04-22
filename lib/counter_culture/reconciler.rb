@@ -102,10 +102,12 @@ module CounterCulture
           # iterate in batches; otherwise we might run out of memory when there's a lot of
           # instances and we try to load all their counts at once
           batch_size = options.fetch(:batch_size, CounterCulture.config.batch_size)
+          start_index = options[:start]
+          finish_index = options[:finish]
 
-          counts_query = counts_query.where(options[:where])
+          counts_query = counts_query.where(options[:where]).group(full_primary_key(relation_class))
 
-          counts_query.group(full_primary_key(relation_class)).find_in_batches(batch_size: batch_size) do |records|
+          counts_query.find_in_batches(batch_size: batch_size, start: start_index, finish: finish_index) do |records|
             # now iterate over all the models and see whether their counts are right
             update_count_for_batch(column_name, records)
           end
