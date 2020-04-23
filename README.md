@@ -286,7 +286,7 @@ Product.counter_culture_fix_counts start: 1000, finish: 2000
 # In worker 1, lets process from 1000 to 2000
 
 Product.counter_culture_fix_counts start: 2001, finish: 3000
-# In worker 1, lets process from 2001 to 3000
+# In worker 2, lets process from 2001 to 3000
 ```
 
 The ```counter_culture_fix_counts``` counts method uses batch processing of records to keep the memory consumption low. The default batch size is 1000 but is configurable like so
