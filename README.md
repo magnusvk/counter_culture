@@ -275,7 +275,13 @@ Product.counter_culture_fix_counts verbose: true
 
 Product.counter_culture_fix_counts only: :category, where: { categories: { id: 1 } }
 # will automatically fix counts only on the :category with id 1 relation on Product
+```
 
+#### Parallelizing fix counter cache in multiple workers
+
+The options start and finish are especially useful if you want multiple workers dealing with the same processing queue. You can make worker 1 handle all the records between id 1 and 9999 and worker 2 handle from 10000 and beyond by setting the :start and :finish option on each worker.
+
+```ruby
 Product.counter_culture_fix_counts start: 10_000
 # will fix counts for all counter caches defined on Product from record 10000 and onwards.
 
