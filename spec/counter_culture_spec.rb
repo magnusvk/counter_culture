@@ -2305,12 +2305,7 @@ RSpec.describe "CounterCulture" do
   end
 
   it "support fix counts using batch limits start and finish" do
-    company = Company.create!
-    company.children << Company.create!
-    company.children_count = -1
-    company.save!
-
-    companies = 3.times.map do
+    companies_group = 3.times.map do
       company = Company.create!
       company.children << Company.create!
       company.children_count = -1
@@ -2318,15 +2313,27 @@ RSpec.describe "CounterCulture" do
       company
     end
 
-    start = companies.first.id
-    finish = companies.last.id
+    company_out_of_first_group = Company.create!
+    company_out_of_first_group.children << Company.create!
+    company_out_of_first_group.children_count = -1
+    company_out_of_first_group.save!
+
+    start = companies_group.first.id
+    finish = companies_group.last.id
 
     fixed = Company.counter_culture_fix_counts start: start, finish: finish
     expect(fixed.length).to eq(3)
 
-    companies.each do |company|
+    companies_group.each do |company|
       expect(company.reload.children_count).to eq(1)
     end
+
+    expect(company_out_of_first_group.reload.children_count).to eq(-1)
+
+
+    Company.counter_culture_fix_counts start: company_out_of_first_group.id
+
+    expect(company_out_of_first_group.reload.children_count).to eq(1)
   end
 
   private
