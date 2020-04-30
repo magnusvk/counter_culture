@@ -2323,13 +2323,11 @@ RSpec.describe "CounterCulture" do
 
     fixed = Company.counter_culture_fix_counts start: start, finish: finish
     expect(fixed.length).to eq(3)
+    expect(company_out_of_first_group.reload.children_count).to eq(-1)
 
     companies_group.each do |company|
       expect(company.reload.children_count).to eq(1)
     end
-
-    expect(company_out_of_first_group.reload.children_count).to eq(-1)
-
 
     Company.counter_culture_fix_counts start: company_out_of_first_group.id
 
