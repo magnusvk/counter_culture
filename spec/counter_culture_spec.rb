@@ -2304,6 +2304,36 @@ RSpec.describe "CounterCulture" do
     expect(prefecture.reload.big_cities_count).to eq(1)
   end
 
+  it "support fix counts using batch limits start and finish" do
+    companies_group = 3.times.map do
+      company = Company.create!
+      company.children << Company.create!
+      company.children_count = -1
+      company.save!
+      company
+    end
+
+    company_out_of_first_group = Company.create!
+    company_out_of_first_group.children << Company.create!
+    company_out_of_first_group.children_count = -1
+    company_out_of_first_group.save!
+
+    start = companies_group.first.id
+    finish = companies_group.last.id
+
+    fixed = Company.counter_culture_fix_counts start: start, finish: finish
+    expect(fixed.length).to eq(3)
+    expect(company_out_of_first_group.reload.children_count).to eq(-1)
+
+    companies_group.each do |company|
+      expect(company.reload.children_count).to eq(1)
+    end
+
+    Company.counter_culture_fix_counts start: company_out_of_first_group.id
+
+    expect(company_out_of_first_group.reload.children_count).to eq(1)
+  end
+
   private
   def papertrail_supported_here?
     return false if Rails.version < "5.0.0"

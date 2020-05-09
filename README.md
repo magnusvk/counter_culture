@@ -312,6 +312,25 @@ If you have specified a custom timestamps column, pass its name as the value for
 Product.counter_culture_fix_counts touch: 'category_count_changed'
 ```
 
+
+#### Parallelizing fix counter cache in multiple workers
+
+The options start and finish are especially useful if you want multiple workers dealing with the same processing queue. You can make worker 1 handle all the records between id 1 and 9999 and worker 2 handle from 10000 and beyond by setting the :start and :finish option on each worker.
+
+```ruby
+Product.counter_culture_fix_counts start: 10_000
+# will fix counts for all counter caches defined on Product from record 10000 and onwards.
+
+Product.counter_culture_fix_counts finish: 10_000
+# let's process until 10000 records.
+
+Product.counter_culture_fix_counts start: 1000, finish: 2000
+# In worker 1, lets process from 1000 to 2000
+
+Product.counter_culture_fix_counts start: 2001, finish: 3000
+# In worker 2, lets process from 2001 to 3000
+```
+
 #### Handling dynamic column names
 
 Manually populating counter caches with dynamic column names requires additional configuration:
