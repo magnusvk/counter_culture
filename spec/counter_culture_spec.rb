@@ -2305,6 +2305,9 @@ RSpec.describe "CounterCulture" do
   end
 
   it "support fix counts using batch limits start and finish" do
+    # Rails 4.2 doesn't support `finish`
+    return if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
+
     companies_group = 3.times.map do
       company = Company.create!
       company.children << Company.create!
