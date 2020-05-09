@@ -1,3 +1,8 @@
+## (to be released)
+
+Changes:
+  - Dropped support for Ruby 2.3 and 2.4
+
 ## 2.4.0 (May 9, 2020)
 
 Improvements:

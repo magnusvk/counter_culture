@@ -3,7 +3,7 @@
 set -e
 source /usr/local/share/chruby/chruby.sh
 
-for RUBY_VERSION in 2.3.8 2.4.7 2.5.6 2.6.4; do
+for RUBY_VERSION in 2.5.7 2.6.5 2.7.0; do
   chruby $RUBY_VERSION
   ruby --version
 
