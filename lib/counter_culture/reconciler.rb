@@ -107,7 +107,11 @@ module CounterCulture
 
           counts_query = counts_query.where(options[:where]).group(full_primary_key(relation_class))
 
-          counts_query.find_in_batches(batch_size: batch_size, start: start_index, finish: finish_index) do |records|
+          find_in_batches_args = { batch_size: batch_size }
+          find_in_batches_args[:start] = options[:start] if options[:start].present?
+          find_in_batches_args[:finish] = options[:finish] if options[:finish].present?
+
+          counts_query.find_in_batches(find_in_batches_args) do |records|
             # now iterate over all the models and see whether their counts are right
             update_count_for_batch(column_name, records)
           end
