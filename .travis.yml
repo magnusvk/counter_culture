@@ -19,10 +19,9 @@ env:
   - DB=sqlite3
   - DB=mysql2
 before_install:
-  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
-  - gem install bundler -v '< 2'
+  - gem install bundler -v '1.17.3'
 install:
-  - bundle update
+  - bundle _1.17.3_ update
 before_script:
   - psql -c 'create database counter_culture_test;' -U postgres
   - mysql -e 'CREATE DATABASE counter_culture_test;'
