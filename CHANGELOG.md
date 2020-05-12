@@ -1,4 +1,9 @@
-## 2.3.0 (January 28, 2020)
+## (to be released)
+
+Changes:
+  - Dropped support for Ruby 2.3 and 2.4
+
+## 2.4.0 (May 9, 2020)
 
 Improvements:
   - Allow specifying `start` and `finish` options to `counter_culture_fix_counts` (#279)
