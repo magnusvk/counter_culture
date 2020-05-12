@@ -1,4 +1,7 @@
-## (to be released)
+## 2.5.0 (May 12, 2020)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` with Rails 4.2
 
 Changes:
   - Dropped support for Ruby 2.3 and 2.4
