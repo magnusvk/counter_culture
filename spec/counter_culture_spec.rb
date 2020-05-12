@@ -1717,7 +1717,7 @@ RSpec.describe "CounterCulture" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
 
-      if Rails.version >= "5.1.0"
+      if Gem::Version.new(Rails.version) >= Gem::Version.new("5.1.0")
         # must save to make the actual "saved_changes" available in Rails 5.1
         # whereas we simply use the "changed_attributes" before that
         user.save!
@@ -2306,7 +2306,9 @@ RSpec.describe "CounterCulture" do
 
   it "support fix counts using batch limits start and finish" do
     # Rails 4.2 doesn't support `finish`
-    return if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
+     if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
+       skip("Unsupported in Rails < 5.0")
+     end
 
     companies_group = 3.times.map do
       company = Company.create!
@@ -2339,7 +2341,7 @@ RSpec.describe "CounterCulture" do
 
   private
   def papertrail_supported_here?
-    return false if Rails.version < "5.0.0"
+    return false if Gem::Version.new(Rails.version) < Gem::Version.new("5.0.0")
     true
   end
 end
