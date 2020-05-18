@@ -1,3 +1,8 @@
+## 2.5.1 (May 18, 2020)
+
+Bugfixes:
+  - Fix migration generation in Rails 6+ (#281)
+
 ## 2.5.0 (May 12, 2020)
 
 Bugfixes:
