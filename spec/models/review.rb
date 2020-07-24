@@ -18,10 +18,15 @@ class Review < ActiveRecord::Base
   counter_culture [:user, :manages_company, :industry], :column_name => 'review_approvals_count', :delta_column => 'approvals'
 
   after_create :update_some_text
+  after_create :update_read_only_text
 
   def update_some_text
     return unless Gem::Version.new(Rails.version) >= Gem::Version.new('5.1.5')
     update_attribute(:some_text, rand(36**12).to_s(36))
+  end
+
+  def update_read_only_text
+    self[:read_only_text] = SecureRandom.uuid
   end
 
   def weight
@@ -30,5 +35,11 @@ class Review < ActiveRecord::Base
     else
       1
     end
+  end
+
+  private
+
+  def read_only_text=(*)
+    raise 'This is a read_only field'
   end
 end
