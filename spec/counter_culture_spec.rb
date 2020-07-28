@@ -1410,7 +1410,13 @@ RSpec.describe "CounterCulture" do
     expect(io.string).to include(
       "Performing reconciling of SimpleDependent#simple_main.")
     expect(io.string).to include(
-      "..")
+      "Processing batch #1.")
+    expect(io.string).to include(
+      "Finished batch #1.")
+    expect(io.string).to include(
+      "Processing batch #2.")
+    expect(io.string).to include(
+      "Finished batch #2.")
     expect(io.string).to include(
       "Finished reconciling of SimpleDependent#simple_main.")
     Rails.logger = logger
