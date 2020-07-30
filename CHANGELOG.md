@@ -1,3 +1,9 @@
+## 2.6.0 (July 29, 2020)
+
+Improvements:
+  - Use []= method instead of attribute writer method internally to avoid conflicts with read-only attributes (#287)
+  - More detailed logging when performing reconciliation (#288)
+
 ## 2.5.1 (May 18, 2020)
 
 Bugfixes:
