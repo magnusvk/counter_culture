@@ -519,6 +519,49 @@ RSpec.describe "CounterCulture" do
         expect(user.tried_count).to eq(0)
       end
     end
+
+    context "should keep counters using only column_names and scopes" do
+      let!(:prefecture) { Prefecture.create! name: 'Prefecture' }
+      let!(:second_prefecture) { Prefecture.create! name: 'Prefecture 2' }
+      let!(:big) { City.create!(name: 'Big', prefecture: prefecture, population: 221800) }
+      let!(:medium) { City.create!(name: 'Medium', prefecture: prefecture, population: 74658) }
+      let!(:small) { City.create!(name: 'Small', prefecture: prefecture, population: 6045) }
+      it 'starts at the correct values' do
+        prefecture.reload
+        expect(prefecture.big_cities_count).to eq 1
+        expect(prefecture.small_cities_count).to eq 1
+        expect(prefecture.medium_cities_count).to eq 1
+        expect(prefecture.small_and_big_cities_count).to eq 2
+        expect(second_prefecture.big_cities_count).to eq 0
+        expect(second_prefecture.small_cities_count).to eq 0
+        expect(second_prefecture.medium_cities_count).to  eq 0
+        expect(second_prefecture.small_and_big_cities_count).to eq 0
+      end
+
+      it 'updates when changing the prefecture' do
+        small.update prefecture: second_prefecture 
+        expect(prefecture.reload.small_and_big_cities_count).to eq 1
+        expect(second_prefecture.reload.small_cities_count).to eq 1
+      end
+
+      it 'updates when changing the population' do
+        small.update population: 50000
+        expect(prefecture.reload.small_and_big_cities_count).to eq 1
+        expect(prefecture.reload.small_cities_count).to eq 0
+      end 
+
+      it 'updates on deletion' do
+        small.destroy
+        expect(prefecture.reload.small_and_big_cities_count).to eq 1
+        expect(prefecture.reload.small_cities_count).to eq 0
+      end
+
+      it 'updates on creation' do
+        City.create(name: 'New', prefecture: prefecture, population: 1000)
+        expect(prefecture.reload.small_and_big_cities_count).to eq 3
+        expect(prefecture.reload.small_cities_count).to eq 2
+      end
+    end
   end
 
   it "increments third-level counter cache on create" do

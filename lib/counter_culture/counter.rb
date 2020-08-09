@@ -3,7 +3,7 @@ module CounterCulture
     CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude]
     ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
 
-    attr_reader :model, :relation, *CONFIG_OPTIONS
+    attr_reader :model, :relation, *CONFIG_OPTIONS, :without_column_name
 
     def initialize(model, relation, options)
       @model = model
@@ -20,6 +20,7 @@ module CounterCulture
       @touch = options.fetch(:touch, false)
       @delta_magnitude = options[:delta_magnitude] || 1
       @with_papertrail = options.fetch(:with_papertrail, false)
+      @without_column_name = !options.key?(:column_name)
     end
 
     # increments or decrements a counter cache
@@ -34,73 +35,79 @@ module CounterCulture
     #      first part of the relation
     #   :with_papertrail => update the column via Papertrail touch_with_version method
     def change_counter_cache(obj, options)
-      change_counter_column = options.fetch(:counter_column) { counter_cache_name_for(obj) }
+      change_counter_columns = []
+      if @without_column_name && @column_names
+        change_counter_columns.concat options.fetch(:counter_column) { counter_cache_column_names_from_scope(obj) }
+      else
+        change_counter_columns << options.fetch(:counter_column) { counter_cache_name_for(obj) }        
+      end
+      change_counter_columns.each do |change_counter_column|
+        # default to the current foreign key value
+        id_to_change = foreign_key_value(obj, relation, options[:was])
+        # allow overwriting of foreign key value by the caller
+        id_to_change = foreign_key_values.call(id_to_change) if foreign_key_values
 
-      # default to the current foreign key value
-      id_to_change = foreign_key_value(obj, relation, options[:was])
-      # allow overwriting of foreign key value by the caller
-      id_to_change = foreign_key_values.call(id_to_change) if foreign_key_values
+        if id_to_change && change_counter_column
+          delta_magnitude = if delta_column
+                              (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
+                            else
+                              counter_delta_magnitude_for(obj)
+                            end
+          # increment or decrement?
+          operator = options[:increment] ? '+' : '-'
 
-      if id_to_change && change_counter_column
-        delta_magnitude = if delta_column
-                            (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
+          klass = relation_klass(relation, source: obj, was: options[:was])
+
+          # MySQL throws an ambiguous column error if any joins are present and we don't include the
+          # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
+          # throws an exception if the table name is present after UPDATE.
+          quoted_column = if klass.connection.adapter_name == 'Mysql2'
+                            "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
                           else
-                            counter_delta_magnitude_for(obj)
+                            "#{model.connection.quote_column_name(change_counter_column)}"
                           end
-        # increment or decrement?
-        operator = options[:increment] ? '+' : '-'
 
-        klass = relation_klass(relation, source: obj, was: options[:was])
-
-        # MySQL throws an ambiguous column error if any joins are present and we don't include the
-        # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
-        # throws an exception if the table name is present after UPDATE.
-        quoted_column = if klass.connection.adapter_name == 'Mysql2'
-                          "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
-                        else
-                          "#{model.connection.quote_column_name(change_counter_column)}"
-                        end
-
-        # we don't use Rails' update_counters because we support changing the timestamp
-        updates = []
-        # this updates the actual counter
-        updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
-        # and here we update the timestamp, if so desired
-        if touch
-          current_time = obj.send(:current_time_from_proper_timezone)
-          timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
-          if touch != true
-            # starting in Rails 6 this is frozen
-            timestamp_columns = timestamp_columns.dup
-            timestamp_columns << touch
-          end
-          timestamp_columns.each do |timestamp_column|
-            updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
-          end
-        end
-
-        primary_key = relation_primary_key(relation, source: obj, was: options[:was])
-
-        if @with_papertrail
-          instance = klass.where(primary_key => id_to_change).first
-          if instance
-            if instance.paper_trail.respond_to?(:save_with_version)
-              # touch_with_version is deprecated starting in PaperTrail 9.0.0
-
-              current_time = obj.send(:current_time_from_proper_timezone)
-              timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
-              timestamp_columns.each do |timestamp_column|
-                instance.send("#{timestamp_column}=", current_time)
-              end
-
-              instance.paper_trail.save_with_version(validate: false)
-            else
-              instance.paper_trail.touch_with_version
+          # we don't use Rails' update_counters because we support changing the timestamp
+          updates = []
+          # this updates the actual counter
+          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+          # and here we update the timestamp, if so desired
+          if touch
+            current_time = obj.send(:current_time_from_proper_timezone)
+            timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
+            if touch != true
+              # starting in Rails 6 this is frozen
+              timestamp_columns = timestamp_columns.dup
+              timestamp_columns << touch
+            end
+            timestamp_columns.each do |timestamp_column|
+              updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
             end
           end
-        end
 
-        klass.where(primary_key => id_to_change).update_all updates.join(', ')
+          primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+
+          if @with_papertrail
+            instance = klass.where(primary_key => id_to_change).first
+            if instance
+              if instance.paper_trail.respond_to?(:save_with_version)
+                # touch_with_version is deprecated starting in PaperTrail 9.0.0
+
+                current_time = obj.send(:current_time_from_proper_timezone)
+                timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
+                timestamp_columns.each do |timestamp_column|
+                  instance.send("#{timestamp_column}=", current_time)
+                end
+
+                instance.paper_trail.save_with_version(validate: false)
+              else
+                instance.paper_trail.touch_with_version
+              end
+            end
+          end
+
+          klass.where(primary_key => id_to_change).update_all updates.join(', ')
+        end
       end
     end
 
@@ -128,6 +135,47 @@ module CounterCulture
         # static column name
         counter_cache_name
       end
+    end
+
+    # Gets all the columns that are needed to change defined in column_names
+    #
+    # obj: object to calculate the counter cache name
+    def counter_cache_column_names_from_scope(obj) 
+      column_names = []
+      @column_names.each do |scope, column_name|
+        column_names << column_name if scope.exists?(obj.id) || obj.instance_eval(sql_query_to_eval_query(obj, scope.to_sql))
+      end
+      column_names
+    end
+
+    # Parse sql query with AND, OR, IN to a logical expression
+    #
+    # sql: the query to parse
+    def sql_query_to_eval_query(obj, sql)
+      where_pos = sql.index("WHERE") # Get where position
+      sql = sql[where_pos + 6, sql.length] # Get the where clause
+      splitted_query = (sql.split /(AND|OR)/i) # Split on and and or
+      splitted_query.each_with_index do |exp, exp_index|
+        exp.strip!
+        exp.gsub!("AND", "&&") if exp.index("AND") # Replace and
+        exp.gsub!("OR", "||") if exp.index("OR") # Replace or
+        exp.gsub!("#{obj.class.table_name}\".","") if exp.index("#{obj.class.table_name}\".") # Replace "cities"."population" to "population"
+        exp.gsub!("\"", "") if exp.index("\"") # "population" to population
+        if exp.index("IN") 
+          index = exp.index("IN")
+          start_of_range = index + 4
+          end_of_range = exp[start_of_range, sql.length].index(")")
+          values = exp[start_of_range, end_of_range].split(',') # Get all values in the IN clause
+          attribute = exp[0, index - 1] # Get the attribute
+          new_exp = ""
+          values.each_with_index do |value, index| # Replace the population IN (10, 20) to (population = 10 || population = 20)
+            new_exp += "#{attribute.strip} = #{value.strip}"
+            new_exp += " || " unless index == values.length - 1
+          end
+          splitted_query[exp_index] = "(" + new_exp + ")"
+        end
+      end
+      splitted_query.join(" ") # Join the query back together
     end
 
     # the string to pass to order() in order to sort by primary key

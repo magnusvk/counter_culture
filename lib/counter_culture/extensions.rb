@@ -115,6 +115,11 @@ module CounterCulture
         counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
         counter_cache_name = counter.counter_cache_name_for(self)
 
+        if counter.without_column_name && counter.column_names
+          counter_cache_name_was = counter.counter_cache_column_names_from_scope(counter.previous_model(self))
+          counter_cache_name = counter.counter_cache_column_names_from_scope(self)
+        end
+
         if counter.first_level_relation_changed?(self) ||
             (counter.delta_column && counter.attribute_changed?(self, counter.delta_column)) ||
             counter_cache_name != counter_cache_name_was

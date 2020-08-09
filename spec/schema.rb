@@ -257,6 +257,9 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table :prefectures, :force => true do |t|
     t.string :name
     t.integer :big_cities_count, null: false, default: 0
+    t.integer :small_cities_count, null: false, default: 0
+    t.integer :medium_cities_count, null: false, default: 0
+    t.integer :small_and_big_cities_count, null: false, default: 0
   end
 
   create_table :cities, :force => true do |t|
