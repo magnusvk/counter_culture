@@ -109,7 +109,7 @@ module CounterCulture
           find_in_batches_args[:start] = options[:start] if options[:start].present?
           find_in_batches_args[:finish] = options[:finish] if options[:finish].present?
 
-          counts_query.find_in_batches(find_in_batches_args).with_index(1) do |records, index|
+          counts_query.find_in_batches(**find_in_batches_args).with_index(1) do |records, index|
             log "Processing batch ##{index}."
             # now iterate over all the models and see whether their counts are right
             update_count_for_batch(column_name, records)
