@@ -1,3 +1,8 @@
+## 2.6.1 (September 8, 2020)
+
+Bugfixes:
+  - Address Ruby 2.7.0 deprecation warning (#292)
+
 ## 2.6.0 (July 29, 2020)
 
 Improvements:
