@@ -205,11 +205,15 @@ module CounterCulture
         # this is the column that stores the polymorphic type, aka the class name
         type_column = reflect.foreign_type.to_sym
         # so now turn that into the class that we're looking for here
-        if was
-          attribute_was(source, type_column).try(:constantize)
-        else
-          source.public_send(type_column).try(:constantize)
-        end
+        new_klass =
+          if was
+            attribute_was(source, type_column).try(:constantize)
+          else
+            source.public_send(type_column).try(:constantize)
+          end
+        return new_klass if reflect.scope.nil?
+        # in case of a scope is made available, merge it
+        new_klass.merge(reflect.scope)
       else
         reflect.klass
       end
