@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'Turbo-charged counter caches for your Rails app.'
   spec.description   = 'counter_culture provides turbo-charged counter caches that are kept up-to-date not just on create and destroy, that support multiple levels of indirection through relationships, allow dynamic column names and that avoid deadlocks by updating in the after_commit callback.'
-  spec.homepage      = 'http://github.com/magnusvk/counter_culture'
+  spec.homepage      = 'https://github.com/magnusvk/counter_culture'
   spec.license       = 'MIT'
 
   spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
