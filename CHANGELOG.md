@@ -1,3 +1,8 @@
+## 2.6.2 (October 21, 2020)
+
+Improvements:
+  - Remove superfluous dependency to after_commit_action gem (#297)
+
 ## 2.6.1 (September 8, 2020)
 
 Bugfixes:
