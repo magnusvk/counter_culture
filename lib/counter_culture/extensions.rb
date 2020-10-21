@@ -15,8 +15,6 @@ module CounterCulture
       # called to configure counter caches
       def counter_culture(relation, options = {})
         unless @after_commit_counter_cache
-          include AfterCommitAction unless include?(AfterCommitAction)
-
           # initialize callbacks only once
           after_create :_update_counts_after_create
 
