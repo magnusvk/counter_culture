@@ -1,4 +1,3 @@
-require 'after_commit_action'
 require 'active_support/concern'
 require 'active_support/lazy_load_hooks'
 
