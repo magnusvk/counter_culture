@@ -2358,6 +2358,46 @@ RSpec.describe "CounterCulture" do
     expect(company_out_of_first_group.reload.children_count).to eq(1)
   end
 
+  it "should fix the counter caches for a specified column only" do
+    company = Company.create
+    user = User.create :manages_company_id => company.id
+    product = Product.create
+
+    expect(company.reviews_count).to eq(0)
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(company.review_approvals_count).to eq(0)
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 42
+
+    company.reload
+    user.reload
+    product.reload
+
+    expect(company.reviews_count).to eq(1)
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(company.review_approvals_count).to eq(42)
+
+    company.reviews_count = 2
+    company.review_approvals_count = 7
+    user.reviews_count = 3
+    product.reviews_count = 4
+    company.save!
+    user.save!
+    product.save!
+
+    Review.counter_culture_fix_counts :skip_unsupported => true, :column_name => :review_approvals_count
+    company.reload
+    user.reload
+    product.reload
+
+    expect(company.reviews_count).to eq(2)
+    expect(user.reviews_count).to eq(3)
+    expect(product.reviews_count).to eq(4)
+    expect(company.review_approvals_count).to eq(42)
+  end
+
   private
   def papertrail_supported_here?
     return false if Gem::Version.new(Rails.version) < Gem::Version.new("5.0.0")
