@@ -270,6 +270,10 @@ Product.counter_culture_fix_counts only: :category
 Product.counter_culture_fix_counts only: [[:subcategory, :category]]
 # will automatically fix counts only on the two-level [:subcategory, :category] relation on Product
 
+Product.counter_culture_fix_counts column_name: :reviews_count
+# will automatically fix counts only on the :reviews_count column on Product
+# This allows us to skip the columns that have already been processed. This is useful after running big DB changes that affect only one counter cache column.
+
 # :except and :only also accept arrays
 
 Product.counter_culture_fix_counts verbose: true

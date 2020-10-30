@@ -76,6 +76,10 @@ module CounterCulture
 
         counter_column_names = column_names || {nil => counter_cache_name}
 
+        if options[:column_name]
+          counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
+        end
+
         # iterate over all the possible counter cache column names
         counter_column_names.each do |where, column_name|
           # if the column name is nil, that means those records don't affect
