@@ -1,3 +1,8 @@
+## 2.7.0 (November 16, 2020)
+
+Improvements:
+  - New `column_name` option for `counter_culture_fix_counts` (#300)
+
 ## 2.6.2 (October 21, 2020)
 
 Improvements:
