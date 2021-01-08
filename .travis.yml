@@ -27,9 +27,9 @@ env:
   - DB=sqlite3
   - DB=mysql2
 before_install:
-  - gem install bundler -v '1.17.3'
+  - if [ "$BUNDLE_GEMFILE" = "gemfiles/rails_4.2.gemfile" ]; then gem install bundler -v '1.17.3'; else gem install bundler -v '> 2'; fi
 install:
-  - bundle _1.17.3_ update
+  - if [ "$BUNDLE_GEMFILE" = "gemfiles/rails_4.2.gemfile" ]; then bundle _1.17.3_ update; else bundle update; fi
 before_script:
   - psql -c 'create database counter_culture_test;' -U postgres
   - mysql -e 'CREATE DATABASE counter_culture_test;'
