@@ -2208,7 +2208,7 @@ RSpec.describe "CounterCulture" do
 
   describe "with papertrail support", versioning: true do
     it "creates a papertrail version when changed" do
-      unless papertrail_supported_here?
+      unless PapertrailSupport.supported_here?
         skip("Unsupported in this combination of Ruby and Rails")
       end
 
@@ -2245,7 +2245,7 @@ RSpec.describe "CounterCulture" do
       let!(:main_obj) { SimpleMain.create(created_at: 1.day.ago, updated_at: 1.day.ago) }
 
       it "updates the updated_at of the parent variant" do
-        unless papertrail_supported_here?
+        unless PapertrailSupport.supported_here?
           skip("Unsupported in this combination of Ruby and Rails")
         end
 
@@ -2257,7 +2257,7 @@ RSpec.describe "CounterCulture" do
       end
 
       it "sets the created_at time of the new version row to the current time" do
-        unless papertrail_supported_here?
+        unless PapertrailSupport.supported_here?
           skip("Unsupported in this combination of Ruby and Rails")
         end
 
@@ -2270,7 +2270,7 @@ RSpec.describe "CounterCulture" do
     end
 
     it "does not create a papertrail version when papertrail flag not set" do
-      unless papertrail_supported_here?
+      unless PapertrailSupport.supported_here?
         skip("Unsupported in this combination of Ruby and Rails")
       end
 
@@ -2396,11 +2396,5 @@ RSpec.describe "CounterCulture" do
     expect(user.reviews_count).to eq(3)
     expect(product.reviews_count).to eq(4)
     expect(company.review_approvals_count).to eq(42)
-  end
-
-  private
-  def papertrail_supported_here?
-    return false if Gem::Version.new(Rails.version) < Gem::Version.new("5.0.0")
-    true
   end
 end

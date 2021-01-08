@@ -13,7 +13,7 @@ class User < ActiveRecord::Base
   has_many :reviews
   accepts_nested_attributes_for :reviews, :allow_destroy => true
 
-  if Rails.version >= "5.0.0"
+  if PapertrailSupport.supported_here?
     has_paper_trail
   end
 

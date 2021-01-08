@@ -7,11 +7,23 @@ require 'counter_culture'
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-require 'paper_trail'
-require 'rails'
+require 'rails/all'
+
+module PapertrailSupport
+  def self.supported_here?
+    return false if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
+    return false if Gem::Version.new(Rails.version) > Gem::Version.new('6.1.0')
+    true
+  end
+end
+
 require 'rspec'
 require 'timecop'
-require 'paper_trail/frameworks/rspec'
+
+if PapertrailSupport.supported_here?
+  require 'paper_trail'
+  require 'paper_trail/frameworks/rspec'
+end
 
 case ENV['DB']
 when 'postgresql'
@@ -50,7 +62,7 @@ DB_CONFIG = {
   }
 }.with_indifferent_access.freeze
 
-if Rails.version < '5.0.0'
+if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
   ActiveRecord::Base.raise_in_transactional_callbacks = true
 end
 
