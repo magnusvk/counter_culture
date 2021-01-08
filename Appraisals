@@ -19,5 +19,6 @@
     gem 'pg', gem_rails_version < Gem::Version.new('5.0') ? '~> 0.15' : '~> 1.0'
     gem 'mysql2'
     gem 'sqlite3', gem_rails_version < Gem::Version.new(5.2) ? '~> 1.3.0' : '~> 1.4'
+    gem 'bigdecimal', gem_rails_version < Gem::Version.new(5.0) ? '~> 1.3.5' : nil
   end
 end
