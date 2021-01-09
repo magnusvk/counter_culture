@@ -22,12 +22,12 @@
       gem 'pg'
     end
     gem 'mysql2'
-    if gem_rails_version < Gem::Version.new(5.2)
+    if gem_rails_version < Gem::Version.new('5.2')
       gem 'sqlite3', '~> 1.3.0'
     else
       gem 'sqlite3'
     end
-    if gem_rails_version < Gem::Version.new(5.0)
+    if gem_rails_version < Gem::Version.new('5.0')
       gem 'bigdecimal', '~> 1.3.5'
     end
   end
