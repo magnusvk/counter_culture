@@ -18,8 +18,6 @@ gemfile:
   - gemfiles/rails_6.1.gemfile
 matrix:
   exclude:
-    - rvm: "2.7.0"
-      gemfile: gemfiles/rails_4.2.gemfile
     - rvm: "3.0.0"
       gemfile: gemfiles/rails_4.2.gemfile
     - rvm: "3.0.0"
