@@ -12,7 +12,7 @@ require 'rails/all'
 module PapertrailSupport
   def self.supported_here?
     return false if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
-    return false if Gem::Version.new(Rails.version) > Gem::Version.new('6.1.0')
+    return false if Gem::Version.new(Rails.version) >= Gem::Version.new('6.1.0')
     return false if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('3.0.0')
     true
   end
