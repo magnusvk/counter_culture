@@ -86,6 +86,24 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "skips increments counter cache on create" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13, :skip_counts_after_create => true
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+  end
+
   it "decrements counter cache on destroy" do
     user = User.create
     product = Product.create
