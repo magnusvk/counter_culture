@@ -1678,6 +1678,34 @@ RSpec.describe "CounterCulture" do
     expect(categ.reload.posts_count).to eq(1)
   end
 
+  it "works with after_commit" do
+    subcateg1 = Subcateg.create!
+    subcateg2 = Subcateg.create!
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+
+    post = Post.create!(subcateg: subcateg1)
+
+    expect(subcateg1.reload.posts_after_commit_count).to eq(1)
+    expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+
+    Post.transaction do
+      post.update(subcateg: subcateg2)
+      expect(subcateg1.reload.posts_after_commit_count).to eq(1)
+      expect(subcateg1.reload.posts_count).to eq(0)
+      expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+      expect(subcateg2.reload.posts_count).to eq(1)
+    end
+
+    expect(subcateg1.reload.posts_after_commit_count).to eq(0)
+    expect(subcateg2.reload.posts_after_commit_count).to eq(1)
+
+    post.destroy!
+
+    expect(subcateg1.reload.posts_after_commit_count).to eq(0)
+    expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+  end
+
   it "works correctly with a has_one association in the middle" do
     candidate_profile1 = CandidateProfile.create(candidate: Candidate.create)
     candidate1 = candidate_profile1.candidate
@@ -2239,6 +2267,35 @@ RSpec.describe "CounterCulture" do
       attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(1)
+    end
+
+    it "works with after_commit" do
+      unless PapertrailSupport.supported_here?
+        skip("Unsupported in this combination of Ruby and Rails")
+      end
+
+      subcateg = Subcateg.create!
+
+      expect(subcateg.posts_after_commit_count).to eq(0)
+      expect(subcateg.versions.count).to eq(1)
+
+      User.transaction do
+        Post.create!(subcateg: subcateg)
+
+        subcateg.reload
+
+        expect(subcateg.posts_after_commit_count).to eq(0)
+        expect(subcateg.versions.count).to eq(1)
+      end
+
+      subcateg.reload
+
+      expect(subcateg.posts_after_commit_count).to eq(1)
+      expect(subcateg.versions.count).to eq(2)
+
+      attrs_from_versions = YAML.load(subcateg.versions.reorder(:id).last.object)
+      # should be the value before the counter change
+      expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
     end
 
     context "counter-cache model versioning" do
