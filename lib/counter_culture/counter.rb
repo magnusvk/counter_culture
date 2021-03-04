@@ -19,7 +19,13 @@ module CounterCulture
       @execute_after_commit = options.fetch(:execute_after_commit, false)
 
       if @execute_after_commit
-        require 'after_commit_action'
+        begin
+          require 'after_commit_action'
+        rescue LoadError
+          fail(LoadError.new(
+            "You need to include the `after_commit_action` gem in your "\
+            "gem dependencies to use the execute_after_commit option"))
+        end
         model.include(AfterCommitAction)
       end
     end
