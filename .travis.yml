@@ -1,4 +1,5 @@
 language: ruby
+cache: bundler
 services:
   - postgresql
   - mysql
