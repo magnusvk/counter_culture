@@ -1,4 +1,7 @@
 language: ruby
+cache:
+  directories:
+     - ~/.rvm/gems
 services:
   - postgresql
   - mysql
