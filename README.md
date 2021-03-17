@@ -250,6 +250,16 @@ You may also specify a custom timestamp column that gets updated only when a par
 
 With this option, any time the `category_counter_cache` changes both the `category_count_changed` and `updated_at` columns will get updated.
 
+### Avoiding deadlocks / executing counter cache updates after commit
+
+Some applications run into issues with deadlocks involving counter cache updates when using this gem. See [#263](https://github.com/magnusvk/counter_culture/issues/263#issuecomment-772284439) for information and helpful links on how to avoid this issue.
+
+Another option is to simply defer the update of counter caches to outside of the transaction. This gives up transacrtional guarantees for your counter cache updates but should resolve any deadlocks you experience. This behavior is disabled by default, enable it on each affected counter cache as follows:
+
+```ruby
+  counter_culture :category, execute_after_commit: true
+```
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
@@ -446,4 +456,4 @@ counter_culture now supports polymorphic associations of one level only.
 
 ## Copyright
 
-Copyright (c) 2012-2013 BestVendor, Magnus von Koeller. See LICENSE.txt for further details.
+Copyright (c) 2012-2021 BestVendor, Magnus von Koeller. See LICENSE.txt for further details.

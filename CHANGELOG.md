@@ -1,3 +1,8 @@
+## 2.8.0 (March 16, 2021)
+
+Improvements:
+  - New `execute_after_commit` option (#309)
+
 ## 2.7.0 (November 16, 2020)
 
 Improvements:
