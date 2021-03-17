@@ -146,6 +146,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "subcategs", :primary_key => "subcat_id", :force => true do |t|
     t.integer  "fk_cat_id"
     t.integer  "posts_count",       :default => 0, :null => false
+    t.integer  "posts_after_commit_count",       :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
