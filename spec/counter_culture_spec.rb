@@ -1706,6 +1706,47 @@ RSpec.describe "CounterCulture" do
     expect(subcateg2.reload.posts_after_commit_count).to eq(0)
   end
 
+  it "works with after_commit and update and destroy in one transaction" do
+    subcateg1 = Subcateg.create!
+    subcateg2 = Subcateg.create!
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+
+    post = Post.create!(subcateg: subcateg1)
+
+    expect(subcateg1.reload.posts_after_commit_count).to eq(1)
+    expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+
+    Post.transaction do
+      post.update(subcateg: subcateg2)
+      expect(subcateg1.reload.posts_after_commit_count).to eq(1)
+      expect(subcateg1.reload.posts_count).to eq(0)
+      expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+      expect(subcateg2.reload.posts_count).to eq(1)
+    end
+
+    expect(subcateg1.reload.posts_after_commit_count).to eq(0)
+    expect(subcateg2.reload.posts_after_commit_count).to eq(1)
+
+    puts '*'*20
+    logger = ActiveRecord::Base.logger
+    ActiveRecord::Base.logger = Logger.new(STDOUT)
+    Post.transaction do
+      Post.find(post.id).update(title: "Test 123")
+      Post.find(post.id).destroy!
+      #post.update(title: "Test 123")
+      #post.destroy!
+
+      expect(subcateg1.reload.posts_after_commit_count).to eq(0)
+      expect(subcateg2.reload.posts_after_commit_count).to eq(1)
+    end
+    ActiveRecord::Base.logger = logger
+    puts '*'*20
+
+    expect(subcateg1.reload.posts_after_commit_count).to eq(0)
+    expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+  end
+
   it "works correctly with a has_one association in the middle" do
     candidate_profile1 = CandidateProfile.create(candidate: Candidate.create)
     candidate1 = candidate_profile1.candidate

@@ -112,7 +112,9 @@ module CounterCulture
           end
         end
 
+        puts "SCHEDULING #{updates.join(', ')}"
         execute_now_or_after_commit(obj) do
+          puts "RUNNING #{updates.join(', ')}"
           klass.where(primary_key => id_to_change).update_all updates.join(', ')
         end
       end

@@ -94,6 +94,7 @@ module CounterCulture
     def _update_counts_after_create
       self.class.after_commit_counter_cache.each do |counter|
         # increment counter cache
+        puts "CREATE"
         counter.change_counter_cache(self, :increment => true)
       end
     end
@@ -102,6 +103,7 @@ module CounterCulture
     def _update_counts_after_destroy
       self.class.after_commit_counter_cache.each do |counter|
         # decrement counter cache
+        puts "DESTROY"
         counter.change_counter_cache(self, :increment => false)
       end
     end
@@ -109,6 +111,7 @@ module CounterCulture
     # called by after_update callback
     def _update_counts_after_update
       self.class.after_commit_counter_cache.each do |counter|
+        puts "UPDATE"
         # figure out whether the applicable counter cache changed (this can happen
         # with dynamic column names)
         counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
