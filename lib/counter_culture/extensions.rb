@@ -14,19 +14,25 @@ module CounterCulture
 
       # called to configure counter caches
       def counter_culture(relation, options = {})
+        @execute_after_commit = options.fetch(:execute_after_commit, false)
         unless @after_commit_counter_cache
           # initialize callbacks only once
-          after_create :_update_counts_after_create
 
-          before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
+          if @execute_after_commit
+            after_commit :_update_counts_after_create, on: :create
+            after_commit :_update_counts_after_update, on: :update, unless: :destroyed_for_counter_culture?
+            after_commit :_update_counts_after_destroy, on: :destroy, unless: :destroyed_for_counter_culture?
+          else
+            after_create :_update_counts_after_create
+            after_update :_update_counts_after_update, unless: :destroyed_for_counter_culture?
+            before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
+          end
 
           if respond_to?(:before_real_destroy) &&
               instance_methods.include?(:paranoia_destroyed?)
             before_real_destroy :_update_counts_after_destroy,
               if: -> (model) { !model.paranoia_destroyed? }
           end
-
-          after_update :_update_counts_after_update, unless: :destroyed_for_counter_culture?
 
           if respond_to?(:before_restore)
             before_restore :_update_counts_after_create,
