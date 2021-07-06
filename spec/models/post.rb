@@ -10,4 +10,8 @@ class Post < ActiveRecord::Base
     :with_papertrail => PapertrailSupport.supported_here?
 
   counter_culture [:subcateg, :categ]
+
+  counter_culture :subcateg, :column_name => :posts_dynamic_commit_count,
+    :execute_after_commit => proc { !Thread.current[:realtime_counter] },
+    :with_papertrail => PapertrailSupport.supported_here?
 end
