@@ -311,7 +311,9 @@ module CounterCulture
     end
 
     def execute_now_or_after_commit(obj, &block)
-      if @execute_after_commit
+      execute_after_commit = @execute_after_commit.is_a?(Proc) ? @execute_after_commit.call : @execute_after_commit
+
+      if execute_after_commit
         obj.execute_after_commit(&block)
       else
         block.call

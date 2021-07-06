@@ -260,6 +260,12 @@ Another option is to simply defer the update of counter caches to outside of the
   counter_culture :category, execute_after_commit: true
 ```
 
+You can also pass a `Proc` for dynamic control. This is useful for temporarily enabling realtime counters:
+
+```ruby
+  counter_culture :category, execute_after_commit: proc { !Thread.current[:realtime_counter] }
+```
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.

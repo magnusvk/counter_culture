@@ -16,6 +16,15 @@ module PapertrailSupport
   end
 end
 
+module DynamicAfterCommit
+  def self.with_realtime_counters(&block)
+    Thread.current[:realtime_counter] = true
+    yield
+  ensure
+    Thread.current[:realtime_counter] = nil
+  end
+end
+
 require 'rspec'
 require 'timecop'
 

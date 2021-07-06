@@ -147,6 +147,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "fk_cat_id"
     t.integer  "posts_count",       :default => 0, :null => false
     t.integer  "posts_after_commit_count",       :default => 0, :null => false
+    t.integer  "posts_dynamic_commit_count",       :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
