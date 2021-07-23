@@ -259,6 +259,12 @@ Another option is to simply defer the update of counter caches to outside of the
 ```ruby
   counter_culture :category, execute_after_commit: true
 ```
+[NOTE] You need to manually specify the `after_commit_action` as dependency in the Gemfile to use this feature
+```ruby
+...
+gem "after_commit_action"
+...
+```
 
 ### Manually populating counter cache values
 
