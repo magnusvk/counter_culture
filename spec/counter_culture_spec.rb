@@ -7,6 +7,7 @@ require 'models/review'
 require 'models/simple_review'
 require 'models/twitter_review'
 require 'models/user'
+require 'models/user_follower'
 require 'models/category'
 require 'models/has_string_id'
 require 'models/has_non_pk_id'
@@ -2453,5 +2454,25 @@ RSpec.describe "CounterCulture" do
     expect(user.reviews_count).to eq(3)
     expect(product.reviews_count).to eq(4)
     expect(company.review_approvals_count).to eq(42)
+  end
+
+  it "should fix the counter for caches which requires extra join" do
+    follower = User.create
+    followed = User.create
+    to_be_banned_follower = User.create
+
+    UserFollower.create follower_id: follower.id, followed_id: followed.id
+    UserFollower.create follower_id: to_be_banned_follower.id, followed_id: followed.id
+
+    followed.reload
+    expect(followed.active_followers_count).to eq(2)
+
+    to_be_banned_follower.update(banned: true)
+    followed.reload
+    expect(followed.active_followers_count).to eq(2)
+
+    UserFollower.counter_culture_fix_counts
+    followed.reload
+    expect(followed.active_followers_count).to eq(1)
   end
 end

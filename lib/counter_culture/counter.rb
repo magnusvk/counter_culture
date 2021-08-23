@@ -1,6 +1,6 @@
 module CounterCulture
   class Counter
-    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
+    CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit, :extra_join ]
     ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
 
     attr_reader :model, :relation, *CONFIG_OPTIONS
@@ -17,6 +17,7 @@ module CounterCulture
       @delta_magnitude = options[:delta_magnitude] || 1
       @with_papertrail = options.fetch(:with_papertrail, false)
       @execute_after_commit = options.fetch(:execute_after_commit, false)
+      @extra_join = options.fetch(:extra_join, nil)
 
       if @execute_after_commit
         begin

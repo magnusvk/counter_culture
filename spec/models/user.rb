@@ -13,6 +13,16 @@ class User < ActiveRecord::Base
   has_many :reviews
   accepts_nested_attributes_for :reviews, :allow_destroy => true
 
+  has_many :user_followers,
+           class_name: 'UserFollower',
+           foreign_key: 'follower_id',
+           dependent: :destroy
+  has_many :followers, -> { order(name: :asc) }, through: :user_followers
+  has_many :users_followed, class_name: 'UserFollower',
+           foreign_key: 'followed_id',
+           dependent: :destroy
+  has_many :followed_users, -> { order(name: :asc) }, through: :users_followed
+
   if PapertrailSupport.supported_here?
     has_paper_trail
   end
