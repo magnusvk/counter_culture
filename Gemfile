@@ -7,3 +7,4 @@ gemspec
 
 # Ensure we have the default DB adapter for testing
 gem 'sqlite3'
+gem 'pg'
