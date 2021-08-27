@@ -1,3 +1,8 @@
+## 2.9.0 (August 27, 2021)
+
+Improvements:
+  - Allow `execute_after_commit` to be a `Proc` for dynamic control (#326)
+
 ## 2.8.0 (March 16, 2021)
 
 Improvements:
