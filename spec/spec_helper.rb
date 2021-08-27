@@ -17,11 +17,11 @@ module PapertrailSupport
 end
 
 module DynamicAfterCommit
-  def self.with_realtime_counters(&block)
-    Thread.current[:realtime_counter] = true
+  def self.update_counter_cache_in_transaction(&block)
+    Thread.current[:update_counter_cache_in_transaction] = true
     yield
   ensure
-    Thread.current[:realtime_counter] = nil
+    Thread.current[:update_counter_cache_in_transaction] = nil
   end
 end
 

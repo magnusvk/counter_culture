@@ -1748,7 +1748,7 @@ RSpec.describe "CounterCulture" do
     expect(subcateg2.posts_dynamic_commit_count).to eq(0)
 
     Post.transaction do
-      DynamicAfterCommit.with_realtime_counters do
+      DynamicAfterCommit.update_counter_cache_in_transaction do
         post.update(subcateg: subcateg2)
       end
 
@@ -2380,7 +2380,7 @@ RSpec.describe "CounterCulture" do
       expect(subcateg.versions.count).to eq(1)
 
       User.transaction do
-        DynamicAfterCommit.with_realtime_counters do
+        DynamicAfterCommit.update_counter_cache_in_transaction do
           Post.create!(subcateg: subcateg)
         end
 

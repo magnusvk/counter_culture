@@ -260,10 +260,10 @@ Another option is to simply defer the update of counter caches to outside of the
   counter_culture :category, execute_after_commit: true
 ```
 
-You can also pass a `Proc` for dynamic control. This is useful for temporarily enabling realtime counters:
+You can also pass a `Proc` for dynamic control. This is useful for temporarily moving the counter cache update inside of the transaction:
 
 ```ruby
-  counter_culture :category, execute_after_commit: proc { !Thread.current[:realtime_counter] }
+  counter_culture :category, execute_after_commit: proc { !Thread.current[:update_counter_cache_in_transaction] }
 ```
 
 ### Manually populating counter cache values
