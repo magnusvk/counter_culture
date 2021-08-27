@@ -16,6 +16,15 @@ module PapertrailSupport
   end
 end
 
+module DynamicAfterCommit
+  def self.update_counter_cache_in_transaction(&block)
+    Thread.current[:update_counter_cache_in_transaction] = true
+    yield
+  ensure
+    Thread.current[:update_counter_cache_in_transaction] = nil
+  end
+end
+
 require 'rspec'
 require 'timecop'
 

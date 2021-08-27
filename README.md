@@ -266,6 +266,12 @@ gem "after_commit_action"
 ...
 ```
 
+You can also pass a `Proc` for dynamic control. This is useful for temporarily moving the counter cache update inside of the transaction:
+
+```ruby
+  counter_culture :category, execute_after_commit: proc { !Thread.current[:update_counter_cache_in_transaction] }
+```
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
