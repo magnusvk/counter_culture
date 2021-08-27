@@ -12,9 +12,9 @@ addons:
   postgresql: "9.6"
 rvm:
   - "2.5.9"
-  - "2.6.7"
-  - "2.7.3"
-  - "3.0.1"
+  - "2.6.8"
+  - "2.7.4"
+  - "3.0.2"
 gemfile:
   - gemfiles/rails_4.2.gemfile
   - gemfiles/rails_5.0.gemfile
