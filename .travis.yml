@@ -5,6 +5,9 @@ cache:
 services:
   - postgresql
   - mysql
+branches:
+  only:
+  - master
 addons:
   postgresql: "9.6"
 rvm:
