@@ -1441,6 +1441,59 @@ RSpec.describe "CounterCulture" do
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
   end
 
+  it "should request a reading and not a writing database connection" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    A_FEW.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    # Counts are correct at this point so no update should happen
+
+    requested_reading_connection = false
+    requested_writing_connection = false
+    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+      if reading
+        requested_reading_connection = true
+      else
+        requested_writing_connection = true
+      end
+      block.call
+    }
+    expect(requested_reading_connection).to be(true)
+    expect(requested_writing_connection).to be(false)
+  end
+
+  it "should request a reading and a writing database connection" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    A_FEW.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    # Damage the counts so an update happens
+    SimpleMain.update_all(simple_dependents_count: -1)
+
+    requested_reading_connection = false
+    requested_writing_connection = false
+    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+      if reading
+        requested_reading_connection = true
+      else
+        requested_writing_connection = true
+      end
+      block.call
+    }
+    expect(requested_reading_connection).to be(true)
+    expect(requested_writing_connection).to be(true)
+  end
+
   it "should correctly fix the counter caches with conditionals" do
     updated = SimpleMain.create
     updated.simple_dependents.create
