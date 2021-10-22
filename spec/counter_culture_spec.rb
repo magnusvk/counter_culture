@@ -32,6 +32,11 @@ require 'models/with_module/model2'
 require 'models/prefecture'
 require 'models/city'
 
+if ENV['DB'] == 'postgresql'
+  require 'models/purchase_order'
+  require 'models/purchase_order_item'
+end
+
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
 
@@ -2558,5 +2563,34 @@ RSpec.describe "CounterCulture" do
     expect(user.reviews_count).to eq(3)
     expect(product.reviews_count).to eq(4)
     expect(company.review_approvals_count).to eq(42)
+  end
+
+  if ENV['DB'] == 'postgresql'
+    it "should work with pg money type" do
+      po = PurchaseOrder.create
+
+      expect(po.total_amount).to eq(0.0)
+
+      item = po.purchase_order_items.build(amount: 100.00)
+      item.save
+
+      po.reload
+      expect(po.total_amount).to eq(100.0)
+
+      item = po.purchase_order_items.build(amount: 100.00)
+      item.save
+
+      po.reload
+      expect(po.total_amount).to eq(200.0)
+
+      item.destroy
+
+      po.reload
+      expect(po.total_amount).to eq(100.0)
+
+      po.purchase_order_items.destroy_all
+      po.reload
+      expect(po.total_amount).to eq(0.0)
+    end
   end
 end

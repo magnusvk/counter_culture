@@ -266,4 +266,15 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer :prefecture_id, null: false
     t.integer :population, null: false
   end
+
+  if ENV['DB'] == 'postgresql'
+    create_table :purchase_orders, :force => true do |t|
+      t.money "total_amount", scale: 2, default: "0.0", null: false
+    end
+
+    create_table :purchase_order_items, :force => true do |t|
+      t.integer :purchase_order_id, null: false
+      t.money "amount", scale: 2, default: "0.0", null: false
+    end
+  end
 end
