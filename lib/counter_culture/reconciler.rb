@@ -187,7 +187,7 @@ module CounterCulture
         # if a delta column is provided use SUM, otherwise use COUNT
         return @count_select if @count_select
         if delta_column
-          @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
+          @count_select = "SUM(COALESCE(CAST(#{self_table_name}.#{delta_column} as NUMERIC),0))"
         else
           @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
         end

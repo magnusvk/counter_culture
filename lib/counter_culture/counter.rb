@@ -72,7 +72,7 @@ module CounterCulture
         # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
         # this updates the actual counter
-        updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+        updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
         # and here we update the timestamp, if so desired
         if touch
           current_time = obj.send(:current_time_from_proper_timezone)
