@@ -2492,9 +2492,9 @@ RSpec.describe "CounterCulture" do
 
   it "support fix counts using batch limits start and finish" do
     # Rails 4.2 doesn't support `finish`
-     if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
-       skip("Unsupported in Rails < 5.0")
-     end
+    if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
+      skip("Unsupported in Rails < 5.0")
+    end
 
     companies_group = 3.times.map do
       company = Company.create!
@@ -2565,32 +2565,39 @@ RSpec.describe "CounterCulture" do
     expect(company.review_approvals_count).to eq(42)
   end
 
-  if ENV['DB'] == 'postgresql'
-    it "should work with pg money type" do
-      po = PurchaseOrder.create
-
-      expect(po.total_amount).to eq(0.0)
-
-      item = po.purchase_order_items.build(amount: 100.00)
-      item.save
-
-      po.reload
-      expect(po.total_amount).to eq(100.0)
-
-      item = po.purchase_order_items.build(amount: 100.00)
-      item.save
-
-      po.reload
-      expect(po.total_amount).to eq(200.0)
-
-      item.destroy
-
-      po.reload
-      expect(po.total_amount).to eq(100.0)
-
-      po.purchase_order_items.destroy_all
-      po.reload
-      expect(po.total_amount).to eq(0.0)
+  it "should work with pg money type" do
+    # Rails 4.2 doesn't support the Postgres `money` type
+    if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
+      skip("Unsupported in Rails < 5.0")
     end
+
+    if ENV['DB'] != 'postgresql'
+      skip("money type only supported in PostgreSQL")
+    end
+
+    po = PurchaseOrder.create
+
+    expect(po.total_amount).to eq(0.0)
+
+    item = po.purchase_order_items.build(amount: 100.00)
+    item.save
+
+    po.reload
+    expect(po.total_amount).to eq(100.0)
+
+    item = po.purchase_order_items.build(amount: 100.00)
+    item.save
+
+    po.reload
+    expect(po.total_amount).to eq(200.0)
+
+    item.destroy
+
+    po.reload
+    expect(po.total_amount).to eq(100.0)
+
+    po.purchase_order_items.destroy_all
+    po.reload
+    expect(po.total_amount).to eq(0.0)
   end
 end
