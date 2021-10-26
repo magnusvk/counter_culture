@@ -10,8 +10,10 @@ branches:
   only:
   - master
 addons:
+  postgresql: '12'
   apt:
     packages:
+      postgresql-12
       postgresql-client
 rvm:
   - "2.5.9"
