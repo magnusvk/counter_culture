@@ -67,8 +67,9 @@ DB_CONFIG = {
   },
   postgresql: {
     adapter: 'postgresql',
-    username: CI_TEST_RUN ? 'postgres' : '',
+    username: CI_TEST_RUN ? 'travis' : '',
     min_messages: 'ERROR',
+    port: (ENV['PGPORT'].presence || 5432).to_i,
   }
 }.with_indifferent_access.freeze
 

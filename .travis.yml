@@ -14,7 +14,7 @@ addons:
   apt:
     packages:
       postgresql-12
-      postgresql-client
+      postgresql-client-12
 rvm:
   - "2.5.9"
   - "2.6.8"
@@ -38,6 +38,8 @@ matrix:
     - rvm: "3.0.2"
       gemfile: gemfiles/rails_5.2.gemfile
 env:
+  global:
+    - PGPORT=5433
   - DB=postgresql
   - DB=sqlite3
   - DB=mysql2
@@ -46,6 +48,6 @@ before_install:
 install:
   - if [ "$BUNDLE_GEMFILE" = "$PWD/gemfiles/rails_4.2.gemfile" ]; then bundle _1.17.3_ update; else bundle update; fi
 before_script:
-  - psql -c 'create database counter_culture_test;' -U postgres
+  - psql -c 'create database counter_culture_test;' -U travis
   - mysql -e 'CREATE DATABASE counter_culture_test;'
 script: TRAVIS=true bundle exec rake spec
