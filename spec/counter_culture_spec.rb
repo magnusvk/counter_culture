@@ -1821,12 +1821,8 @@ RSpec.describe "CounterCulture" do
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
+      user.save!
 
-      if Gem::Version.new(Rails.version) >= Gem::Version.new("5.1.0")
-        # must save to make the actual "saved_changes" available in Rails 5.1
-        # whereas we simply use the "changed_attributes" before that
-        user.save!
-      end
       prev = CounterCulture::Counter.new(user, :foobar, {}).previous_model(user)
 
       expect(prev.name).to eq("John Smith")
@@ -2491,11 +2487,6 @@ RSpec.describe "CounterCulture" do
   end
 
   it "support fix counts using batch limits start and finish" do
-    # Rails 4.2 doesn't support `finish`
-    if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
-      skip("Unsupported in Rails < 5.0")
-    end
-
     companies_group = 3.times.map do
       company = Company.create!
       company.children << Company.create!
@@ -2566,11 +2557,6 @@ RSpec.describe "CounterCulture" do
   end
 
   it "should work with pg money type" do
-    # Rails 4.2 doesn't support the Postgres `money` type
-    if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
-      skip("Unsupported in Rails < 5.0")
-    end
-
     if ENV['DB'] != 'postgresql'
       skip("money type only supported in PostgreSQL")
     end
