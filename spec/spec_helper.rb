@@ -11,7 +11,6 @@ require 'rails/all'
 
 module PapertrailSupport
   def self.supported_here?
-    return false if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
     true
   end
 end
@@ -64,6 +63,7 @@ DB_CONFIG = {
     adapter: 'mysql2',
     username: CI_TEST_RUN ? 'travis' : 'root',
     encoding: 'utf8',
+    collation: 'utf8_unicode_ci',
   },
   postgresql: {
     adapter: 'postgresql',
