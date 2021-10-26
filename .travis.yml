@@ -1,3 +1,4 @@
+dist: focal
 language: ruby
 cache:
   directories:
