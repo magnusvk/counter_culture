@@ -10,7 +10,9 @@ branches:
   only:
   - master
 addons:
-  postgresql: "9.6"
+  apt:
+    packages:
+      postgresql-client
 rvm:
   - "2.5.9"
   - "2.6.8"
