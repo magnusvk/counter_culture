@@ -1,3 +1,16 @@
+## 3.0.0 (October 26, 2021)
+
+Breaking changes:
+  - Dropped support for Ruby < 2.6
+  - Dropped support for Rails < 5.2
+
+Note that there are no specific breaking changes that would cause older
+versions of Ruby or Rails to stop working, we have simply stopped testing
+against them.
+
+Improvements:
+  - Support PostgreSql's `money` type for use with a delta column (#333)
+
 ## 2.9.0 (August 27, 2021)
 
 Improvements:
