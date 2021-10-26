@@ -1,5 +1,4 @@
 class PurchaseOrder < ActiveRecord::Base
-  attribute :total_amount, :money
 
   has_many :purchase_order_items, dependent: :destroy
 

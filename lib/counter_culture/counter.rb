@@ -69,10 +69,16 @@ module CounterCulture
                           "#{model.connection.quote_column_name(change_counter_column)}"
                         end
 
+        column_type = klass.type_for_attribute(change_counter_column).type
+
         # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
         # this updates the actual counter
-        updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
+        if column_type == :money
+          updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
+        else
+          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+        end
         # and here we update the timestamp, if so desired
         if touch
           current_time = obj.send(:current_time_from_proper_timezone)
