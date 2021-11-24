@@ -2306,21 +2306,41 @@ RSpec.describe "CounterCulture" do
     end
   end
 
-  it "can fix counts by scope" do
-    prefecture = Prefecture.new name: 'Tokyo'
-    prefecture.save!
-    City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
-    City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
+  describe "fix counts by scope" do
+    let(:prefecture) { Prefecture.new name: 'Tokyo' }
 
-    prefecture.reload
-    expect(prefecture.big_cities_count).to eq(1)
+    before do
+      prefecture.save!
+      City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
+      City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
 
-    prefecture.big_cities_count = 999
-    prefecture.save!
+      prefecture.reload
+    end
 
-    City.counter_culture_fix_counts
+    context "when column_names is a Hash" do
+      it "can fix counts by scope" do
+        expect(prefecture.big_cities_count).to eq(1)
 
-    expect(prefecture.reload.big_cities_count).to eq(1)
+        prefecture.big_cities_count = 999
+        prefecture.save!
+
+        City.counter_culture_fix_counts
+        expect(prefecture.reload.big_cities_count).to eq(1)
+      end
+    end
+
+    context "when column_names is a Proc" do
+      it "can fix counts by scope" do
+        expect(prefecture.small_cities_count).to eq(1)
+
+        prefecture.small_cities_count = 999
+        prefecture.save!
+
+        City.counter_culture_fix_counts
+
+        expect(prefecture.reload.small_cities_count).to eq(1)
+      end
+    end
   end
 
   it "support fix counts using batch limits start and finish" do

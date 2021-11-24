@@ -354,7 +354,9 @@ class Product < ActiveRecord::Base
 end
 ```
 
-You can specify a scope instead of a where condition string for `column_names`:
+You can specify a scope instead of a where condition string for `column_names`. It is recommended
+to provide a Proc that returns a hash instead of directly providing a hash as the scope
+will hit your database to load the schema cache while your model is being loaded:
 
 ```ruby
 class Product < ActiveRecord::Base
@@ -364,10 +366,10 @@ class Product < ActiveRecord::Base
 
   counter_culture :category,
       column_name: proc {|model| "#{model.product_type}_count" },
-      column_names: {
+      column_names: -> { {
           Product.awesomes => :awesome_count,
           Product.suckys => :sucky_count
-      }
+      } }
 end
 ```
 

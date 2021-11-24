@@ -74,7 +74,17 @@ module CounterCulture
 
         scope = relation_class
 
-        counter_column_names = column_names || {nil => counter_cache_name}
+        counter_column_names =
+          case column_names
+          when Proc
+            column_names.call
+          when Hash
+            column_names
+          else
+            { nil => counter_cache_name }
+          end
+
+        raise ArgumentError, "The result of :column_names must return a Hash" unless counter_column_names.is_a?(Hash)
 
         if options[:column_name]
           counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
