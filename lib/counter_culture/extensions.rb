@@ -45,8 +45,9 @@ module CounterCulture
           @after_commit_counter_cache = []
         end
 
-        if options[:column_names] && !options[:column_names].is_a?(Hash)
-          raise ":column_names must be a Hash of conditions and column names"
+        if options[:column_names] && !(options[:column_names].is_a?(Hash) || options[:column_names].is_a?(Proc))
+          raise ":column_names must be a Hash of conditions and column names, " \
+                "or a Proc that when called returns such a Hash"
         end
 
         # add the counter to our collection
