@@ -1,3 +1,9 @@
+## 3.1.0 (November 29, 2021)
+
+Improvements:
+  - Allow specifiying a `Proc` to `column_names` to avoid loading a scope on
+    startup (#335)
+
 ## 3.0.0 (October 26, 2021)
 
 Breaking changes:

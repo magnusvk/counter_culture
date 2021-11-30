@@ -84,8 +84,6 @@ module CounterCulture
             { nil => counter_cache_name }
           end
 
-        raise ArgumentError, "The result of :column_names must return a Hash" unless counter_column_names.is_a?(Hash)
-
         if options[:column_name]
           counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
         end

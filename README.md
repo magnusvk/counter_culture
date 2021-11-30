@@ -376,9 +376,10 @@ class Product < ActiveRecord::Base
 end
 ```
 
-You can specify a scope instead of a where condition string for `column_names`. It is recommended
-to provide a Proc that returns a hash instead of directly providing a hash as the scope
-will hit your database to load the schema cache while your model is being loaded:
+You can specify a scope instead of a where condition string for `column_names`. We recommend
+providing a Proc that returns a hash instead of directly providing a hash: If you were to directly
+provide a scope this would load your schema cache on startup which will break things like 
+`rake db:migrate`.
 
 ```ruby
 class Product < ActiveRecord::Base

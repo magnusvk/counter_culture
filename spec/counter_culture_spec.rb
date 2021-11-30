@@ -2480,6 +2480,16 @@ RSpec.describe "CounterCulture" do
       prefecture.reload
     end
 
+    it "raises an error when column_names is invalid" do
+      expect {
+        City.counter_culture :prefecture, column_name: :foo,
+          column_names: :foo
+      }.to raise_error(
+        ArgumentError,
+        ":column_names must be a Hash of conditions and column names, or a Proc that when called returns such a Hash",
+      )
+    end
+
     context "when column_names is a Hash" do
       it "can fix counts by scope" do
         expect(prefecture.big_cities_count).to eq(1)
@@ -2493,6 +2503,16 @@ RSpec.describe "CounterCulture" do
     end
 
     context "when column_names is a Proc" do
+      it "raises an error when the Proc doesn't return a hash" do
+        expect {
+          City.counter_culture :prefecture, column_name: :foo,
+            column_names: -> { :foo }
+        }.to raise_error(
+          ArgumentError,
+          ":column_names must be a Hash of conditions and column names, or a Proc that when called returns such a Hash",
+        )
+      end
+
       it "can fix counts by scope" do
         expect(prefecture.small_cities_count).to eq(1)
 
