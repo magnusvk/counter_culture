@@ -31,6 +31,9 @@ require 'models/with_module/model1'
 require 'models/with_module/model2'
 require 'models/prefecture'
 require 'models/city'
+require 'models/group'
+require 'models/sub_group'
+require 'models/group_item'
 
 if ENV['DB'] == 'postgresql'
   require 'models/purchase_order'
@@ -1389,6 +1392,16 @@ RSpec.describe "CounterCulture" do
     string_id2.reload
     expect(string_id.users_count).to eq(0)
     expect(string_id2.users_count).to eq(0)
+  end
+
+  it 'should work with different primary keys when relation is an array' do
+    group = Group.create
+    sub_group = SubGroup.create(group: group)
+
+    expect(group.group_items_count).to eq(0)
+    group_item = GroupItem.create(sub_group: sub_group)
+
+    expect(group.reload.group_items_count).to eq(1)    
   end
 
   it "should raise a good error message when calling fix_counts with no caches defined" do
