@@ -165,7 +165,7 @@ module CounterCulture
     def foreign_key_value(obj, relation, was = false)
       original_relation = relation
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
-      first_relation = relation.first
+      
       if was
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
