@@ -272,7 +272,8 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "group_items_count", :default => 0, :null => false
   end
 
-  create_table "sub_groups", primary_key: 'uuid', id: :uuid, :force => true do |t|
+  create_table "sub_groups", primary_key: 'uuid', id: false, :force => true do |t|
+    t.string  "uuid", :null => false
     t.integer  "group_id", :null => false
   end
 
