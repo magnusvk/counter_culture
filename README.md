@@ -1,4 +1,4 @@
-# counter_culture [![Build Status](https://travis-ci.com/magnusvk/counter_culture.svg)](https://travis-ci.com/magnusvk/counter_culture)
+# counter_culture [![Build Status](https://app.travis-ci.com/magnusvk/counter_culture.svg?branch=master)](https://app.travis-ci.com/magnusvk/counter_culture)
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
@@ -250,6 +250,28 @@ You may also specify a custom timestamp column that gets updated only when a par
 
 With this option, any time the `category_counter_cache` changes both the `category_count_changed` and `updated_at` columns will get updated.
 
+### Avoiding deadlocks / executing counter cache updates after commit
+
+Some applications run into issues with deadlocks involving counter cache updates when using this gem. See [#263](https://github.com/magnusvk/counter_culture/issues/263#issuecomment-772284439) for information and helpful links on how to avoid this issue.
+
+Another option is to simply defer the update of counter caches to outside of the transaction. This gives up transacrtional guarantees for your counter cache updates but should resolve any deadlocks you experience. This behavior is disabled by default, enable it on each affected counter cache as follows:
+
+```ruby
+  counter_culture :category, execute_after_commit: true
+```
+[NOTE] You need to manually specify the `after_commit_action` as dependency in the Gemfile to use this feature
+```ruby
+...
+gem "after_commit_action"
+...
+```
+
+You can also pass a `Proc` for dynamic control. This is useful for temporarily moving the counter cache update inside of the transaction:
+
+```ruby
+  counter_culture :category, execute_after_commit: proc { !Thread.current[:update_counter_cache_in_transaction] }
+```
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.
@@ -354,7 +376,10 @@ class Product < ActiveRecord::Base
 end
 ```
 
-You can specify a scope instead of a where condition string for `column_names`:
+You can specify a scope instead of a where condition string for `column_names`. We recommend
+providing a Proc that returns a hash instead of directly providing a hash: If you were to directly
+provide a scope this would load your schema cache on startup which will break things like 
+`rake db:migrate`.
 
 ```ruby
 class Product < ActiveRecord::Base
@@ -364,10 +389,10 @@ class Product < ActiveRecord::Base
 
   counter_culture :category,
       column_name: proc {|model| "#{model.product_type}_count" },
-      column_names: {
+      column_names: -> { {
           Product.awesomes => :awesome_count,
           Product.suckys => :sucky_count
-      }
+      } }
 end
 ```
 
@@ -446,4 +471,4 @@ counter_culture now supports polymorphic associations of one level only.
 
 ## Copyright
 
-Copyright (c) 2012-2013 BestVendor, Magnus von Koeller. See LICENSE.txt for further details.
+Copyright (c) 2012-2021 BestVendor, Magnus von Koeller. See LICENSE.txt for further details.

@@ -4,6 +4,10 @@ class Subcateg < ActiveRecord::Base
 
   self.primary_key = :subcat_id
 
+  if PapertrailSupport.supported_here?
+    has_paper_trail
+  end
+
   has_many :posts
   belongs_to :categ, :foreign_key => :fk_cat_id
 

@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'discard'
   spec.add_development_dependency 'paper_trail'
   spec.add_development_dependency 'paranoia'
+  spec.add_development_dependency 'after_commit_action'
   spec.add_development_dependency 'rails', '>= 4.2'
   spec.add_development_dependency 'rake', '>= 10.0'
   spec.add_development_dependency 'rdoc', '~> 5.0.0'
@@ -42,4 +43,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec-extra-formatters'
   spec.add_development_dependency 'simplecov', '~> 0.16.1'
   spec.add_development_dependency 'timecop'
+  spec.add_development_dependency 'sqlite3'
+  spec.add_development_dependency 'mysql2'
+  spec.add_development_dependency 'pg'
 end

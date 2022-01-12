@@ -11,10 +11,16 @@ require 'rails/all'
 
 module PapertrailSupport
   def self.supported_here?
-    return false if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
-    return false if Gem::Version.new(Rails.version) >= Gem::Version.new('6.1.0')
-    return false if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('3.0.0')
     true
+  end
+end
+
+module DynamicAfterCommit
+  def self.update_counter_cache_in_transaction(&block)
+    Thread.current[:update_counter_cache_in_transaction] = true
+    yield
+  ensure
+    Thread.current[:update_counter_cache_in_transaction] = nil
   end
 end
 
@@ -23,6 +29,7 @@ require 'timecop'
 
 if PapertrailSupport.supported_here?
   require 'paper_trail'
+  require "paper_trail/frameworks/active_record"
   require 'paper_trail/frameworks/active_record/models/paper_trail/version'
   require 'paper_trail/frameworks/rspec'
 end
@@ -56,6 +63,7 @@ DB_CONFIG = {
     adapter: 'mysql2',
     username: CI_TEST_RUN ? 'travis' : 'root',
     encoding: 'utf8',
+    collation: 'utf8_unicode_ci',
   },
   postgresql: {
     adapter: 'postgresql',

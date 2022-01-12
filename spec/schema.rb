@@ -146,6 +146,8 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table "subcategs", :primary_key => "subcat_id", :force => true do |t|
     t.integer  "fk_cat_id"
     t.integer  "posts_count",       :default => 0, :null => false
+    t.integer  "posts_after_commit_count",       :default => 0, :null => false
+    t.integer  "posts_dynamic_commit_count",       :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -257,11 +259,23 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table :prefectures, :force => true do |t|
     t.string :name
     t.integer :big_cities_count, null: false, default: 0
+    t.integer :small_cities_count, null: false, default: 0
   end
 
   create_table :cities, :force => true do |t|
     t.string :name
     t.integer :prefecture_id, null: false
     t.integer :population, null: false
+  end
+
+  if ENV['DB'] == 'postgresql' && Gem::Version.new(Rails.version) >= Gem::Version.new('5.0')
+    create_table :purchase_orders, :force => true do |t|
+      t.money "total_amount", scale: 2, default: "0.0", null: false
+    end
+
+    create_table :purchase_order_items, :force => true do |t|
+      t.integer :purchase_order_id, null: false
+      t.money "amount", scale: 2, default: "0.0", null: false
+    end
   end
 end
