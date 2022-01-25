@@ -14,8 +14,8 @@ jobs:
         type: string
     docker:
       - image: cimg/ruby:<< parameters.ruby-version >>
-      - image: cimg/postgres:latest-ram
-      - image: cimg/mysql:latest-ram
+      - image: cimg/postgres:14.1
+      - image: cimg/mysql:8.0
     steps:
       - checkout
       - run:
