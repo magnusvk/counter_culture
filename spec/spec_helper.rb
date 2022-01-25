@@ -64,6 +64,7 @@ DB_CONFIG = {
     username: CI_TEST_RUN ? 'travis' : 'root',
     encoding: 'utf8',
     collation: 'utf8_unicode_ci',
+    port: '3306',
   },
   postgresql: {
     adapter: 'postgresql',
