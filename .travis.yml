@@ -16,16 +16,17 @@ addons:
       - postgresql-12
       - postgresql-client-12
 rvm:
-  - "2.6.8"
-  - "2.7.4"
-  - "3.0.2"
+  - "2.6.9"
+  - "2.7.5"
+  - "3.0.3"
 gemfile:
   - gemfiles/rails_5.2.gemfile
   - gemfiles/rails_6.0.gemfile
   - gemfiles/rails_6.1.gemfile
+  - gemfiles/rails_7.0.gemfile
 matrix:
   exclude:
-    - rvm: "3.0.2"
+    - rvm: "3.0.3"
       gemfile: gemfiles/rails_5.2.gemfile
 env:
   global:
