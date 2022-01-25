@@ -1,8 +1,11 @@
-## 3.2.0 (December 28, 2021)
+## 3.2.0 (January 24, 2022)
 
 Improvements:
   - Allow specifiying `polymorphic_classes` to avoid a potentially expensive
     `DISTINCT` query when calling `counter_culture_fix_counts` (#336)
+
+Bugfixes:
+  - Fix primary key name for enumerable relations (#337)
 
 ## 3.1.0 (November 29, 2021)
 
