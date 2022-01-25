@@ -41,6 +41,10 @@ require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
 
 RSpec.describe "CounterCulture" do
+  def yaml_load(yaml)
+    YAML.safe_load(yaml, permitted_classes: [Time])
+  end
+
   before(:each) do
     DatabaseCleaner.clean
   end
@@ -2344,7 +2348,7 @@ RSpec.describe "CounterCulture" do
       expect(product.reviews_count).to eq(1)
       expect(product.versions.count).to eq(2)
 
-      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(0)
 
@@ -2355,7 +2359,7 @@ RSpec.describe "CounterCulture" do
       expect(product.reviews_count).to eq(2)
       expect(product.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(1)
     end
@@ -2387,7 +2391,7 @@ RSpec.describe "CounterCulture" do
       expect(subcateg.posts_dynamic_commit_count).to eq(1)
       expect(subcateg.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(subcateg.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(subcateg.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
       expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
@@ -2422,7 +2426,7 @@ RSpec.describe "CounterCulture" do
       expect(subcateg.posts_dynamic_commit_count).to eq(1)
       expect(subcateg.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(subcateg.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(subcateg.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
       expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
