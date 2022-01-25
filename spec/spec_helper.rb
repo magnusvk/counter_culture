@@ -61,7 +61,7 @@ DB_CONFIG = {
   },
   mysql2: {
     adapter: 'mysql2',
-    username: CI_TEST_RUN ? 'travis' : 'root',
+    username: 'root',
     encoding: 'utf8',
     collation: 'utf8_unicode_ci',
     host: '127.0.0.1',
