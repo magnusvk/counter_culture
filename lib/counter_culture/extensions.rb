@@ -71,7 +71,8 @@ module CounterCulture
       # options:
       #   { :exclude => list of relations to skip when fixing counts,
       #     :only => only these relations will have their counts fixed,
-      #     :column_name => only this column will have its count fixed }
+      #     :column_name => only this column will have its count fixed
+      #     :polymorphic_classes => specify the class(es) to update in polymorphic associations }
       # returns: a list of fixed record as an array of hashes of the form:
       #   { :entity => which model the count was fixed on,
       #     :id => the id of the model that had the incorrect count,
@@ -91,7 +92,7 @@ module CounterCulture
           next if options[:exclude] && options[:exclude].include?(counter.relation)
           next if options[:only] && !options[:only].include?(counter.relation)
 
-          reconciler_options = %i(batch_size column_name finish skip_unsupported start touch verbose where)
+          reconciler_options = %i(batch_size column_name finish skip_unsupported start touch verbose where polymorphic_classes)
 
           reconciler = CounterCulture::Reconciler.new(counter, options.slice(*reconciler_options))
           reconciler.reconcile!

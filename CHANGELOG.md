@@ -1,3 +1,9 @@
+## 3.2.0 (December 28, 2021)
+
+Improvements:
+  - Allow specifiying `polymorphic_classes` to avoid a potentially expensive
+    `DISTINCT` query when calling `counter_culture_fix_counts` (#336)
+
 ## 3.1.0 (November 29, 2021)
 
 Improvements:

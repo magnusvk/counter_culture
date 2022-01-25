@@ -2186,6 +2186,30 @@ RSpec.describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(2)
       end
 
+      it "can fix counts for a specified polymorphic correctly" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts(polymorphic_classes: PolyEmployee)
+
+        expect(product1.reload.poly_images_count_dup).to eq(100) # unchanged
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+      end
+
+      it "can fix counts for multiple specified polymorphics correctly" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts(
+          polymorphic_classes: [PolyEmployee, PolyProduct]
+        )
+
+        expect(product1.reload.poly_images_count_dup).to eq(1)
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+      end
+
       it "can handle nil values" do
         img = PolyImage.create(imageable: employee)
         PolyImage.create(imageable: nil)

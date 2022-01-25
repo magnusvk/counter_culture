@@ -378,7 +378,7 @@ end
 
 You can specify a scope instead of a where condition string for `column_names`. We recommend
 providing a Proc that returns a hash instead of directly providing a hash: If you were to directly
-provide a scope this would load your schema cache on startup which will break things like 
+provide a scope this would load your schema cache on startup which will break things like
 `rake db:migrate`.
 
 ```ruby
@@ -458,6 +458,17 @@ end
 #### Polymorphic associations
 
 counter_culture now supports polymorphic associations of one level only.
+
+To discover which models need to be updated via `counter_culture_fix_counts`,
+counter_culture performs a `DISTINCT` query on the polymorphic relationship.
+This query can be expensive so we therefore offer the option
+(`polymorphic_classes`) to specify the models' counts that should be corrected:
+
+```ruby
+Image.counter_culture_fix_counts(polymorphic_classes: Product)
+# or
+Image.counter_culture_fix_counts(polymorphic_classes: [Product, Employee])
+```
 
 ## Contributing to counter_culture
 
