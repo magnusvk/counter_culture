@@ -53,7 +53,7 @@ DB_CONFIG = {
     pool: 5,
     timeout: 5000,
     host: 'localhost',
-    database: 'counter_culture_test',
+    database: CI_TEST_RUN ? 'circle_test' : 'counter_culture_test',
   },
   sqlite3: {
     adapter: 'sqlite3',
