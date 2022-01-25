@@ -1394,14 +1394,30 @@ RSpec.describe "CounterCulture" do
     expect(string_id2.users_count).to eq(0)
   end
 
-  it 'should work with different primary keys when relation is an array' do
-    group = Group.create
-    sub_group = SubGroup.create(group: group)
+  context "when relation is an array but has different primary keys along the chain" do
+    it "should update correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
 
-    expect(group.group_items_count).to eq(0)
-    group_item = GroupItem.create(sub_group: sub_group)
+      expect(group.group_items_count).to eq(0)
+      group_item = GroupItem.create(sub_group: sub_group)
 
-    expect(group.reload.group_items_count).to eq(1)    
+      expect(group.reload.group_items_count).to eq(1)
+    end
+
+    it "should fix counts correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+
+      group.update!(group_items_count: -1)
+
+      GroupItem.counter_culture_fix_counts
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
   end
 
   it "should raise a good error message when calling fix_counts with no caches defined" do
