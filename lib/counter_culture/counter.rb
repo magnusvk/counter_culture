@@ -163,8 +163,9 @@ module CounterCulture
     #   pass true to get the past value, false or nothing to get the
     #   current value
     def foreign_key_value(obj, relation, was = false)
+      original_relation = relation
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
-      first_relation = relation.first
+      
       if was
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
@@ -180,7 +181,8 @@ module CounterCulture
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation, source: obj, was: was).try(:to_sym))
+
+      return value.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym))
     end
 
     # gets the reflect object on the given relation

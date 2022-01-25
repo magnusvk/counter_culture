@@ -31,6 +31,9 @@ require 'models/with_module/model1'
 require 'models/with_module/model2'
 require 'models/prefecture'
 require 'models/city'
+require 'models/group'
+require 'models/sub_group'
+require 'models/group_item'
 
 if ENV['DB'] == 'postgresql'
   require 'models/purchase_order'
@@ -1393,6 +1396,32 @@ RSpec.describe "CounterCulture" do
     string_id2.reload
     expect(string_id.users_count).to eq(0)
     expect(string_id2.users_count).to eq(0)
+  end
+
+  context "when relation is an array but has different primary keys along the chain" do
+    it "should update correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+
+      expect(group.group_items_count).to eq(0)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
+
+    it "should fix counts correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+
+      group.update!(group_items_count: -1)
+
+      GroupItem.counter_culture_fix_counts
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
   end
 
   it "should raise a good error message when calling fix_counts with no caches defined" do
