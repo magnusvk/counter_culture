@@ -1,4 +1,4 @@
-# counter_culture [![Build Status](https://app.travis-ci.com/magnusvk/counter_culture.svg?branch=master)](https://app.travis-ci.com/magnusvk/counter_culture)
+# counter_culture [![Build Status](https://circleci.com/gh/magnusvk/counter_culture.svg?style=svg)](https://circleci.com/gh/magnusvk/counter_culture)
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
@@ -378,7 +378,7 @@ end
 
 You can specify a scope instead of a where condition string for `column_names`. We recommend
 providing a Proc that returns a hash instead of directly providing a hash: If you were to directly
-provide a scope this would load your schema cache on startup which will break things like 
+provide a scope this would load your schema cache on startup which will break things like
 `rake db:migrate`.
 
 ```ruby
