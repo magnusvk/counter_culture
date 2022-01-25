@@ -34,7 +34,7 @@ jobs:
           command: dockerize -wait tcp://localhost:3306 -timeout 1m
       - run:
           name: rspec
-          command: DB=<< parameters.database >> ruby/rspec-test
+          command: DB=<< parameters.database >> rspec spec
 
 workflows:
   test:
