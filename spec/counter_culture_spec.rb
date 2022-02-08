@@ -2547,6 +2547,19 @@ RSpec.describe "CounterCulture" do
       )
     end
 
+    context "when column_names value is a Symbol" do
+      before do
+        prefecture.update_columns(big_cities_count: 0, small_cities_count: 0)
+      end
+
+      it "updates the column" do
+        expect(prefecture.reload.big_cities_count).to be(0)
+        City.counter_culture_fix_counts(only: :prefecture,
+                                        column_name: :big_cities_count)
+        expect(prefecture.reload.big_cities_count).to be(1)
+      end
+    end
+
     context "when column_names is a Hash" do
       it "can fix counts by scope" do
         expect(prefecture.big_cities_count).to eq(1)
