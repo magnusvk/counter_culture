@@ -45,6 +45,16 @@ workflows:
               ruby-version: ["2.6", "2.7", "3.0"]
               rails-version: ["5.2", "6.0", "6.1", "7.0"]
               database: ["postgresql", "sqlite3", "mysql2"]
+            include:
+              - ruby-version: "3.1"
+                rails-version: "7.0"
+                database: "postgresql"
+              - ruby-version: "3.1"
+                rails-version: "7.0"
+                database: "sqlite3"
+              - ruby-version: "3.1"
+                rails-version: "7.0"
+                database: "mysql2"
             exclude:
               - ruby-version: "3.0"
                 rails-version: "5.2"
