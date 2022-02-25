@@ -1,3 +1,8 @@
+## 3.2.1 (February 24, 2022)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` when passing it symbols for column names (#341)
+
 ## 3.2.0 (January 24, 2022)
 
 Improvements:
