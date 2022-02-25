@@ -85,7 +85,9 @@ module CounterCulture
           end
 
         if options[:column_name]
-          counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
+          counter_column_names = counter_column_names.select do |_, v|
+            options[:column_name].to_s == v.to_s
+          end
         end
 
         # iterate over all the possible counter cache column names
