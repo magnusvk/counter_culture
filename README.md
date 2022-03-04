@@ -20,7 +20,7 @@ product.categories_count # => will use counter cache without query
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 2.0'
+gem 'counter_culture', '~> 3.0'
 ```
 
 Then run `bundle install`
