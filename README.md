@@ -17,7 +17,15 @@ product.categories_count # => will use counter cache without query
 
 ## Installation
 
-Add counter_culture to your Gemfile:
+### Add counter_culture to your Gemfile:
+
+If using Ruby < 2.6 or Rails < 5.2:
+
+```ruby
+gem 'counter_culture', '~> 2.0'
+```
+
+If using Ruby >= 2.6 and Rails >= 5.2:
 
 ```ruby
 gem 'counter_culture', '~> 3.0'
