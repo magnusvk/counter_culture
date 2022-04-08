@@ -1,4 +1,4 @@
-# counter_culture [![Build Status](https://app.travis-ci.com/magnusvk/counter_culture.svg?branch=master)](https://app.travis-ci.com/magnusvk/counter_culture)
+# counter_culture [![Build Status](https://circleci.com/gh/magnusvk/counter_culture/tree/master.svg?style=svg)](https://circleci.com/gh/magnusvk/counter_culture/tree/master)
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
@@ -7,7 +7,7 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Can keep a running count, or a running total
 
-Tested against Ruby 2.5.8, 2.6.6, 2.7.2 and 3.0.0, and against the latest patch releases of Rails 4.2, 5.0, 5.1, 5.2, 6.0 and 6.1.
+Tested against Ruby 2.6, 2.7 and 3.0, and against the latest patch releases of Rails 5.2, 6.0, 6.1 and 7.0.
 
 Please note that -- unlike Rails' built-in counter-caches -- counter_culture does not currently change the behavior of the `.size` method on ActiveRecord associations. If you want to avoid a database query and read the cached value, please use the attribute name containing the counter cache directly.
 ```
@@ -378,7 +378,7 @@ end
 
 You can specify a scope instead of a where condition string for `column_names`. We recommend
 providing a Proc that returns a hash instead of directly providing a hash: If you were to directly
-provide a scope this would load your schema cache on startup which will break things like 
+provide a scope this would load your schema cache on startup which will break things like
 `rake db:migrate`.
 
 ```ruby
@@ -458,6 +458,17 @@ end
 #### Polymorphic associations
 
 counter_culture now supports polymorphic associations of one level only.
+
+To discover which models need to be updated via `counter_culture_fix_counts`,
+counter_culture performs a `DISTINCT` query on the polymorphic relationship.
+This query can be expensive so we therefore offer the option
+(`polymorphic_classes`) to specify the models' counts that should be corrected:
+
+```ruby
+Image.counter_culture_fix_counts(polymorphic_classes: Product)
+# or
+Image.counter_culture_fix_counts(polymorphic_classes: [Product, Employee])
+```
 
 ## Contributing to counter_culture
 

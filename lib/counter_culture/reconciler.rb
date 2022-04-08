@@ -28,7 +28,7 @@ module CounterCulture
         raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
       end
 
-      associated_model_classes.each do |associated_model_class|
+      Array(associated_model_classes).each do |associated_model_class|
         Reconciliation.new(counter, changes, options, associated_model_class).perform
       end
 
@@ -39,7 +39,7 @@ module CounterCulture
 
     def associated_model_classes
       if polymorphic?
-        polymorphic_associated_model_classes
+        options[:polymorphic_classes].presence || polymorphic_associated_model_classes
       else
         [associated_model_class]
       end
@@ -85,7 +85,9 @@ module CounterCulture
           end
 
         if options[:column_name]
-          counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
+          counter_column_names = counter_column_names.select do |_, v|
+            options[:column_name].to_s == v.to_s
+          end
         end
 
         # iterate over all the possible counter cache column names
