@@ -165,7 +165,7 @@ RSpec.describe "CounterCulture" do
     expect(user2.reload.review_approvals_count).to eq(69)
   end
 
-  it "works with multiple saves in one transcation" do
+  it "works with multiple saves in one transaction" do
     user = User.create
     product = Product.create
 
