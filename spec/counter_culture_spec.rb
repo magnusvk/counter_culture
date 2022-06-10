@@ -31,11 +31,23 @@ require 'models/with_module/model1'
 require 'models/with_module/model2'
 require 'models/prefecture'
 require 'models/city'
+require 'models/group'
+require 'models/sub_group'
+require 'models/group_item'
+
+if ENV['DB'] == 'postgresql'
+  require 'models/purchase_order'
+  require 'models/purchase_order_item'
+end
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
 
 RSpec.describe "CounterCulture" do
+  def yaml_load(yaml)
+    YAML.safe_load(yaml, permitted_classes: [Time])
+  end
+
   before(:each) do
     DatabaseCleaner.clean
   end
@@ -1386,6 +1398,32 @@ RSpec.describe "CounterCulture" do
     expect(string_id2.users_count).to eq(0)
   end
 
+  context "when relation is an array but has different primary keys along the chain" do
+    it "should update correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+
+      expect(group.group_items_count).to eq(0)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
+
+    it "should fix counts correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+
+      group.update!(group_items_count: -1)
+
+      GroupItem.counter_culture_fix_counts
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
+  end
+
   it "should raise a good error message when calling fix_counts with no caches defined" do
     expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
   end
@@ -1869,12 +1907,8 @@ RSpec.describe "CounterCulture" do
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
+      user.save!
 
-      if Gem::Version.new(Rails.version) >= Gem::Version.new("5.1.0")
-        # must save to make the actual "saved_changes" available in Rails 5.1
-        # whereas we simply use the "changed_attributes" before that
-        user.save!
-      end
       prev = CounterCulture::Counter.new(user, :foobar, {}).previous_model(user)
 
       expect(prev.name).to eq("John Smith")
@@ -2238,6 +2272,30 @@ RSpec.describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(2)
       end
 
+      it "can fix counts for a specified polymorphic correctly" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts(polymorphic_classes: PolyEmployee)
+
+        expect(product1.reload.poly_images_count_dup).to eq(100) # unchanged
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+      end
+
+      it "can fix counts for multiple specified polymorphics correctly" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts(
+          polymorphic_classes: [PolyEmployee, PolyProduct]
+        )
+
+        expect(product1.reload.poly_images_count_dup).to eq(1)
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+      end
+
       it "can handle nil values" do
         img = PolyImage.create(imageable: employee)
         PolyImage.create(imageable: nil)
@@ -2372,7 +2430,7 @@ RSpec.describe "CounterCulture" do
       expect(product.reviews_count).to eq(1)
       expect(product.versions.count).to eq(2)
 
-      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(0)
 
@@ -2383,7 +2441,7 @@ RSpec.describe "CounterCulture" do
       expect(product.reviews_count).to eq(2)
       expect(product.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(1)
     end
@@ -2415,7 +2473,7 @@ RSpec.describe "CounterCulture" do
       expect(subcateg.posts_dynamic_commit_count).to eq(1)
       expect(subcateg.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(subcateg.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(subcateg.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
       expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
@@ -2450,7 +2508,7 @@ RSpec.describe "CounterCulture" do
       expect(subcateg.posts_dynamic_commit_count).to eq(1)
       expect(subcateg.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(subcateg.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(subcateg.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
       expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
@@ -2521,29 +2579,77 @@ RSpec.describe "CounterCulture" do
     end
   end
 
-  it "can fix counts by scope" do
-    prefecture = Prefecture.new name: 'Tokyo'
-    prefecture.save!
-    City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
-    City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
+  describe "fix counts by scope" do
+    let(:prefecture) { Prefecture.new name: 'Tokyo' }
 
-    prefecture.reload
-    expect(prefecture.big_cities_count).to eq(1)
+    before do
+      prefecture.save!
+      City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
+      City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
 
-    prefecture.big_cities_count = 999
-    prefecture.save!
+      prefecture.reload
+    end
 
-    City.counter_culture_fix_counts
+    it "raises an error when column_names is invalid" do
+      expect {
+        City.counter_culture :prefecture, column_name: :foo,
+          column_names: :foo
+      }.to raise_error(
+        ArgumentError,
+        ":column_names must be a Hash of conditions and column names, or a Proc that when called returns such a Hash",
+      )
+    end
 
-    expect(prefecture.reload.big_cities_count).to eq(1)
+    context "when column_names value is a Symbol" do
+      before do
+        prefecture.update_columns(big_cities_count: 0, small_cities_count: 0)
+      end
+
+      it "updates the column" do
+        expect(prefecture.reload.big_cities_count).to be(0)
+        City.counter_culture_fix_counts(only: :prefecture,
+                                        column_name: :big_cities_count)
+        expect(prefecture.reload.big_cities_count).to be(1)
+      end
+    end
+
+    context "when column_names is a Hash" do
+      it "can fix counts by scope" do
+        expect(prefecture.big_cities_count).to eq(1)
+
+        prefecture.big_cities_count = 999
+        prefecture.save!
+
+        City.counter_culture_fix_counts
+        expect(prefecture.reload.big_cities_count).to eq(1)
+      end
+    end
+
+    context "when column_names is a Proc" do
+      it "raises an error when the Proc doesn't return a hash" do
+        expect {
+          City.counter_culture :prefecture, column_name: :foo,
+            column_names: -> { :foo }
+        }.to raise_error(
+          ArgumentError,
+          ":column_names must be a Hash of conditions and column names, or a Proc that when called returns such a Hash",
+        )
+      end
+
+      it "can fix counts by scope" do
+        expect(prefecture.small_cities_count).to eq(1)
+
+        prefecture.small_cities_count = 999
+        prefecture.save!
+
+        City.counter_culture_fix_counts
+
+        expect(prefecture.reload.small_cities_count).to eq(1)
+      end
+    end
   end
 
   it "support fix counts using batch limits start and finish" do
-    # Rails 4.2 doesn't support `finish`
-     if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
-       skip("Unsupported in Rails < 5.0")
-     end
-
     companies_group = 3.times.map do
       company = Company.create!
       company.children << Company.create!
@@ -2611,5 +2717,36 @@ RSpec.describe "CounterCulture" do
     expect(user.reviews_count).to eq(3)
     expect(product.reviews_count).to eq(4)
     expect(company.review_approvals_count).to eq(42)
+  end
+
+  it "should work with pg money type" do
+    if ENV['DB'] != 'postgresql'
+      skip("money type only supported in PostgreSQL")
+    end
+
+    po = PurchaseOrder.create
+
+    expect(po.total_amount).to eq(0.0)
+
+    item = po.purchase_order_items.build(amount: 100.00)
+    item.save
+
+    po.reload
+    expect(po.total_amount).to eq(100.0)
+
+    item = po.purchase_order_items.build(amount: 100.00)
+    item.save
+
+    po.reload
+    expect(po.total_amount).to eq(200.0)
+
+    item.destroy
+
+    po.reload
+    expect(po.total_amount).to eq(100.0)
+
+    po.purchase_order_items.destroy_all
+    po.reload
+    expect(po.total_amount).to eq(0.0)
   end
 end

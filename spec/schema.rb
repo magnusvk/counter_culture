@@ -259,11 +259,36 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   create_table :prefectures, :force => true do |t|
     t.string :name
     t.integer :big_cities_count, null: false, default: 0
+    t.integer :small_cities_count, null: false, default: 0
   end
 
   create_table :cities, :force => true do |t|
     t.string :name
     t.integer :prefecture_id, null: false
     t.integer :population, null: false
+  end
+
+  create_table "groups", :force => true do |t|
+    t.integer  "group_items_count", :default => 0, :null => false
+  end
+
+  create_table "sub_groups", primary_key: 'uuid', id: false, :force => true do |t|
+    t.string  "uuid", :null => false
+    t.integer  "group_id", :null => false
+  end
+
+  create_table "group_items", :force => true do |t|
+    t.string  "sub_group_uuid", :null => false
+  end
+
+  if ENV['DB'] == 'postgresql' && Gem::Version.new(Rails.version) >= Gem::Version.new('5.0')
+    create_table :purchase_orders, :force => true do |t|
+      t.money "total_amount", scale: 2, default: "0.0", null: false
+    end
+
+    create_table :purchase_order_items, :force => true do |t|
+      t.integer :purchase_order_id, null: false
+      t.money "amount", scale: 2, default: "0.0", null: false
+    end
   end
 end

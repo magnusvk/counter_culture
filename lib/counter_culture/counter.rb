@@ -69,10 +69,16 @@ module CounterCulture
                           "#{model.connection.quote_column_name(change_counter_column)}"
                         end
 
+        column_type = klass.type_for_attribute(change_counter_column).type
+
         # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
         # this updates the actual counter
-        updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+        if column_type == :money
+          updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
+        else
+          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+        end
         # and here we update the timestamp, if so desired
         if touch
           current_time = obj.send(:current_time_from_proper_timezone)
@@ -157,8 +163,9 @@ module CounterCulture
     #   pass true to get the past value, false or nothing to get the
     #   current value
     def foreign_key_value(obj, relation, was = false)
+      original_relation = relation
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
-      first_relation = relation.first
+      
       if was
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
@@ -174,7 +181,8 @@ module CounterCulture
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
-      return value.try(relation_primary_key(first_relation, source: obj, was: was).try(:to_sym))
+
+      return value.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym))
     end
 
     # gets the reflect object on the given relation

@@ -28,7 +28,7 @@ module CounterCulture
         raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
       end
 
-      associated_model_classes.each do |associated_model_class|
+      Array(associated_model_classes).each do |associated_model_class|
         Reconciliation.new(counter, changes, options, associated_model_class).perform
       end
 
@@ -39,7 +39,7 @@ module CounterCulture
 
     def associated_model_classes
       if polymorphic?
-        polymorphic_associated_model_classes
+        options[:polymorphic_classes].presence || polymorphic_associated_model_classes
       else
         [associated_model_class]
       end
@@ -74,10 +74,20 @@ module CounterCulture
 
         scope = relation_class
 
-        counter_column_names = column_names || {nil => counter_cache_name}
+        counter_column_names =
+          case column_names
+          when Proc
+            column_names.call
+          when Hash
+            column_names
+          else
+            { nil => counter_cache_name }
+          end
 
         if options[:column_name]
-          counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
+          counter_column_names = counter_column_names.select do |_, v|
+            options[:column_name].to_s == v.to_s
+          end
         end
 
         # iterate over all the possible counter cache column names
@@ -191,7 +201,12 @@ module CounterCulture
         # if a delta column is provided use SUM, otherwise use COUNT
         return @count_select if @count_select
         if delta_column
-          @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
+          # cast the column as NUMERIC if it is a PG money type
+          if model.type_for_attribute(delta_column).type == :money
+            @count_select = "SUM(COALESCE(CAST(#{self_table_name}.#{delta_column} as NUMERIC),0))"
+          else
+            @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column}, 0))"
+          end
         else
           @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
         end

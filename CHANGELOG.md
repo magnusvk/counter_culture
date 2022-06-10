@@ -1,3 +1,36 @@
+## 3.2.1 (February 24, 2022)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` when passing it symbols for column names (#341)
+
+## 3.2.0 (January 24, 2022)
+
+Improvements:
+  - Allow specifiying `polymorphic_classes` to avoid a potentially expensive
+    `DISTINCT` query when calling `counter_culture_fix_counts` (#336)
+
+Bugfixes:
+  - Fix primary key name for enumerable relations (#337)
+
+## 3.1.0 (November 29, 2021)
+
+Improvements:
+  - Allow specifiying a `Proc` to `column_names` to avoid loading a scope on
+    startup (#335)
+
+## 3.0.0 (October 26, 2021)
+
+Breaking changes:
+  - Dropped support for Ruby < 2.6
+  - Dropped support for Rails < 5.2
+
+Note that there are no specific breaking changes that would cause older
+versions of Ruby or Rails to stop working, we have simply stopped testing
+against them.
+
+Improvements:
+  - Support PostgreSql's `money` type for use with a delta column (#333)
+
 ## 2.9.0 (August 27, 2021)
 
 Improvements:

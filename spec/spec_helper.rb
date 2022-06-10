@@ -11,7 +11,6 @@ require 'rails/all'
 
 module PapertrailSupport
   def self.supported_here?
-    return false if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
     true
   end
 end
@@ -54,7 +53,7 @@ DB_CONFIG = {
     pool: 5,
     timeout: 5000,
     host: 'localhost',
-    database: 'counter_culture_test',
+    database: CI_TEST_RUN ? 'circle_test' : 'counter_culture_test',
   },
   sqlite3: {
     adapter: 'sqlite3',
@@ -62,8 +61,11 @@ DB_CONFIG = {
   },
   mysql2: {
     adapter: 'mysql2',
-    username: CI_TEST_RUN ? 'travis' : 'root',
+    username: 'root',
     encoding: 'utf8',
+    collation: 'utf8_unicode_ci',
+    host: '127.0.0.1',
+    port: '3306',
   },
   postgresql: {
     adapter: 'postgresql',
