@@ -113,8 +113,10 @@ module CounterCulture
     # called by after_destroy callback
     def _update_counts_after_destroy
       self.class.after_commit_counter_cache.each do |counter|
-        # decrement counter cache
-        counter.change_counter_cache(self, :increment => false)
+        unless destroyed?
+          # decrement counter cache
+          counter.change_counter_cache(self, :increment => false)
+        end
       end
     end
 

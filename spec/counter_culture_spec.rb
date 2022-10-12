@@ -123,6 +123,16 @@ RSpec.describe "CounterCulture" do
     expect(user.reviews_count).to eq(0)
     expect(user.review_approvals_count).to eq(0)
     expect(product.reviews_count).to eq(0)
+
+    # this does not decrement counter cache
+    review.destroy
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
   end
 
   it "updates counter cache on update" do
