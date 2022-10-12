@@ -2573,11 +2573,21 @@ RSpec.describe "CounterCulture" do
     end
 
     context "when column_names is a Proc" do
-      it "does not call the proc right away" do
-        called = false
-        City.counter_culture :prefecture, column_name: :foo,
-             column_names: -> { called = true; :foo }
-        expect(called).to eq(false)
+      context "when the return value is not a hash" do
+        it "does not call the proc right away" do
+          called = false
+          City.counter_culture :prefecture, column_name: :big_cities_count,
+               column_names: -> { called = true; :foo }
+          expect(called).to eq(false)
+        end
+
+        it "raises an error when called later" do
+          City.counter_culture :prefecture, column_name: :big_cities_count,
+               column_names: -> { :foo }
+          expect { City.counter_culture_fix_counts }.to raise_error(
+            ":column_names must be a Hash of conditions and column names"
+          )
+        end
       end
 
       it "can fix counts by scope" do
