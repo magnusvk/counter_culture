@@ -45,15 +45,7 @@ module CounterCulture
           @after_commit_counter_cache = []
         end
 
-        column_names_valid = (
-          !options[:column_names] ||
-          options[:column_names].is_a?(Hash) ||
-          (
-            options[:column_names].is_a?(Proc) &&
-            options[:column_names].call.is_a?(Hash)
-          )
-        )
-        unless column_names_valid
+        if options[:column_names] && !(options[:column_names].is_a?(Hash) || options[:column_names].is_a?(Proc))
           raise ArgumentError.new(
             ":column_names must be a Hash of conditions and column names, " \
             "or a Proc that when called returns such a Hash"
