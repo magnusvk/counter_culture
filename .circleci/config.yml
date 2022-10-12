@@ -20,7 +20,7 @@ jobs:
       - checkout
       - run:
           name: gem update --system
-          command: gem update --system
+          command: sudo gem update --system
       - run:
           name: bundle update
           command: BUNDLE_GEMFILE=gemfiles/rails_<< parameters.rails-version >>.gemfile bundle update
