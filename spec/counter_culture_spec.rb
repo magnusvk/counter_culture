@@ -2573,6 +2573,13 @@ RSpec.describe "CounterCulture" do
     end
 
     context "when column_names is a Proc" do
+      it "does not call the proc right away" do
+        called = false
+        City.counter_culture :prefecture, column_name: :foo,
+             column_names: -> { called = true; :foo }
+        expect(called).to eq(false)
+      end
+
       it "can fix counts by scope" do
         expect(prefecture.small_cities_count).to eq(1)
 
