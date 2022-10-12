@@ -125,11 +125,13 @@ module CounterCulture
           find_in_batches_args[:start] = options[:start] if options[:start].present?
           find_in_batches_args[:finish] = options[:finish] if options[:finish].present?
 
-          counts_query.find_in_batches(**find_in_batches_args).with_index(1) do |records, index|
-            log "Processing batch ##{index}."
-            # now iterate over all the models and see whether their counts are right
-            update_count_for_batch(column_name, records)
-            log "Finished batch ##{index}."
+          with_reading_db_connection do
+            counts_query.find_in_batches(**find_in_batches_args).with_index(1) do |records, index|
+              log "Processing batch ##{index}."
+              # now iterate over all the models and see whether their counts are right
+              update_count_for_batch(column_name, records)
+              log "Finished batch ##{index}."
+            end
           end
         end
         log_without_newline "\n"
@@ -163,7 +165,9 @@ module CounterCulture
               end
             end
 
-            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+            with_writing_db_connection do
+              relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+            end
           end
         end
       end
@@ -312,6 +316,22 @@ module CounterCulture
           string.parameterize('_')
         else
           string.parameterize(separator: '_')
+        end
+      end
+
+      def with_reading_db_connection(&block)
+        if builder = options[:db_connection_builder]
+          builder.call(true, block)
+        else
+          yield
+        end
+      end
+
+      def with_writing_db_connection(&block)
+        if builder = options[:db_connection_builder]
+          builder.call(false, block)
+        else
+          yield
         end
       end
     end

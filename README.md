@@ -359,6 +359,20 @@ Product.counter_culture_fix_counts start: 2001, finish: 3000
 # In worker 2, lets process from 2001 to 3000
 ```
 
+#### Fix counter cache using a replica database
+
+When counter caches need fixed ofttimes only a small number of records need updated. A table with 20 million rows queried in batches of 1000 results in 20,000 count queries for a single counter cache. Rails 6 introduced [native handling](https://guides.rubyonrails.org/v6.0/active_record_multiple_databases.html) of database replicas. Why not send that counting work to your replica? You can customize the database connections used for the read and write queries with the option `db_connection_builder`.
+
+```ruby
+Product.counter_culture_fix_counts db_connection_builder: proc{|reading, block|
+  if reading # Count calls will request a reading connection
+    Product.connected_to(role: :reading, &block)
+  else # Update all calls will request a non-reading connection
+    Product.connected_to(role: :writing, &block)
+  end
+}
+```
+
 #### Handling dynamic column names
 
 Manually populating counter caches with dynamic column names requires additional configuration:

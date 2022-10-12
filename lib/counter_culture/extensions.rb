@@ -84,7 +84,7 @@ module CounterCulture
           next if options[:exclude] && options[:exclude].include?(counter.relation)
           next if options[:only] && !options[:only].include?(counter.relation)
 
-          reconciler_options = %i(batch_size column_name finish skip_unsupported start touch verbose where polymorphic_classes)
+          reconciler_options = %i(batch_size column_name db_connection_builder finish skip_unsupported start touch verbose where polymorphic_classes)
 
           reconciler = CounterCulture::Reconciler.new(counter, options.slice(*reconciler_options))
           reconciler.reconcile!
