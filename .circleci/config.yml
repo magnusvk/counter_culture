@@ -42,7 +42,7 @@ workflows:
       - test:
           matrix:
             parameters:
-              ruby-version: ["2.6", "2.7", "3.0"]
+              ruby-version: ["2.6", "2.7", "3.0", "3.1"]
               rails-version: ["5.2", "6.0", "6.1", "7.0"]
               database: ["postgresql", "sqlite3", "mysql2"]
             exclude:
@@ -53,6 +53,15 @@ workflows:
                 rails-version: "5.2"
                 database: "sqlite3"
               - ruby-version: "3.0"
+                rails-version: "5.2"
+                database: "mysql2"
+              - ruby-version: "3.1"
+                rails-version: "5.2"
+                database: "postgresql"
+              - ruby-version: "3.1"
+                rails-version: "5.2"
+                database: "sqlite3"
+              - ruby-version: "3.1"
                 rails-version: "5.2"
                 database: "mysql2"
               - ruby-version: "2.6"
