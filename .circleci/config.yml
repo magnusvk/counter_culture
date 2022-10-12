@@ -19,6 +19,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: no document
+          command: echo "gem: --no-document" >> ~/.gemrc
+      - run:
           name: gem update --system
           command: sudo gem update --system
       - run:
