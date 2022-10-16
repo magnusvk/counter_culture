@@ -49,15 +49,7 @@ module CounterCulture
           @after_commit_counter_cache = []
         end
 
-        column_names_valid = (
-          !options[:column_names] ||
-          options[:column_names].is_a?(Hash) ||
-          (
-            options[:column_names].is_a?(Proc) &&
-            options[:column_names].call.is_a?(Hash)
-          )
-        )
-        unless column_names_valid
+        if options[:column_names] && !(options[:column_names].is_a?(Hash) || options[:column_names].is_a?(Proc))
           raise ArgumentError.new(
             ":column_names must be a Hash of conditions and column names, " \
             "or a Proc that when called returns such a Hash"
@@ -96,7 +88,7 @@ module CounterCulture
           next if options[:exclude] && options[:exclude].include?(counter.relation)
           next if options[:only] && !options[:only].include?(counter.relation)
 
-          reconciler_options = %i(batch_size column_name finish skip_unsupported start touch verbose where polymorphic_classes)
+          reconciler_options = %i(batch_size column_name db_connection_builder finish skip_unsupported start touch verbose where polymorphic_classes)
 
           reconciler = CounterCulture::Reconciler.new(counter, options.slice(*reconciler_options))
           reconciler.reconcile!
@@ -117,8 +109,10 @@ module CounterCulture
     # called by after_destroy callback
     def _update_counts_after_destroy
       self.class.after_commit_counter_cache.each do |counter|
-        # decrement counter cache
-        counter.change_counter_cache(self, :increment => false)
+        unless destroyed?
+          # decrement counter cache
+          counter.change_counter_cache(self, :increment => false)
+        end
       end
     end
 

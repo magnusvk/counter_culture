@@ -141,6 +141,16 @@ RSpec.describe "CounterCulture" do
     expect(user.reviews_count).to eq(0)
     expect(user.review_approvals_count).to eq(0)
     expect(product.reviews_count).to eq(0)
+
+    # this does not decrement counter cache
+    review.destroy
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
   end
 
   it "updates counter cache on update" do
@@ -1497,6 +1507,59 @@ RSpec.describe "CounterCulture" do
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
   end
 
+  it "should request a reading and not a writing database connection" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    A_FEW.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    # Counts are correct at this point so no update should happen
+
+    requested_reading_connection = false
+    requested_writing_connection = false
+    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+      if reading
+        requested_reading_connection = true
+      else
+        requested_writing_connection = true
+      end
+      block.call
+    }
+    expect(requested_reading_connection).to be(true)
+    expect(requested_writing_connection).to be(false)
+  end
+
+  it "should request a reading and a writing database connection" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    A_FEW.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    # Damage the counts so an update happens
+    SimpleMain.update_all(simple_dependents_count: -1)
+
+    requested_reading_connection = false
+    requested_writing_connection = false
+    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+      if reading
+        requested_reading_connection = true
+      else
+        requested_writing_connection = true
+      end
+      block.call
+    }
+    expect(requested_reading_connection).to be(true)
+    expect(requested_writing_connection).to be(true)
+  end
+
   it "should correctly fix the counter caches with conditionals" do
     updated = SimpleMain.create
     updated.simple_dependents.create
@@ -2591,14 +2654,21 @@ RSpec.describe "CounterCulture" do
     end
 
     context "when column_names is a Proc" do
-      it "raises an error when the Proc doesn't return a hash" do
-        expect {
-          City.counter_culture :prefecture, column_name: :foo,
-            column_names: -> { :foo }
-        }.to raise_error(
-          ArgumentError,
-          ":column_names must be a Hash of conditions and column names, or a Proc that when called returns such a Hash",
-        )
+      context "when the return value is not a hash" do
+        it "does not call the proc right away" do
+          called = false
+          City.counter_culture :prefecture, column_name: :big_cities_count,
+               column_names: -> { called = true; :foo }
+          expect(called).to eq(false)
+        end
+
+        it "raises an error when called later" do
+          City.counter_culture :prefecture, column_name: :big_cities_count,
+               column_names: -> { :foo }
+          expect { City.counter_culture_fix_counts }.to raise_error(
+            ":column_names must be a Hash of conditions and column names"
+          )
+        end
       end
 
       it "can fix counts by scope" do

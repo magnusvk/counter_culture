@@ -1,3 +1,13 @@
+## 3.3.0 (October 11, 2022)
+
+Improvements:
+  - Allow reading from replica in `counter_culture_fix_counts` (#330)
+  - Test against Ruby 3.1 (#357)
+
+Bugfixes:
+  - Don't decrement counter cache when calling `.destroy` on an already-destroyed model (#351)
+  - Don't immediately call `Proc` passed to `column_names` to avoid startup issue (#352)
+
 ## 3.2.1 (February 24, 2022)
 
 Bugfixes:

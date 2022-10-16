@@ -20,7 +20,7 @@ product.categories_count # => will use counter cache without query
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 2.0'
+gem 'counter_culture', '~> 3.2'
 ```
 
 Then run `bundle install`
@@ -357,6 +357,20 @@ Product.counter_culture_fix_counts start: 1000, finish: 2000
 
 Product.counter_culture_fix_counts start: 2001, finish: 3000
 # In worker 2, lets process from 2001 to 3000
+```
+
+#### Fix counter cache using a replica database
+
+When fixing counter caches the number of reads usually vastly exceeds the number of writes. It can make sense to offload the road load to a replica database in this case. Rails 6 introduced [native handling of multiple database connections](https://guides.rubyonrails.org/v6.0/active_record_multiple_databases.html). You can use this to send read traffic to a read-only repliace using the option `db_connection_builder`:
+
+```ruby
+Product.counter_culture_fix_counts db_connection_builder: proc{|reading, block|
+  if reading # Count calls will request a reading connection
+    Product.connected_to(role: :reading, &block)
+  else # Update all calls will request a non-reading connection
+    Product.connected_to(role: :writing, &block)
+  end
+}
 ```
 
 #### Handling dynamic column names
