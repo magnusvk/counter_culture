@@ -34,6 +34,9 @@ require 'models/city'
 require 'models/group'
 require 'models/sub_group'
 require 'models/group_item'
+require 'models/habtm_product'
+require 'models/habtm_category'
+require 'models/habtm_category_product'
 
 if ENV['DB'] == 'postgresql'
   require 'models/purchase_order'
@@ -2765,5 +2768,119 @@ RSpec.describe "CounterCulture" do
     po.purchase_order_items.destroy_all
     po.reload
     expect(po.total_amount).to eq(0.0)
+  end
+
+  context 'has_and_belongs_to_many' do
+    let(:create_ar_categories!) do
+      HabtmCategory.create(name: 'Category')
+      HabtmCategory.create(name: 'New Category')
+      HabtmCategory.create(name: 'Another new Category')
+    end
+
+    let(:create_ar_product!) do
+      HabtmProduct.create(name: 'Visible Product', visible: true)
+      HabtmProduct.create(name: 'Hidden / Invisible Product', visible: false)
+    end
+
+    before :each do
+      HabtmCategoriesProduct.destroy_all
+      HabtmCategory.destroy_all
+      HabtmProduct.destroy_all
+      create_ar_product!
+      create_ar_categories!
+    end
+
+    let(:product) { HabtmProduct.first }
+    let(:hidden_product) { HabtmProduct.last }
+    let(:category) { HabtmCategory.first }
+    let(:new_category) { HabtmCategory.all[1] }
+    let(:another_new_category) { HabtmCategory.all[2] }
+
+    describe 'functional test' do
+      it 'assigns product to category through <<' do
+        product.habtm_categories << category
+        expect(HabtmCategory.find(category.id).habtm_products).to include(product)
+      end
+
+      it 'assigns product to category through update' do
+        product.update!(habtm_categories: [category])
+        expect(HabtmCategory.find(category.id).habtm_products).to include(product)
+      end
+
+      it 'deletes product from category through update' do
+        product.update!(habtm_categories: [category])
+        product.update!(habtm_categories: [new_category])
+        expect(HabtmCategory.find(category.id).habtm_products).to_not include(product)
+        expect(HabtmCategory.find(new_category.id).habtm_products).to include(product)
+      end
+
+      it 'deletes properly' do
+        product.habtm_categories << category
+        product.habtm_categories.destroy(product.habtm_categories.last)
+        expect(category.reload.products_count).to eql 0
+      end
+
+      it 'count products' do
+        product.habtm_categories << category
+
+        expect(category.reload.habtm_products.count).to eql 1
+      end
+    end
+
+    describe 'adding' do
+      it 'via "<<" counts up' do
+        product.habtm_categories << category
+        expect(category.reload.products_count).to eql 1
+      end
+
+      it 'via "update" counts up' do
+        product.update(habtm_categories: [category])
+        expect(category.reload.products_count).to eql 1
+      end
+
+      it 'via "update" counts up (sanity check)' do
+        product.update(habtm_categories: [category])
+        product.update(habtm_categories: [new_category, another_new_category])
+        expect(category.reload.habtm_products.count).to eql 0
+        expect(new_category.reload.habtm_products.count).to eql 1
+        expect(another_new_category.reload.habtm_products.count).to eql 1
+      end
+    end
+
+    context 'update' do
+      before :each do
+        product.update(habtm_categories: [new_category])
+      end
+
+      it 'removes from the old category' do
+        expect(category.reload.products_count).to eql 0
+      end
+
+      it 'adds to the new category' do
+        expect(new_category.reload.products_count).to eql 1
+      end
+    end
+
+    context '<<' do
+      before :each do
+        product.habtm_categories << new_category
+      end
+
+      it 'adds to the new category' do
+        expect(new_category.reload.products_count).to eql 1
+      end
+
+      it 'removes from the old category' do
+        category.habtm_products.destroy(product)
+        expect(category.reload.products_count).to eql 0
+        expect(new_category.reload.products_count).to eql 1
+      end
+    end
+
+    it 'removes old relation via "update"' do
+      product.update(habtm_categories: [category])
+      product.update(habtm_categories: [new_category, another_new_category])
+      expect(category.reload.products_count).to eql 0
+    end
   end
 end

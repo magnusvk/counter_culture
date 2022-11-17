@@ -225,6 +225,21 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "special_poly_images_count", :default => 0, :null => false
   end
 
+  create_table "habtm_products", :force => true  do |t|
+    t.string  "name", :null => false
+    t.boolean  "visible", default: false
+  end
+
+  create_table "habtm_categories", :force => true  do |t|
+    t.string  "name", :null => false
+    t.integer "products_count", default: 0, null: false
+  end
+
+  create_table "habtm_categories_products", :force => true  do |t|
+    t.integer  "habtm_category_id", :null => false
+    t.integer  "habtm_product_id", :null => false
+  end
+
   create_table "conversations", :force => true do |t|
     t.integer "candidate_id"
   end
