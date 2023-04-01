@@ -34,6 +34,11 @@ require 'models/city'
 require 'models/group'
 require 'models/sub_group'
 require 'models/group_item'
+require 'models/many_to_many/article'
+require 'models/many_to_many/author'
+require 'models/many_to_many/reader'
+require 'models/many_to_many/authors_article'
+require 'models/many_to_many/readers_article'
 
 if ENV['DB'] == 'postgresql'
   require 'models/purchase_order'
@@ -2765,5 +2770,43 @@ RSpec.describe "CounterCulture" do
     po.purchase_order_items.destroy_all
     po.reload
     expect(po.total_amount).to eq(0.0)
+  end
+
+  describe "many to many association counter caches" do
+    let!(:reader) { Reader.create! }
+    let!(:author) { Author.create! }
+    let(:article) { Article.new(readers: [reader], authors: [author]) }
+
+    context "when the relation is a single-level one" do
+      context "when creating a new record" do
+        it "updates the counter cache" do
+          expect { article.save }.to change { author.reload.articles_count }.by(1)
+        end
+      end
+
+      context "when deleting an existing record" do
+        before { article.save }
+
+        it "updates the counter cache" do
+          expect { article.destroy }.to change { author.reload.articles_count }.by(-1)
+        end
+      end
+    end
+
+    context "when the relation is a multi-level one" do
+      context "when creating a new record" do
+        it "updates the counter cache" do
+          expect { article.save }.to change { author.reload.readers_count }.by(1)
+        end
+      end
+
+      context "when deleting an existing record" do
+        before { article.save }
+
+        it "updates the counter cache" do
+          expect { article.destroy }.to change { author.reload.readers_count }.by(-1)
+        end
+      end
+    end
   end
 end

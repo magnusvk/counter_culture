@@ -281,6 +281,31 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string  "sub_group_uuid", :null => false
   end
 
+  create_table "readers", :force => true do |t|
+    t.string "name"
+  end
+
+  create_table "articles", :force => true do |t|
+    t.string "title"
+  end
+
+  create_table "authors", :force => true do |t|
+    t.string "name"
+
+    t.integer "articles_count", default: 0, null: false
+    t.integer "readers_count", default: 0, null: false
+  end
+
+  create_table "readers_articles", :force => true do |t|
+    t.integer "reader_id", null: false
+    t.integer "article_id", null: false
+  end
+
+  create_table "authors_articles", :force => true do |t|
+    t.integer "author_id", null: false
+    t.integer "article_id", null: false
+  end
+
   if ENV['DB'] == 'postgresql' && Gem::Version.new(Rails.version) >= Gem::Version.new('5.0')
     create_table :purchase_orders, :force => true do |t|
       t.money "total_amount", scale: 2, default: "0.0", null: false
