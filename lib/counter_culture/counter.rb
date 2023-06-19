@@ -284,6 +284,8 @@ module CounterCulture
       if reflect.options.key?(:polymorphic)
         raise "can't handle multiple keys with polymorphic associations" unless (relation.is_a?(Symbol) || relation.length == 1)
         raise "must specify source for polymorphic associations..." unless source
+
+        return reflect.options[:primary_key] if reflect.options.key?(:primary_key)
         return relation_klass(relation, source: source, was: was).try(:primary_key)
       end
       reflect.association_primary_key(klass)
