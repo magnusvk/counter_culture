@@ -1,3 +1,8 @@
+## 3.3.1 (June 26, 2023)
+
+Bugfixes:
+  - Read primary key on polymorphic associations if it's explicitly set (#370)
+
 ## 3.3.0 (October 11, 2022)
 
 Improvements:
