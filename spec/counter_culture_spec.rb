@@ -2326,6 +2326,30 @@ RSpec.describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(1)
       end
     end
+
+    describe 'using custom indexes as primary keys' do
+      it "increments / decrements counter caches correctly" do
+        expect(employee.poly_images_from_uids_count).to eq(0)
+        expect(product1.poly_images_from_uids_count).to eq(0)
+        img1 = PolyImage.create(imageable_from_uid: employee)
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(0)
+        img2 = PolyImage.create(imageable_from_uid: product1)
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(1)
+        img3 = PolyImage.create(imageable_from_uid: product1)
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(2)
+        img3.destroy
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(1)
+        img2.imageable_from_uid = employee
+        img2.save!
+        expect(employee.reload.poly_images_from_uids_count).to eq(2)
+        expect(product1.reload.poly_images_from_uids_count).to eq(0)
+      end
+    end
+
     describe "custom column name" do
       it "increments counter cache on create" do
         expect(employee.poly_images_count_dup).to eq(0)
