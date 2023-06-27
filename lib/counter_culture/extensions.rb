@@ -2,10 +2,6 @@ module CounterCulture
   module Extensions
     extend ActiveSupport::Concern
 
-    included do
-      attr_accessor :skip_counts_after_create
-    end
-
     module ClassMethods
       # this holds all configuration data
       def after_commit_counter_cache
@@ -20,7 +16,7 @@ module CounterCulture
       def counter_culture(relation, options = {})
         unless @after_commit_counter_cache
           # initialize callbacks only once
-          after_create :_update_counts_after_create, unless: :skip_counts_after_create
+          after_create :_update_counts_after_create
 
           before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
 
@@ -94,6 +90,14 @@ module CounterCulture
           reconciler.reconcile!
           reconciler.changes
         end.compact
+      end
+
+      def skip_counter_culture_updates
+        counter_culture_updates_was = Thread.current[:skip_counter_culture_updates]
+        Thread.current[:skip_counter_culture_updates] = Array(counter_culture_updates_was) + [self]
+        yield
+      ensure
+        Thread.current[:skip_counter_culture_updates] = counter_culture_updates_was
       end
     end
 
