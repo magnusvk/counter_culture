@@ -106,14 +106,57 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(0)
     expect(user.review_approvals_count).to eq(0)
 
-    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13, :skip_counts_after_create => true
+    Review.skip_counter_culture_updates do
+      user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+    end
 
     user.reload
     product.reload
 
     expect(user.reviews_count).to eq(0)
-    expect(user.review_approvals_count).to eq(0)
     expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+  end
+
+  it "skips increments counter cache on update" do
+    user = User.create
+    user.reviews.create :user_id => user.id, :approvals => 13
+
+    user.reload
+
+    expect(user.review_approvals_count).to eq(13)
+
+    Review.skip_counter_culture_updates do
+      user.reviews.last.update :approvals => 26
+    end
+
+    user.reload
+
+    expect(user.review_approvals_count).to eq(13)
+  end
+
+  it "skips increments counter cache on destroy" do
+    user = User.create
+    product = Product.create
+    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+
+    Review.skip_counter_culture_updates do
+      user.reviews.last.destroy
+    end
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
   end
 
   it "decrements counter cache on destroy" do
