@@ -93,6 +93,8 @@ module CounterCulture
       end
 
       def skip_counter_culture_updates
+        return unless block_given?
+
         counter_culture_updates_was = Thread.current[:skip_counter_culture_updates]
         Thread.current[:skip_counter_culture_updates] = Array(counter_culture_updates_was) + [self]
         yield
