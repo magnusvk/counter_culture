@@ -127,6 +127,39 @@ RSpec.describe "CounterCulture" do
     expect(user.review_approvals_count).to eq(13)
   end
 
+  it "skips increments counter cache on create - nested" do
+    user = User.create
+    category = Category.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(category.products_count).to eq(0)
+
+    Product.skip_counter_culture_updates do
+      Review.skip_counter_culture_updates do
+        product = category.products.create
+        user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+      end
+    end
+
+    user.reload
+    category.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(category.products_count).to eq(0)
+
+    product = category.products.create
+    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+    user.reload
+    category.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+    expect(category.products_count).to eq(1)
+  end
+
   it "skips increments counter cache on update" do
     user = User.create
     review = user.reviews.create :approvals => 13
