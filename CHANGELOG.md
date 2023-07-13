@@ -1,3 +1,8 @@
+## 3.4.0 (July 12, 2023)
+
+Improvements:
+  - Ability to skip counter culture updates in a block (#371)
+
 ## 3.3.1 (June 26, 2023)
 
 Bugfixes:

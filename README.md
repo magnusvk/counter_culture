@@ -190,6 +190,18 @@ Now, the ```Category``` model will keep the counter cache in ```special_count```
 
 If you would like to use this with `counter_culture_fix_counts`, make sure to also provide [the `column_names` configuration](#handling-dynamic-column-names).
 
+### Temporarily skipping counter cache updates
+
+If you would like to temporarily pause counter_culture, for example in a backfill script, you can do so as follows:
+
+```ruby
+Review.skip_counter_culture_updates do
+  user.reviews.create!
+end
+
+user.reviews_count # => unchanged
+```
+
 ### Totaling instead of counting
 
 Instead of keeping a running count, you may want to automatically track a running total.
