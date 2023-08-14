@@ -267,7 +267,7 @@ With this option, any time the `category_counter_cache` changes both the `catego
 
 Some applications run into issues with deadlocks involving counter cache updates when using this gem. See [#263](https://github.com/magnusvk/counter_culture/issues/263#issuecomment-772284439) for information and helpful links on how to avoid this issue.
 
-Another option is to simply defer the update of counter caches to outside of the transaction. This gives up transacrtional guarantees for your counter cache updates but should resolve any deadlocks you experience. This behavior is disabled by default, enable it on each affected counter cache as follows:
+Another option is to simply defer the update of counter caches to outside of the transaction. This gives up transactional guarantees for your counter cache updates but should resolve any deadlocks you experience. This behavior is disabled by default, enable it on each affected counter cache as follows:
 
 ```ruby
   counter_culture :category, execute_after_commit: true
