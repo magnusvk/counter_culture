@@ -431,6 +431,23 @@ dynamic, you can pass `skip_unsupported`:
 Product.counter_culture_fix_counts skip_unsupported: true
 ```
 
+You can also use context within the block that was provided with the `column_names` method:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  scope :awesomes, -> (ids) { where(ids: ids, product_type: 'awesome') }
+
+  counter_culture :category,
+      column_name: 'awesome_count'
+      column_names: -> (context) {
+        { Product.awesomes(context[:ids]) => :awesome_count }
+      }
+end
+
+Product.counter_culture_fix_counts(context: { ids: [1, 2] })
+```
+
 #### Handling over-written, dynamic foreign keys
 
 Manually populating counter caches with dynamically over-written foreign keys (```:foreign_key_values``` option) is not supported. You will have to write code to handle this case yourself.

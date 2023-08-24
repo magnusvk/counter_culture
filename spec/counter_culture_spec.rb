@@ -2778,6 +2778,24 @@ RSpec.describe "CounterCulture" do
     end
 
     context "when column_names is a Proc" do
+      context "when column_names uses context" do
+        let(:column_names) do
+          proc { |context|
+            @called = context
+            { City.big => :big_cities_count }
+          }
+        end
+
+        it "injects options inside block" do
+          @called = false
+          City.counter_culture :prefecture, column_name: :big_cities_count, column_names: column_names
+
+          City.counter_culture_fix_counts(context: true)
+
+          expect(@called).to eq(true)
+        end
+      end
+
       context "when the return value is not a hash" do
         it "does not call the proc right away" do
           called = false

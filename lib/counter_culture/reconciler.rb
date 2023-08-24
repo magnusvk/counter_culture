@@ -77,7 +77,11 @@ module CounterCulture
         counter_column_names =
           case column_names
           when Proc
-            column_names.call
+            if column_names.lambda? && column_names.arity == 0
+              column_names.call
+            else
+              column_names.call(options.fetch(:context, {}))
+            end
           when Hash
             column_names
           else
