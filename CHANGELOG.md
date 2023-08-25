@@ -1,3 +1,8 @@
+## 3.5.0 (August 25, 2023)
+
+Improvements:
+  - Allow passing context to `counter_culture_fix_counts` (#375)
+
 ## 3.4.0 (July 12, 2023)
 
 Improvements:
