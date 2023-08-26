@@ -74,7 +74,7 @@ class Group < ActiveRecord::Base
   has_many :members, through: :group_memberships, class: "User"
 end
 
-class Membership < ActiveRecord::Base
+class GroupMembership < ActiveRecord::Base
   belongs_to :group
   belongs_to :member, class: "User"
   counter_culture :group, column_name: "members_count"
@@ -374,7 +374,7 @@ Product.counter_culture_fix_counts start: 2001, finish: 3000
 
 #### Fix counter cache using a replica database
 
-When fixing counter caches the number of reads usually vastly exceeds the number of writes. It can make sense to offload the road load to a replica database in this case. Rails 6 introduced [native handling of multiple database connections](https://guides.rubyonrails.org/v6.0/active_record_multiple_databases.html). You can use this to send read traffic to a read-only repliace using the option `db_connection_builder`:
+When fixing counter caches the number of reads usually vastly exceeds the number of writes. It can make sense to offload the read load to a replica database in this case. Rails 6 introduced [native handling of multiple database connections](https://guides.rubyonrails.org/v6.0/active_record_multiple_databases.html). You can use this to send read traffic to a read-only replica using the option `db_connection_builder`:
 
 ```ruby
 Product.counter_culture_fix_counts db_connection_builder: proc{|reading, block|
