@@ -358,7 +358,7 @@ Product.counter_culture_fix_counts touch: 'category_count_changed'
 
 The options start and finish are especially useful if you want multiple workers dealing with the same processing queue. You can make worker 1 handle all the records between id 1 and 9999 and worker 2 handle from 10000 and beyond by setting the :start and :finish option on each worker.
 
->  **! NOTE**: the IDs we're as `start` and `finish` here are in fact `Category` IDs, not `Product`!
+>  **! NOTE**: the IDs we pass as `start` and `finish` here are in fact `Category` IDs, not `Product`!
 
 ```ruby
 Product.counter_culture_fix_counts start: 10_000
