@@ -182,7 +182,11 @@ module CounterCulture
         value = value.send(relation.shift)
       end
 
-      return value.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym))
+      if value.is_a?(ActiveRecord::Associations::CollectionProxy)
+        value.map { |v| v.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym)) }
+      else
+        value.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym))
+      end
     end
 
     # gets the reflect object on the given relation
