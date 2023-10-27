@@ -1,4 +1,4 @@
-# counter_culture [![Build Status](https://travis-ci.com/magnusvk/counter_culture.svg)](https://travis-ci.com/magnusvk/counter_culture)
+# counter_culture [![Build Status](https://circleci.com/gh/magnusvk/counter_culture/tree/master.svg?style=svg)](https://circleci.com/gh/magnusvk/counter_culture/tree/master)
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
@@ -7,10 +7,11 @@ Turbo-charged counter caches for your Rails app. Huge improvements over the Rail
 * Supports dynamic column names, making it possible to split up the counter cache for different types of objects
 * Can keep a running count, or a running total
 
-Tested against Ruby 2.5.8, 2.6.6, 2.7.2 and 3.0.0, and against the latest patch releases of Rails 4.2, 5.0, 5.1, 5.2, 6.0 and 6.1.
+Tested against Ruby 2.6, 2.7, 3.0, 3.1 and 3.2, and against the latest patch releases of Rails 5.2, 6.0, 6.1 and 7.0.
 
 Please note that -- unlike Rails' built-in counter-caches -- counter_culture does not currently change the behavior of the `.size` method on ActiveRecord associations. If you want to avoid a database query and read the cached value, please use the attribute name containing the counter cache directly.
-```
+
+```ruby
 product.categories.size  # => will lead to a SELECT COUNT(*) query
 product.categories_count # => will use counter cache without query
 ```
@@ -20,7 +21,7 @@ product.categories_count # => will use counter cache without query
 Add counter_culture to your Gemfile:
 
 ```ruby
-gem 'counter_culture', '~> 2.0'
+gem 'counter_culture', '~> 3.2'
 ```
 
 Then run `bundle install`
@@ -73,7 +74,7 @@ class Group < ActiveRecord::Base
   has_many :members, through: :group_memberships, class: "User"
 end
 
-class Membership < ActiveRecord::Base
+class GroupMembership < ActiveRecord::Base
   belongs_to :group
   belongs_to :member, class: "User"
   counter_culture :group, column_name: "members_count"
@@ -189,6 +190,18 @@ Now, the ```Category``` model will keep the counter cache in ```special_count```
 
 If you would like to use this with `counter_culture_fix_counts`, make sure to also provide [the `column_names` configuration](#handling-dynamic-column-names).
 
+### Temporarily skipping counter cache updates
+
+If you would like to temporarily pause counter_culture, for example in a backfill script, you can do so as follows:
+
+```ruby
+Review.skip_counter_culture_updates do
+  user.reviews.create!
+end
+
+user.reviews_count # => unchanged
+```
+
 ### Totaling instead of counting
 
 Instead of keeping a running count, you may want to automatically track a running total.
@@ -254,7 +267,7 @@ With this option, any time the `category_counter_cache` changes both the `catego
 
 Some applications run into issues with deadlocks involving counter cache updates when using this gem. See [#263](https://github.com/magnusvk/counter_culture/issues/263#issuecomment-772284439) for information and helpful links on how to avoid this issue.
 
-Another option is to simply defer the update of counter caches to outside of the transaction. This gives up transacrtional guarantees for your counter cache updates but should resolve any deadlocks you experience. This behavior is disabled by default, enable it on each affected counter cache as follows:
+Another option is to simply defer the update of counter caches to outside of the transaction. This gives up transactional guarantees for your counter cache updates but should resolve any deadlocks you experience. This behavior is disabled by default, enable it on each affected counter cache as follows:
 
 ```ruby
   counter_culture :category, execute_after_commit: true
@@ -264,6 +277,12 @@ Another option is to simply defer the update of counter caches to outside of the
 ...
 gem "after_commit_action"
 ...
+```
+
+You can also pass a `Proc` for dynamic control. This is useful for temporarily moving the counter cache update inside of the transaction:
+
+```ruby
+  counter_culture :category, execute_after_commit: proc { !Thread.current[:update_counter_cache_in_transaction] }
 ```
 
 ### Manually populating counter cache values
@@ -339,6 +358,8 @@ Product.counter_culture_fix_counts touch: 'category_count_changed'
 
 The options start and finish are especially useful if you want multiple workers dealing with the same processing queue. You can make worker 1 handle all the records between id 1 and 9999 and worker 2 handle from 10000 and beyond by setting the :start and :finish option on each worker.
 
+>  **! NOTE**: the IDs we pass as `start` and `finish` here are in fact `Category` IDs, not `Product`!
+
 ```ruby
 Product.counter_culture_fix_counts start: 10_000
 # will fix counts for all counter caches defined on Product from record 10000 and onwards.
@@ -351,6 +372,20 @@ Product.counter_culture_fix_counts start: 1000, finish: 2000
 
 Product.counter_culture_fix_counts start: 2001, finish: 3000
 # In worker 2, lets process from 2001 to 3000
+```
+
+#### Fix counter cache using a replica database
+
+When fixing counter caches the number of reads usually vastly exceeds the number of writes. It can make sense to offload the read load to a replica database in this case. Rails 6 introduced [native handling of multiple database connections](https://guides.rubyonrails.org/v6.0/active_record_multiple_databases.html). You can use this to send read traffic to a read-only replica using the option `db_connection_builder`:
+
+```ruby
+Product.counter_culture_fix_counts db_connection_builder: proc{|reading, block|
+  if reading # Count calls will request a reading connection
+    Product.connected_to(role: :reading, &block)
+  else # Update all calls will request a non-reading connection
+    Product.connected_to(role: :writing, &block)
+  end
+}
 ```
 
 #### Handling dynamic column names
@@ -370,7 +405,10 @@ class Product < ActiveRecord::Base
 end
 ```
 
-You can specify a scope instead of a where condition string for `column_names`:
+You can specify a scope instead of a where condition string for `column_names`. We recommend
+providing a Proc that returns a hash instead of directly providing a hash: If you were to directly
+provide a scope this would load your schema cache on startup which will break things like
+`rake db:migrate`.
 
 ```ruby
 class Product < ActiveRecord::Base
@@ -380,10 +418,10 @@ class Product < ActiveRecord::Base
 
   counter_culture :category,
       column_name: proc {|model| "#{model.product_type}_count" },
-      column_names: {
+      column_names: -> { {
           Product.awesomes => :awesome_count,
           Product.suckys => :sucky_count
-      }
+      } }
 end
 ```
 
@@ -393,6 +431,23 @@ dynamic, you can pass `skip_unsupported`:
 
 ```ruby
 Product.counter_culture_fix_counts skip_unsupported: true
+```
+
+You can also use context within the block that was provided with the `column_names` method:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  scope :awesomes, -> (ids) { where(ids: ids, product_type: 'awesome') }
+
+  counter_culture :category,
+      column_name: 'awesome_count'
+      column_names: -> (context) {
+        { Product.awesomes(context[:ids]) => :awesome_count }
+      }
+end
+
+Product.counter_culture_fix_counts(context: { ids: [1, 2] })
 ```
 
 #### Handling over-written, dynamic foreign keys
@@ -449,6 +504,17 @@ end
 #### Polymorphic associations
 
 counter_culture now supports polymorphic associations of one level only.
+
+To discover which models need to be updated via `counter_culture_fix_counts`,
+counter_culture performs a `DISTINCT` query on the polymorphic relationship.
+This query can be expensive so we therefore offer the option
+(`polymorphic_classes`) to specify the models' counts that should be corrected:
+
+```ruby
+Image.counter_culture_fix_counts(polymorphic_classes: Product)
+# or
+Image.counter_culture_fix_counts(polymorphic_classes: [Product, Employee])
+```
 
 ## Contributing to counter_culture
 

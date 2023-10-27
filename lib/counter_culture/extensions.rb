@@ -45,8 +45,11 @@ module CounterCulture
           @after_commit_counter_cache = []
         end
 
-        if options[:column_names] && !options[:column_names].is_a?(Hash)
-          raise ":column_names must be a Hash of conditions and column names"
+        if options[:column_names] && !(options[:column_names].is_a?(Hash) || options[:column_names].is_a?(Proc))
+          raise ArgumentError.new(
+            ":column_names must be a Hash of conditions and column names, " \
+            "or a Proc that when called returns such a Hash"
+          )
         end
 
         # add the counter to our collection
@@ -60,7 +63,8 @@ module CounterCulture
       # options:
       #   { :exclude => list of relations to skip when fixing counts,
       #     :only => only these relations will have their counts fixed,
-      #     :column_name => only this column will have its count fixed }
+      #     :column_name => only this column will have its count fixed
+      #     :polymorphic_classes => specify the class(es) to update in polymorphic associations }
       # returns: a list of fixed record as an array of hashes of the form:
       #   { :entity => which model the count was fixed on,
       #     :id => the id of the model that had the incorrect count,
@@ -80,12 +84,22 @@ module CounterCulture
           next if options[:exclude] && options[:exclude].include?(counter.relation)
           next if options[:only] && !options[:only].include?(counter.relation)
 
-          reconciler_options = %i(batch_size column_name finish skip_unsupported start touch verbose where)
+          reconciler_options = %i(context batch_size column_name db_connection_builder finish skip_unsupported start touch verbose where polymorphic_classes)
 
           reconciler = CounterCulture::Reconciler.new(counter, options.slice(*reconciler_options))
           reconciler.reconcile!
           reconciler.changes
         end.compact
+      end
+
+      def skip_counter_culture_updates
+        return unless block_given?
+
+        counter_culture_updates_was = Thread.current[:skip_counter_culture_updates]
+        Thread.current[:skip_counter_culture_updates] = Array(counter_culture_updates_was) + [self]
+        yield
+      ensure
+        Thread.current[:skip_counter_culture_updates] = counter_culture_updates_was
       end
     end
 
@@ -101,8 +115,10 @@ module CounterCulture
     # called by after_destroy callback
     def _update_counts_after_destroy
       self.class.after_commit_counter_cache.each do |counter|
-        # decrement counter cache
-        counter.change_counter_cache(self, :increment => false)
+        unless destroyed?
+          # decrement counter cache
+          counter.change_counter_cache(self, :increment => false)
+        end
       end
     end
 

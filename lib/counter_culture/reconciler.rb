@@ -28,7 +28,7 @@ module CounterCulture
         raise "Fixing counter caches is not supported when :delta_magnitude is a Proc; you may skip this relation with :skip_unsupported => true" if delta_magnitude.is_a?(Proc)
       end
 
-      associated_model_classes.each do |associated_model_class|
+      Array(associated_model_classes).each do |associated_model_class|
         Reconciliation.new(counter, changes, options, associated_model_class).perform
       end
 
@@ -39,7 +39,7 @@ module CounterCulture
 
     def associated_model_classes
       if polymorphic?
-        polymorphic_associated_model_classes
+        options[:polymorphic_classes].presence || polymorphic_associated_model_classes
       else
         [associated_model_class]
       end
@@ -74,10 +74,26 @@ module CounterCulture
 
         scope = relation_class
 
-        counter_column_names = column_names || {nil => counter_cache_name}
+        counter_column_names =
+          case column_names
+          when Proc
+            if column_names.lambda? && column_names.arity == 0
+              column_names.call
+            else
+              column_names.call(options.fetch(:context, {}))
+            end
+          when Hash
+            column_names
+          else
+            { nil => counter_cache_name }
+          end
+
+        raise ArgumentError, ":column_names must be a Hash of conditions and column names" unless counter_column_names.is_a?(Hash)
 
         if options[:column_name]
-          counter_column_names = counter_column_names.select{ |_, v| options[:column_name].to_s == v }
+          counter_column_names = counter_column_names.select do |_, v|
+            options[:column_name].to_s == v.to_s
+          end
         end
 
         # iterate over all the possible counter cache column names
@@ -113,11 +129,13 @@ module CounterCulture
           find_in_batches_args[:start] = options[:start] if options[:start].present?
           find_in_batches_args[:finish] = options[:finish] if options[:finish].present?
 
-          counts_query.find_in_batches(**find_in_batches_args).with_index(1) do |records, index|
-            log "Processing batch ##{index}."
-            # now iterate over all the models and see whether their counts are right
-            update_count_for_batch(column_name, records)
-            log "Finished batch ##{index}."
+          with_reading_db_connection do
+            counts_query.find_in_batches(**find_in_batches_args).with_index(1) do |records, index|
+              log "Processing batch ##{index}."
+              # now iterate over all the models and see whether their counts are right
+              update_count_for_batch(column_name, records)
+              log "Finished batch ##{index}."
+            end
           end
         end
         log_without_newline "\n"
@@ -151,7 +169,9 @@ module CounterCulture
               end
             end
 
-            relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+            with_writing_db_connection do
+              relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+            end
           end
         end
       end
@@ -187,7 +207,12 @@ module CounterCulture
         # if a delta column is provided use SUM, otherwise use COUNT
         return @count_select if @count_select
         if delta_column
-          @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column},0))"
+          # cast the column as NUMERIC if it is a PG money type
+          if model.type_for_attribute(delta_column).type == :money
+            @count_select = "SUM(COALESCE(CAST(#{self_table_name}.#{delta_column} as NUMERIC),0))"
+          else
+            @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column}, 0))"
+          end
         else
           @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
         end
@@ -299,6 +324,22 @@ module CounterCulture
           string.parameterize('_')
         else
           string.parameterize(separator: '_')
+        end
+      end
+
+      def with_reading_db_connection(&block)
+        if builder = options[:db_connection_builder]
+          builder.call(true, block)
+        else
+          yield
+        end
+      end
+
+      def with_writing_db_connection(&block)
+        if builder = options[:db_connection_builder]
+          builder.call(false, block)
+        else
+          yield
         end
       end
     end

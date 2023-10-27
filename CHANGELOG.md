@@ -1,3 +1,66 @@
+## 3.5.0 (August 25, 2023)
+
+Improvements:
+  - Allow passing context to `counter_culture_fix_counts` (#375)
+
+## 3.4.0 (July 12, 2023)
+
+Improvements:
+  - Ability to skip counter culture updates in a block (#371)
+
+## 3.3.1 (June 26, 2023)
+
+Bugfixes:
+  - Read primary key on polymorphic associations if it's explicitly set (#370)
+
+## 3.3.0 (October 11, 2022)
+
+Improvements:
+  - Allow reading from replica in `counter_culture_fix_counts` (#330)
+  - Test against Ruby 3.1 (#357)
+
+Bugfixes:
+  - Don't decrement counter cache when calling `.destroy` on an already-destroyed model (#351)
+  - Don't immediately call `Proc` passed to `column_names` to avoid startup issue (#352)
+
+## 3.2.1 (February 24, 2022)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` when passing it symbols for column names (#341)
+
+## 3.2.0 (January 24, 2022)
+
+Improvements:
+  - Allow specifiying `polymorphic_classes` to avoid a potentially expensive
+    `DISTINCT` query when calling `counter_culture_fix_counts` (#336)
+
+Bugfixes:
+  - Fix primary key name for enumerable relations (#337)
+
+## 3.1.0 (November 29, 2021)
+
+Improvements:
+  - Allow specifiying a `Proc` to `column_names` to avoid loading a scope on
+    startup (#335)
+
+## 3.0.0 (October 26, 2021)
+
+Breaking changes:
+  - Dropped support for Ruby < 2.6
+  - Dropped support for Rails < 5.2
+
+Note that there are no specific breaking changes that would cause older
+versions of Ruby or Rails to stop working, we have simply stopped testing
+against them.
+
+Improvements:
+  - Support PostgreSql's `money` type for use with a delta column (#333)
+
+## 2.9.0 (August 27, 2021)
+
+Improvements:
+  - Allow `execute_after_commit` to be a `Proc` for dynamic control (#326)
+
 ## 2.8.0 (March 16, 2021)
 
 Improvements:

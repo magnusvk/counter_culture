@@ -32,11 +32,23 @@ require 'models/with_module/model1'
 require 'models/with_module/model2'
 require 'models/prefecture'
 require 'models/city'
+require 'models/group'
+require 'models/sub_group'
+require 'models/group_item'
+
+if ENV['DB'] == 'postgresql'
+  require 'models/purchase_order'
+  require 'models/purchase_order_item'
+end
 
 require 'database_cleaner'
 DatabaseCleaner.strategy = :deletion
 
 RSpec.describe "CounterCulture" do
+  def yaml_load(yaml)
+    YAML.safe_load(yaml, permitted_classes: [Time])
+  end
+
   before(:each) do
     DatabaseCleaner.clean
   end
@@ -87,6 +99,124 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "skips increments counter cache on create" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    Review.skip_counter_culture_updates do
+      user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+    end
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+  end
+
+  it "skips increments counter cache on create - nested" do
+    user = User.create
+    category = Category.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(category.products_count).to eq(0)
+
+    Product.skip_counter_culture_updates do
+      Review.skip_counter_culture_updates do
+        product = category.products.create
+        user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+      end
+    end
+
+    user.reload
+    category.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(category.products_count).to eq(0)
+
+    product = category.products.create
+    user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13
+
+    user.reload
+    category.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+    expect(category.products_count).to eq(1)
+  end
+
+  it "skips increments counter cache on update" do
+    user = User.create
+    review = user.reviews.create :approvals => 13
+
+    user.reload
+
+    expect(user.review_approvals_count).to eq(13)
+
+    Review.skip_counter_culture_updates do
+      review.update :approvals => 26
+    end
+
+    user.reload
+
+    expect(user.review_approvals_count).to eq(13)
+
+    review.update :approvals => 39
+
+    user.reload
+
+    expect(user.review_approvals_count).to eq(26)
+  end
+
+  it "skips increments counter cache on destroy" do
+    user = User.create
+    product = Product.create
+    2.times { user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 13 }
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(2)
+    expect(product.reviews_count).to eq(2)
+    expect(user.review_approvals_count).to eq(26)
+
+    Review.skip_counter_culture_updates do
+      user.reviews.last.destroy
+    end
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(2)
+    expect(product.reviews_count).to eq(2)
+    expect(user.review_approvals_count).to eq(26)
+
+    user.reviews.last.destroy
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+  end
+
   it "decrements counter cache on destroy" do
     user = User.create
     product = Product.create
@@ -104,6 +234,16 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
     expect(user.review_approvals_count).to eq(69)
 
+    review.destroy
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+
+    # this does not decrement counter cache
     review.destroy
 
     user.reload
@@ -1387,6 +1527,32 @@ RSpec.describe "CounterCulture" do
     expect(string_id2.users_count).to eq(0)
   end
 
+  context "when relation is an array but has different primary keys along the chain" do
+    it "should update correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+
+      expect(group.group_items_count).to eq(0)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
+
+    it "should fix counts correctly" do
+      group = Group.create
+      sub_group = SubGroup.create(group: group)
+      group_item = GroupItem.create(sub_group: sub_group)
+
+      expect(group.reload.group_items_count).to eq(1)
+
+      group.update!(group_items_count: -1)
+
+      GroupItem.counter_culture_fix_counts
+
+      expect(group.reload.group_items_count).to eq(1)
+    end
+  end
+
   it "should raise a good error message when calling fix_counts with no caches defined" do
     expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
   end
@@ -1440,6 +1606,59 @@ RSpec.describe "CounterCulture" do
     end
 
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
+  end
+
+  it "should request a reading and not a writing database connection" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    A_FEW.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    # Counts are correct at this point so no update should happen
+
+    requested_reading_connection = false
+    requested_writing_connection = false
+    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+      if reading
+        requested_reading_connection = true
+      else
+        requested_writing_connection = true
+      end
+      block.call
+    }
+    expect(requested_reading_connection).to be(true)
+    expect(requested_writing_connection).to be(false)
+  end
+
+  it "should request a reading and a writing database connection" do
+    # first, clean up
+    SimpleDependent.delete_all
+    SimpleMain.delete_all
+
+    A_FEW.times do |i|
+      main = SimpleMain.create
+      3.times { main.simple_dependents.create }
+    end
+
+    # Damage the counts so an update happens
+    SimpleMain.update_all(simple_dependents_count: -1)
+
+    requested_reading_connection = false
+    requested_writing_connection = false
+    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+      if reading
+        requested_reading_connection = true
+      else
+        requested_writing_connection = true
+      end
+      block.call
+    }
+    expect(requested_reading_connection).to be(true)
+    expect(requested_writing_connection).to be(true)
   end
 
   it "should correctly fix the counter caches with conditionals" do
@@ -1683,28 +1902,94 @@ RSpec.describe "CounterCulture" do
     subcateg1 = Subcateg.create!
     subcateg2 = Subcateg.create!
     expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
     expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
 
     post = Post.create!(subcateg: subcateg1)
 
-    expect(subcateg1.reload.posts_after_commit_count).to eq(1)
-    expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(1)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(1)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
 
     Post.transaction do
       post.update(subcateg: subcateg2)
-      expect(subcateg1.reload.posts_after_commit_count).to eq(1)
-      expect(subcateg1.reload.posts_count).to eq(0)
-      expect(subcateg2.reload.posts_after_commit_count).to eq(0)
-      expect(subcateg2.reload.posts_count).to eq(1)
+
+      subcateg1.reload
+      subcateg2.reload
+
+      expect(subcateg1.posts_after_commit_count).to eq(1)
+      expect(subcateg1.posts_dynamic_commit_count).to eq(1)
+      expect(subcateg1.posts_count).to eq(0)
+      expect(subcateg2.posts_after_commit_count).to eq(0)
+      expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+      expect(subcateg2.posts_count).to eq(1)
     end
 
-    expect(subcateg1.reload.posts_after_commit_count).to eq(0)
-    expect(subcateg2.reload.posts_after_commit_count).to eq(1)
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(1)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(1)
 
     post.destroy!
 
-    expect(subcateg1.reload.posts_after_commit_count).to eq(0)
-    expect(subcateg2.reload.posts_after_commit_count).to eq(0)
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+  end
+
+  it "works with dynamic after_commit" do
+    subcateg1 = Subcateg.create!
+    subcateg2 = Subcateg.create!
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+
+    post = Post.create!(subcateg: subcateg1)
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(1)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(1)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+
+    Post.transaction do
+      DynamicAfterCommit.update_counter_cache_in_transaction do
+        post.update(subcateg: subcateg2)
+      end
+
+      subcateg1.reload
+      subcateg2.reload
+
+      expect(subcateg1.posts_after_commit_count).to eq(1)
+      expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+      expect(subcateg1.posts_count).to eq(0)
+      expect(subcateg2.posts_after_commit_count).to eq(0)
+      expect(subcateg2.posts_dynamic_commit_count).to eq(1)
+      expect(subcateg2.posts_count).to eq(1)
+    end
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(1)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(1)
   end
 
   it "works correctly with a has_one association in the middle" do
@@ -1751,12 +2036,8 @@ RSpec.describe "CounterCulture" do
     it "should return a copy of the original model" do
       user.name = "Joe Smith"
       user.manages_company_id = 2
+      user.save!
 
-      if Gem::Version.new(Rails.version) >= Gem::Version.new("5.1.0")
-        # must save to make the actual "saved_changes" available in Rails 5.1
-        # whereas we simply use the "changed_attributes" before that
-        user.save!
-      end
       prev = CounterCulture::Counter.new(user, :foobar, {}).previous_model(user)
 
       expect(prev.name).to eq("John Smith")
@@ -2120,6 +2401,30 @@ RSpec.describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(2)
       end
 
+      it "can fix counts for a specified polymorphic correctly" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts(polymorphic_classes: PolyEmployee)
+
+        expect(product1.reload.poly_images_count_dup).to eq(100) # unchanged
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+      end
+
+      it "can fix counts for multiple specified polymorphics correctly" do
+        2.times { PolyImage.create(imageable: employee) }
+        1.times { PolyImage.create(imageable: product1) }
+        mess_up_counts
+
+        PolyImage.counter_culture_fix_counts(
+          polymorphic_classes: [PolyEmployee, PolyProduct]
+        )
+
+        expect(product1.reload.poly_images_count_dup).to eq(1)
+        expect(employee.reload.poly_images_count_dup).to eq(2)
+      end
+
       it "can handle nil values" do
         img = PolyImage.create(imageable: employee)
         PolyImage.create(imageable: nil)
@@ -2140,6 +2445,30 @@ RSpec.describe "CounterCulture" do
         expect(employee.reload.poly_images_count).to eq(1)
       end
     end
+
+    describe 'using custom indexes as primary keys' do
+      it "increments / decrements counter caches correctly" do
+        expect(employee.poly_images_from_uids_count).to eq(0)
+        expect(product1.poly_images_from_uids_count).to eq(0)
+        img1 = PolyImage.create(imageable_from_uid: employee)
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(0)
+        img2 = PolyImage.create(imageable_from_uid: product1)
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(1)
+        img3 = PolyImage.create(imageable_from_uid: product1)
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(2)
+        img3.destroy
+        expect(employee.reload.poly_images_from_uids_count).to eq(1)
+        expect(product1.reload.poly_images_from_uids_count).to eq(1)
+        img2.imageable_from_uid = employee
+        img2.save!
+        expect(employee.reload.poly_images_from_uids_count).to eq(2)
+        expect(product1.reload.poly_images_from_uids_count).to eq(0)
+      end
+    end
+
     describe "custom column name" do
       it "increments counter cache on create" do
         expect(employee.poly_images_count_dup).to eq(0)
@@ -2254,7 +2583,7 @@ RSpec.describe "CounterCulture" do
       expect(product.reviews_count).to eq(1)
       expect(product.versions.count).to eq(2)
 
-      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(0)
 
@@ -2265,7 +2594,7 @@ RSpec.describe "CounterCulture" do
       expect(product.reviews_count).to eq(2)
       expect(product.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(product.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(product.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['reviews_count']).to eq(1)
     end
@@ -2278,6 +2607,7 @@ RSpec.describe "CounterCulture" do
       subcateg = Subcateg.create!
 
       expect(subcateg.posts_after_commit_count).to eq(0)
+      expect(subcateg.posts_dynamic_commit_count).to eq(0)
       expect(subcateg.versions.count).to eq(1)
 
       User.transaction do
@@ -2286,17 +2616,55 @@ RSpec.describe "CounterCulture" do
         subcateg.reload
 
         expect(subcateg.posts_after_commit_count).to eq(0)
+        expect(subcateg.posts_dynamic_commit_count).to eq(0)
         expect(subcateg.versions.count).to eq(1)
       end
 
       subcateg.reload
 
       expect(subcateg.posts_after_commit_count).to eq(1)
-      expect(subcateg.versions.count).to eq(2)
+      expect(subcateg.posts_dynamic_commit_count).to eq(1)
+      expect(subcateg.versions.count).to eq(3)
 
-      attrs_from_versions = YAML.load(subcateg.versions.reorder(:id).last.object)
+      attrs_from_versions = yaml_load(subcateg.versions.reorder(:id).last.object)
       # should be the value before the counter change
       expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
+      expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
+    end
+
+    it "works with dynamic after_commit" do
+      unless PapertrailSupport.supported_here?
+        skip("Unsupported in this combination of Ruby and Rails")
+      end
+
+      subcateg = Subcateg.create!
+
+      expect(subcateg.posts_after_commit_count).to eq(0)
+      expect(subcateg.posts_dynamic_commit_count).to eq(0)
+      expect(subcateg.versions.count).to eq(1)
+
+      User.transaction do
+        DynamicAfterCommit.update_counter_cache_in_transaction do
+          Post.create!(subcateg: subcateg)
+        end
+
+        subcateg.reload
+
+        expect(subcateg.posts_after_commit_count).to eq(0)
+        expect(subcateg.posts_dynamic_commit_count).to eq(1)
+        expect(subcateg.versions.count).to eq(2)
+      end
+
+      subcateg.reload
+
+      expect(subcateg.posts_after_commit_count).to eq(1)
+      expect(subcateg.posts_dynamic_commit_count).to eq(1)
+      expect(subcateg.versions.count).to eq(3)
+
+      attrs_from_versions = yaml_load(subcateg.versions.reorder(:id).last.object)
+      # should be the value before the counter change
+      expect(attrs_from_versions['posts_after_commit_count']).to eq(0)
+      expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
     end
 
     context "counter-cache model versioning" do
@@ -2364,29 +2732,102 @@ RSpec.describe "CounterCulture" do
     end
   end
 
-  it "can fix counts by scope" do
-    prefecture = Prefecture.new name: 'Tokyo'
-    prefecture.save!
-    City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
-    City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
+  describe "fix counts by scope" do
+    let(:prefecture) { Prefecture.new name: 'Tokyo' }
 
-    prefecture.reload
-    expect(prefecture.big_cities_count).to eq(1)
+    before do
+      prefecture.save!
+      City.create!(name: 'Sibuya', prefecture: prefecture, population: 221800)
+      City.create!(name: 'Oku Tama', prefecture: prefecture, population: 6045)
 
-    prefecture.big_cities_count = 999
-    prefecture.save!
+      prefecture.reload
+    end
 
-    City.counter_culture_fix_counts
+    it "raises an error when column_names is invalid" do
+      expect {
+        City.counter_culture :prefecture, column_name: :foo,
+          column_names: :foo
+      }.to raise_error(
+        ArgumentError,
+        ":column_names must be a Hash of conditions and column names, or a Proc that when called returns such a Hash",
+      )
+    end
 
-    expect(prefecture.reload.big_cities_count).to eq(1)
+    context "when column_names value is a Symbol" do
+      before do
+        prefecture.update_columns(big_cities_count: 0, small_cities_count: 0)
+      end
+
+      it "updates the column" do
+        expect(prefecture.reload.big_cities_count).to be(0)
+        City.counter_culture_fix_counts(only: :prefecture,
+                                        column_name: :big_cities_count)
+        expect(prefecture.reload.big_cities_count).to be(1)
+      end
+    end
+
+    context "when column_names is a Hash" do
+      it "can fix counts by scope" do
+        expect(prefecture.big_cities_count).to eq(1)
+
+        prefecture.big_cities_count = 999
+        prefecture.save!
+
+        City.counter_culture_fix_counts
+        expect(prefecture.reload.big_cities_count).to eq(1)
+      end
+    end
+
+    context "when column_names is a Proc" do
+      context "when column_names uses context" do
+        let(:column_names) do
+          proc { |context|
+            @called = context
+            { City.big => :big_cities_count }
+          }
+        end
+
+        it "injects options inside block" do
+          @called = false
+          City.counter_culture :prefecture, column_name: :big_cities_count, column_names: column_names
+
+          City.counter_culture_fix_counts(context: true)
+
+          expect(@called).to eq(true)
+        end
+      end
+
+      context "when the return value is not a hash" do
+        it "does not call the proc right away" do
+          called = false
+          City.counter_culture :prefecture, column_name: :big_cities_count,
+               column_names: -> { called = true; :foo }
+          expect(called).to eq(false)
+        end
+
+        it "raises an error when called later" do
+          City.counter_culture :prefecture, column_name: :big_cities_count,
+               column_names: -> { :foo }
+          expect { City.counter_culture_fix_counts }.to raise_error(
+            ":column_names must be a Hash of conditions and column names"
+          )
+        end
+      end
+
+      it "can fix counts by scope" do
+        expect(prefecture.small_cities_count).to eq(1)
+
+        prefecture.small_cities_count = 999
+        prefecture.save!
+
+        City.counter_culture_fix_counts
+
+        expect(prefecture.reload.small_cities_count).to eq(1)
+      end
+    end
   end
 
   it "support fix counts using batch limits start and finish" do
-    # Rails 4.2 doesn't support `finish`
-     if Gem::Version.new(Rails.version) < Gem::Version.new('5.0')
-       skip("Unsupported in Rails < 5.0")
-     end
-
     companies_group = 3.times.map do
       company = Company.create!
       company.children << Company.create!
@@ -2474,5 +2915,36 @@ RSpec.describe "CounterCulture" do
     UserFollower.counter_culture_fix_counts
     followed.reload
     expect(followed.active_followers_count).to eq(1)
+  end
+  
+  it "should work with pg money type" do
+    if ENV['DB'] != 'postgresql'
+      skip("money type only supported in PostgreSQL")
+    end
+
+    po = PurchaseOrder.create
+
+    expect(po.total_amount).to eq(0.0)
+
+    item = po.purchase_order_items.build(amount: 100.00)
+    item.save
+
+    po.reload
+    expect(po.total_amount).to eq(100.0)
+
+    item = po.purchase_order_items.build(amount: 100.00)
+    item.save
+
+    po.reload
+    expect(po.total_amount).to eq(200.0)
+
+    item.destroy
+
+    po.reload
+    expect(po.total_amount).to eq(100.0)
+
+    po.purchase_order_items.destroy_all
+    po.reload
+    expect(po.total_amount).to eq(0.0)
   end
 end
