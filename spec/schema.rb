@@ -156,6 +156,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "title"
     t.integer  "fk_subcat_id", :default => nil
     t.integer  "comments_count", :null => false, :default => 0
+    t.integer  "likes_count", :null => false, :default => 0
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
@@ -164,6 +165,11 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "comment"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
+  end
+
+  create_table "post_likes", :force => true do |t|
+    t.integer  "post_id", :null => false
+    t.datetime "created_at", :null => false
   end
 
   create_table "another_posts", :force => true do |t|

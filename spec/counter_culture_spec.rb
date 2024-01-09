@@ -16,6 +16,7 @@ require 'models/conditional_main'
 require 'models/conditional_dependent'
 require 'models/post'
 require 'models/post_comment'
+require 'models/post_like'
 require 'models/categ'
 require 'models/subcateg'
 require 'models/another_post'
@@ -2925,5 +2926,12 @@ RSpec.describe "CounterCulture" do
     po.purchase_order_items.destroy_all
     po.reload
     expect(po.total_amount).to eq(0.0)
+  end
+
+  it "should touch the record when the counter cache is updated" do
+    post = Post.create!
+    Timecop.travel(2.second.from_now) do
+      expect { PostLike.create!(post: post) }.to change { post.reload.updated_at }
+    end
   end
 end

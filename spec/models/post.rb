@@ -4,6 +4,7 @@ class Post < ActiveRecord::Base
   belongs_to :subcateg, :foreign_key => :fk_subcat_id
 
   has_many :post_comments
+  has_many :post_likes
   counter_culture :subcateg, :column_name => :posts_count
   counter_culture :subcateg, :column_name => :posts_after_commit_count,
     :execute_after_commit => true,
