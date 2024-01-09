@@ -1,3 +1,8 @@
+## 3.5.1 (January 8, 2024)
+
+Bugfixes:
+  - Fix touching for counted models without `updated_at` (#383)
+
 ## 3.5.0 (August 25, 2023)
 
 Improvements:
