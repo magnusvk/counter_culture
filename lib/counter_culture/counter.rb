@@ -314,7 +314,9 @@ module CounterCulture
       changes_method = ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0") ? :saved_changes : :changed_attributes
       obj.public_send(changes_method).each do |key, value|
         old_value = ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0") ? value.first : value
-        prev[key] = old_value
+        # We set old values straight to AR @attributes variable to avoid
+        # write_attribute callbacks from other gems (e.g. ArTransactionChanges)
+        prev.instance_variable_get(:@attributes).write_from_user(key, old_value)
       end
 
       prev
