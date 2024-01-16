@@ -1,3 +1,8 @@
+## 3.5.2 (January 16, 2024)
+
+Bugfixes:
+  - Assign attributes to the duped model on a lower level when determining whether a model has changed to avoid invoking unrelated callbacks (#386)
+
 ## 3.5.1 (January 8, 2024)
 
 Bugfixes:
