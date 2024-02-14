@@ -1,6 +1,7 @@
 require_relative 'spec_helper'
 
 require 'models/company'
+require 'models/comment'
 require 'models/industry'
 require 'models/product'
 require 'models/review'
@@ -2093,6 +2094,18 @@ RSpec.describe "CounterCulture" do
       fixed = Company.counter_culture_fix_counts
       expect(fixed.length).to eq(1)
       expect(company.reload.children_count).to eq(1)
+    end
+
+    it "fixes counter cache for polymorphic self reference" do
+      comment = Comment.create!
+      comment.comments << Comment.create!
+
+      comment.comments_count = -1
+      comment.save!
+
+      fixed = Comment.counter_culture_fix_counts
+      expect(fixed.length).to eq(1)
+      expect(comment.reload.comments_count).to eq(1)
     end
   end
 
