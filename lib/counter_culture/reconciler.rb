@@ -274,13 +274,13 @@ module CounterCulture
           # child in a Single Table Inheritance
           if reflect.active_record.column_names.include?('type') &&
               !model.descends_from_active_record?
-            joins_sql += " AND #{target_table}.type IN ('#{model.name}')"
+            joins_sql += " AND #{target_table_alias}.type IN ('#{model.name}')"
           end
           if polymorphic?
             # adds 'type' condition to JOIN clause if the current model is a
             # polymorphic relation
             # NB only works for one-level relations
-            joins_sql += " AND #{target_table}.#{reflect.foreign_type} = '#{relation_class.name}'"
+            joins_sql += " AND #{target_table_alias}.#{reflect.foreign_type} = '#{relation_class.name}'"
           end
           if index == reverse_relation.size - 1
             # conditions must be applied to the join on which we are counting

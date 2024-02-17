@@ -32,6 +32,19 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "updated_at"
   end
 
+  create_table "comments", :force => true do |t|
+    t.string   "content"
+    t.string   "commentable_type"
+    t.integer  "commentable_id"
+    t.integer  "comments_count",      :default => 0, :null => false
+    t.integer  "soft_delete_paranoia_count",  :default => 0, :null => false
+    t.integer  "soft_delete_paranoia_values_sum", :default => 0, :null => false
+    t.integer  "soft_delete_discards_count",  :default => 0, :null => false
+    t.integer  "soft_delete_discard_values_sum", :default => 0, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "industries", :force => true do |t|
     t.string   "name"
     t.integer  "reviews_count",       :default => 0, :null => false
