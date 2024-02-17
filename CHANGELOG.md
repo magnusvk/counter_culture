@@ -1,3 +1,8 @@
+## 3.5.3 (February 16, 2024)
+
+Bugfixes:
+  - Correct polymorphic table name alias reference in join clauses (#388)
+
 ## 3.5.2 (January 16, 2024)
 
 Bugfixes:
