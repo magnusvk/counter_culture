@@ -17,6 +17,8 @@ module CounterCulture
       @delta_magnitude = options[:delta_magnitude] || 1
       @with_papertrail = options.fetch(:with_papertrail, false)
       @execute_after_commit = options.fetch(:execute_after_commit, false)
+      @if_conditions = Array.wrap(options[:if])
+      @unless_conditions = Array.wrap(options[:unless])
 
       if @execute_after_commit
         begin
@@ -49,78 +51,79 @@ module CounterCulture
       # allow overwriting of foreign key value by the caller
       id_to_change = foreign_key_values.call(id_to_change) if foreign_key_values
 
-      if id_to_change && change_counter_column
-        delta_magnitude = if delta_column
-                            (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
-                          else
-                            counter_delta_magnitude_for(obj)
-                          end
-        # increment or decrement?
-        operator = options[:increment] ? '+' : '-'
+      return unless conditions_allow_change?(obj)
+      return unless id_to_change && change_counter_column
 
-        klass = relation_klass(relation, source: obj, was: options[:was])
-
-        # MySQL throws an ambiguous column error if any joins are present and we don't include the
-        # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
-        # throws an exception if the table name is present after UPDATE.
-        quoted_column = if klass.connection.adapter_name == 'Mysql2'
-                          "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
+      delta_magnitude = if delta_column
+                          (options[:was] ? attribute_was(obj, delta_column) : obj.public_send(delta_column)) || 0
                         else
-                          "#{model.connection.quote_column_name(change_counter_column)}"
+                          counter_delta_magnitude_for(obj)
                         end
+      # increment or decrement?
+      operator = options[:increment] ? '+' : '-'
 
-        column_type = klass.type_for_attribute(change_counter_column).type
+      klass = relation_klass(relation, source: obj, was: options[:was])
 
-        # we don't use Rails' update_counters because we support changing the timestamp
-        updates = []
-        # this updates the actual counter
-        if column_type == :money
-          updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
-        else
-          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+      # MySQL throws an ambiguous column error if any joins are present and we don't include the
+      # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
+      # throws an exception if the table name is present after UPDATE.
+      quoted_column = if klass.connection.adapter_name == 'Mysql2'
+                        "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
+                      else
+                        "#{model.connection.quote_column_name(change_counter_column)}"
+                      end
+
+      column_type = klass.type_for_attribute(change_counter_column).type
+
+      # we don't use Rails' update_counters because we support changing the timestamp
+      updates = []
+      # this updates the actual counter
+      if column_type == :money
+        updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
+      else
+        updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+      end
+      # and here we update the timestamp, if so desired
+      if touch
+        current_time = klass.send(:current_time_from_proper_timezone)
+        timestamp_columns = klass.send(:timestamp_attributes_for_update_in_model)
+        if touch != true
+          # starting in Rails 6 this is frozen
+          timestamp_columns = timestamp_columns.dup
+          timestamp_columns << touch
         end
-        # and here we update the timestamp, if so desired
-        if touch
-          current_time = klass.send(:current_time_from_proper_timezone)
-          timestamp_columns = klass.send(:timestamp_attributes_for_update_in_model)
-          if touch != true
-            # starting in Rails 6 this is frozen
-            timestamp_columns = timestamp_columns.dup
-            timestamp_columns << touch
-          end
-          timestamp_columns.each do |timestamp_column|
-            updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
-          end
+        timestamp_columns.each do |timestamp_column|
+          updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
         end
+      end
 
-        primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+      primary_key = relation_primary_key(relation, source: obj, was: options[:was])
 
-        if @with_papertrail
-          instance = klass.where(primary_key => id_to_change).first
-          if instance
-            if instance.paper_trail.respond_to?(:save_with_version)
-              # touch_with_version is deprecated starting in PaperTrail 9.0.0
+      if @with_papertrail
+        instance = klass.where(primary_key => id_to_change).first
+        if instance
+          if instance.paper_trail.respond_to?(:save_with_version)
+            # touch_with_version is deprecated starting in PaperTrail 9.0.0
 
-              current_time = obj.send(:current_time_from_proper_timezone)
-              timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
-              timestamp_columns.each do |timestamp_column|
-                instance.send("#{timestamp_column}=", current_time)
-              end
+            current_time = obj.send(:current_time_from_proper_timezone)
+            timestamp_columns = obj.send(:timestamp_attributes_for_update_in_model)
+            timestamp_columns.each do |timestamp_column|
+              instance.send("#{timestamp_column}=", current_time)
+            end
 
-              execute_now_or_after_commit(obj) do
-                instance.paper_trail.save_with_version(validate: false)
-              end
-            else
-              execute_now_or_after_commit(obj) do
-                instance.paper_trail.touch_with_version
-              end
+            execute_now_or_after_commit(obj) do
+              instance.paper_trail.save_with_version(validate: false)
+            end
+          else
+            execute_now_or_after_commit(obj) do
+              instance.paper_trail.touch_with_version
             end
           end
         end
+      end
 
-        execute_now_or_after_commit(obj) do
-          klass.where(primary_key => id_to_change).update_all updates.join(', ')
-        end
+      execute_now_or_after_commit(obj) do
+        klass.where(primary_key => id_to_change).update_all updates.join(', ')
       end
     end
 
@@ -341,6 +344,25 @@ module CounterCulture
           "_was"
         end
       obj.public_send("#{attr}#{changes_method}")
+    end
+
+    # Returns whether the given conditions allow the counter cache column to update.
+    # The callback only runs when all the :if conditions and none of the :unless conditions are evaluated to true.
+    def conditions_allow_change?(obj)
+      @if_conditions.all?      { |condition| evaluate_condition(condition, obj) } &&
+      @unless_conditions.none? { |condition| evaluate_condition(condition, obj) }
+    end
+
+    # Evaluate the conditions in the context of the object
+    def evaluate_condition(condition, obj)
+      case condition
+      when Symbol
+        obj.send(condition)
+      when Proc
+        obj.instance_exec(&condition)
+      else
+        raise ArgumentError, "Condition must be a symbol or a proc"
+      end
     end
   end
 end
