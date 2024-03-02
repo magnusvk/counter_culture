@@ -10,9 +10,19 @@ module CounterCulture
       @relation = relation.is_a?(Enumerable) ? relation : [relation]
 
       @counter_cache_name = proc do |model|
-        conditions_allow_change? =
-          Array.wrap(options[:if]).all?      { |condition| evaluate_condition(condition, model) } &&
-          Array.wrap(options[:unless]).none? { |condition| evaluate_condition(condition, model) }
+        conditions = proc do |condition|
+          case condition
+          when Symbol
+            model.public_send(condition)
+          when Proc
+            model.instance_exec(&condition)
+          else
+            raise ArgumentError, "Condition must be a symbol or a proc"
+          end
+        end
+
+        conditions_allow_change? = Array.wrap(options[:if]).all?(&:conditions) &&
+          Array.wrap(options[:unless]).none?(&:conditions)
 
         return unless conditions_allow_change?
 
@@ -350,18 +360,6 @@ module CounterCulture
           "_was"
         end
       obj.public_send("#{attr}#{changes_method}")
-    end
-
-    # Evaluate the conditions in the context of the object
-    def evaluate_condition(condition, obj)
-      case condition
-      when Symbol
-        obj.public_send(condition)
-      when Proc
-        obj.instance_exec(&condition)
-      else
-        raise ArgumentError, "Condition must be a symbol or a proc"
-      end
     end
   end
 end
