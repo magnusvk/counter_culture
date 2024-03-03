@@ -21,9 +21,8 @@ module CounterCulture
           end
         end
 
-        conditions_allow_change? = Array.wrap(options[:if]).all?(&:conditions) &&
-          Array.wrap(options[:unless]).none?(&:conditions)
-
+        conditions_allow_change? = Array.wrap(options[:if]).all?(&conditions) &&
+          Array.wrap(options[:unless]).none?(&conditions)
         return unless conditions_allow_change?
 
         options.fetch(:column_name, "#{model.name.demodulize.tableize}_count")
