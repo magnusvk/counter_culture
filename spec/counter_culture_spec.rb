@@ -15,6 +15,7 @@ require 'models/simple_main'
 require 'models/simple_dependent'
 require 'models/conditional_main'
 require 'models/conditional_dependent'
+require 'models/conditional_dependent_shorthand'
 require 'models/post'
 require 'models/post_comment'
 require 'models/post_like'
@@ -1709,6 +1710,24 @@ RSpec.describe "CounterCulture" do
     ConditionalDependent.counter_culture_fix_counts :batch_size => A_BATCH
 
     ConditionalMain.find_each { |main| expect(main.conditional_dependents_count).to eq(main.id % 2 == 0 ? 3 : 0) }
+  end
+
+  it "should correctly fix the counter caches for thousands of records when counter is conditional using :if/:unless" do
+    # first, clean up
+    ConditionalDependentShorthand.delete_all
+    ConditionalMain.delete_all
+
+    MANY.times do |i|
+      main = ConditionalMain.create
+      3.times { main.conditional_dependent_shorthands.create(:condition => main.id % 2 == 0) }
+    end
+
+    ConditionalMain.find_each { |main| expect(main.conditional_dependent_shorthands_count).to eq(main.id % 2 == 0 ? 3 : 0) }
+
+    ConditionalMain.order(db_random).limit(A_FEW).update_all :conditional_dependent_shorthands_count => 1
+    ConditionalDependentShorthand.counter_culture_fix_counts :batch_size => A_BATCH
+
+    ConditionalMain.find_each { |main| expect(main.conditional_dependent_shorthands_count).to eq(main.id % 2 == 0 ? 3 : 0) }
   end
 
   it "should correctly fix the counter caches when no dependent record exists for some of main records" do

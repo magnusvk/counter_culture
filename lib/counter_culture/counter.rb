@@ -9,7 +9,25 @@ module CounterCulture
       @model = model
       @relation = relation.is_a?(Enumerable) ? relation : [relation]
 
-      @counter_cache_name = options.fetch(:column_name, "#{model.name.demodulize.tableize}_count")
+      @counter_cache_name = proc do |model|
+        conditions = proc do |condition|
+          case condition
+          when Symbol
+            model.public_send(condition)
+          when Proc
+            model.instance_exec(&condition)
+          else
+            raise ArgumentError, "Condition must be a symbol or a proc"
+          end
+        end
+
+        conditions_allow_change? = Array.wrap(options[:if]).all?(&conditions) &&
+          Array.wrap(options[:unless]).none?(&conditions)
+        return unless conditions_allow_change?
+
+        options.fetch(:column_name, "#{model.name.demodulize.tableize}_count")
+      end
+
       @column_names = options[:column_names]
       @delta_column = options[:delta_column]
       @foreign_key_values = options[:foreign_key_values]
