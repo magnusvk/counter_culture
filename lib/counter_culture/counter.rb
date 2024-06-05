@@ -18,9 +18,6 @@ module CounterCulture
       @with_papertrail = options.fetch(:with_papertrail, false)
       @execute_after_commit = options.fetch(:execute_after_commit, false)
 
-      # we don't use Rails' update_counters because we support changing the timestamp
-      @updates_to_execute = []
-
       if @execute_after_commit
         begin
           require 'after_commit_action'
@@ -74,12 +71,16 @@ module CounterCulture
 
         column_type = klass.type_for_attribute(change_counter_column).type
 
+        # we don't use Rails' update_counters because we support changing the timestamp
+        updates = []
+
         # this updates the actual counter
-        if column_type == :money
+        updates << if column_type == :money
           assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
         else
           assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
         end
+
         # and here we update the timestamp, if so desired
         if touch
           current_time = klass.send(:current_time_from_proper_timezone)
@@ -90,7 +91,7 @@ module CounterCulture
             timestamp_columns << touch
           end
           timestamp_columns.each do |timestamp_column|
-            assemble_timestamp_update(
+            updates << assemble_timestamp_update(
               klass,
               id_to_change,
               timestamp_column,
@@ -128,9 +129,9 @@ module CounterCulture
           end
         end
 
-        if @updates_to_execute.any?
+        unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
-            klass.where(primary_key => id_to_change).update_all(@updates_to_execute.join(', '))
+            klass.where(primary_key => id_to_change).update_all updates.join(', ')
           end
         end
       end
@@ -367,7 +368,7 @@ module CounterCulture
           operator == '+' ? delta_magnitude : -delta_magnitude
         )
       else
-        @updates_to_execute << "#{update} #{operator} #{delta_magnitude}"
+        "#{update} #{operator} #{delta_magnitude}"
       end
     end
 
@@ -382,7 +383,7 @@ module CounterCulture
           operator == '+' ? delta_magnitude : -delta_magnitude
         )
       else
-        @updates_to_execute << "#{update} #{operator} #{delta_magnitude}"
+        "#{update} #{operator} #{delta_magnitude}"
       end
     end
 
@@ -392,7 +393,7 @@ module CounterCulture
       if Thread.current[:aggregate_counter_updates]
         remember_timestamp_update(klass, id_to_change, update, value)
       else
-        @updates_to_execute << "#{update} '#{value.call}'"
+        "#{update} '#{value.call}'"
       end
     end
 
