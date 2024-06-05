@@ -18,6 +18,9 @@ module CounterCulture
       @with_papertrail = options.fetch(:with_papertrail, false)
       @execute_after_commit = options.fetch(:execute_after_commit, false)
 
+      # we don't use Rails' update_counters because we support changing the timestamp
+      @updates_to_execute = []
+
       if @execute_after_commit
         begin
           require 'after_commit_action'
@@ -71,13 +74,11 @@ module CounterCulture
 
         column_type = klass.type_for_attribute(change_counter_column).type
 
-        # we don't use Rails' update_counters because we support changing the timestamp
-        updates = []
         # this updates the actual counter
         if column_type == :money
-          updates << "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0) #{operator} #{delta_magnitude}"
+          assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
         else
-          updates << "#{quoted_column} = COALESCE(#{quoted_column}, 0) #{operator} #{delta_magnitude}"
+          assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
         end
         # and here we update the timestamp, if so desired
         if touch
@@ -89,11 +90,20 @@ module CounterCulture
             timestamp_columns << touch
           end
           timestamp_columns.each do |timestamp_column|
-            updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
+            assemble_timestamp_update(
+              klass,
+              id_to_change,
+              timestamp_column,
+              -> { klass.send(:current_time_from_proper_timezone).to_formatted_s(:db) }
+            )
           end
         end
 
         primary_key = relation_primary_key(relation, source: obj, was: options[:was])
+
+        if Thread.current[:aggregate_counter_updates]
+          Thread.current[:primary_key_map][klass] ||= primary_key
+        end
 
         if @with_papertrail
           instance = klass.where(primary_key => id_to_change).first
@@ -118,8 +128,10 @@ module CounterCulture
           end
         end
 
-        execute_now_or_after_commit(obj) do
-          klass.where(primary_key => id_to_change).update_all updates.join(', ')
+        if @updates_to_execute.any?
+          execute_now_or_after_commit(obj) do
+            klass.where(primary_key => id_to_change).update_all(@updates_to_execute.join(', '))
+          end
         end
       end
     end
@@ -165,7 +177,7 @@ module CounterCulture
     def foreign_key_value(obj, relation, was = false)
       original_relation = relation
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
-      
+
       if was
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
@@ -333,6 +345,7 @@ module CounterCulture
     end
 
     private
+
     def attribute_was(obj, attr)
       changes_method =
         if ACTIVE_RECORD_VERSION >= Gem::Version.new("5.1.0")
@@ -341,6 +354,61 @@ module CounterCulture
           "_was"
         end
       obj.public_send("#{attr}#{changes_method}")
+    end
+
+    def assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
+      update = "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0)"
+
+      if Thread.current[:aggregate_counter_updates]
+        remember_counter_update(
+          klass,
+          id_to_change,
+          "#{update} +",
+          operator == '+' ? delta_magnitude : -delta_magnitude
+        )
+      else
+        @updates_to_execute << "#{update} #{operator} #{delta_magnitude}"
+      end
+    end
+
+    def assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
+      update = "#{quoted_column} = COALESCE(#{quoted_column}, 0)"
+
+      if Thread.current[:aggregate_counter_updates]
+        remember_counter_update(
+          klass,
+          id_to_change,
+          "#{update} +",
+          operator == '+' ? delta_magnitude : -delta_magnitude
+        )
+      else
+        @updates_to_execute << "#{update} #{operator} #{delta_magnitude}"
+      end
+    end
+
+    def assemble_timestamp_update(klass, id_to_change, timestamp_column, value)
+      update = "#{timestamp_column} ="
+
+      if Thread.current[:aggregate_counter_updates]
+        remember_timestamp_update(klass, id_to_change, update, value)
+      else
+        @updates_to_execute << "#{update} '#{value.call}'"
+      end
+    end
+
+    def remember_counter_update(klass, id, operation, value)
+      Thread.current[:aggregated_updates][klass] ||= {}
+      Thread.current[:aggregated_updates][klass][id] ||= {}
+      Thread.current[:aggregated_updates][klass][id][operation] ||= 0
+
+      Thread.current[:aggregated_updates][klass][id][operation] += value
+    end
+
+    def remember_timestamp_update(klass, id, operation, value)
+      Thread.current[:aggregated_updates][klass] ||= {}
+      Thread.current[:aggregated_updates][klass][id] ||= {}
+
+      Thread.current[:aggregated_updates][klass][id][operation] = value
     end
   end
 end

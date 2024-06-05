@@ -15,6 +15,35 @@ module CounterCulture
     yield(self) if block_given?
     self
   end
+
+  def self.aggregate_counter_updates
+    return unless block_given?
+
+    Thread.current[:aggregate_counter_updates] = true
+    Thread.current[:aggregated_updates] = {}
+    Thread.current[:primary_key_map] = {}
+
+    yield
+
+    # aggregate the updates for each target and execute SQL queries
+    Thread.current[:aggregated_updates].each do |klass, attrs|
+      attrs.each do |rec_id, updates|
+        updated_columns = updates.map do |operation, value|
+          %Q{#{operation} #{value.is_a?(Proc) ? "'#{value.call}'" : value}} unless value == 0
+        end.compact
+
+        klass
+          .where(Thread.current[:primary_key_map][klass] => rec_id)
+          .update_all(updated_columns.join(', '))
+      end
+    end
+
+    nil
+  ensure
+    Thread.current[:aggregate_counter_updates] = false
+    Thread.current[:aggregated_updates] = nil
+    Thread.current[:primary_key_map] = nil
+  end
 end
 
 # extend ActiveRecord with our own code here
