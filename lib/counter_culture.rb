@@ -23,7 +23,7 @@ module CounterCulture
     Thread.current[:aggregated_updates] = {}
     Thread.current[:primary_key_map] = {}
 
-    yield
+    result = yield
 
     # aggregate the updates for each target record and execute SQL queries
     Thread.current[:aggregated_updates].each do |klass, attrs|
@@ -40,6 +40,8 @@ module CounterCulture
         end
       end
     end
+
+    result
   ensure
     Thread.current[:aggregate_counter_updates] = false
     Thread.current[:aggregated_updates] = nil
