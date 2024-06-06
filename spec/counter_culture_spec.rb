@@ -3174,6 +3174,7 @@ RSpec.describe "CounterCulture" do
         skip("money type only supported in PostgreSQL")
       end
 
+      item = nil
       po = PurchaseOrder.create
 
       expect(po.total_amount).to eq(0.0)
