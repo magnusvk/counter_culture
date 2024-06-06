@@ -25,20 +25,21 @@ module CounterCulture
 
     yield
 
-    # aggregate the updates for each target and execute SQL queries
+    # aggregate the updates for each target record and execute SQL queries
     Thread.current[:aggregated_updates].each do |klass, attrs|
       attrs.each do |rec_id, updates|
         updated_columns = updates.map do |operation, value|
-          %Q{#{operation} #{value.is_a?(Proc) ? "'#{value.call}'" : value}} unless value == 0
+          value = value.call if value.is_a?(Proc)
+          %Q{#{operation} #{value.is_a?(String) ? "'#{value}'" : value}} unless value == 0
         end.compact
 
-        klass
-          .where(Thread.current[:primary_key_map][klass] => rec_id)
-          .update_all(updated_columns.join(', '))
+        if updated_columns.any?
+          klass
+            .where(Thread.current[:primary_key_map][klass] => rec_id)
+            .update_all(updated_columns.join(', '))
+        end
       end
     end
-
-    nil
   ensure
     Thread.current[:aggregate_counter_updates] = false
     Thread.current[:aggregated_updates] = nil

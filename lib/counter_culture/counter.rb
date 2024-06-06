@@ -74,14 +74,14 @@ module CounterCulture
         # we don't use Rails' update_counters because we support changing the timestamp
         updates = []
 
-        # this updates the actual counter
+        # this will update the actual counter
         updates << if column_type == :money
           assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
         else
           assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
         end
 
-        # and here we update the timestamp, if so desired
+        # and this will update the timestamp, if so desired
         if touch
           current_time = klass.send(:current_time_from_proper_timezone)
           timestamp_columns = klass.send(:timestamp_attributes_for_update_in_model)
