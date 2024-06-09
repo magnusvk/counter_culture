@@ -28,15 +28,15 @@ module CounterCulture
     # aggregate the updates for each target record and execute SQL queries
     Thread.current[:aggregated_updates].each do |klass, attrs|
       attrs.each do |rec_id, updates|
-        updated_columns = updates.map do |operation, value|
+        update_snippets = updates.map do |operation, value|
           value = value.call if value.is_a?(Proc)
           %Q{#{operation} #{value.is_a?(String) ? "'#{value}'" : value}} unless value == 0
         end.compact
 
-        if updated_columns.any?
+        if update_snippets.any?
           klass
             .where(Thread.current[:primary_key_map][klass] => rec_id)
-            .update_all(updated_columns.join(', '))
+            .update_all(update_snippets.join(', '))
         end
       end
     end
