@@ -43,7 +43,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec-extra-formatters'
   spec.add_development_dependency 'simplecov', '~> 0.16.1'
   spec.add_development_dependency 'timecop'
-  spec.add_development_dependency 'sqlite3'
+  spec.add_development_dependency 'sqlite3', ">= 1.4"
   spec.add_development_dependency 'mysql2'
   spec.add_development_dependency 'pg'
 end
