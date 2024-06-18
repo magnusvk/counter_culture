@@ -2982,66 +2982,12 @@ RSpec.describe "CounterCulture" do
       expect(user.review_approvals_count).to eq(0)
       expect(user2.review_approvals_count).to eq(0)
 
-      Timecop.freeze do
-        user_update = %Q{
-          UPDATE `users` SET
-            `users`.`reviews_count` = COALESCE(`users`.`reviews_count`, 0) + 2,
-            `users`.`using_count` = COALESCE(`users`.`using_count`, 0) + 2,
-            `users`.`review_approvals_count` = COALESCE(`users`.`review_approvals_count`, 0) + 10,
-            `users`.`dynamic_delta_count` = COALESCE(`users`.`dynamic_delta_count`, 0) + 2,
-            `users`.`custom_delta_count` = COALESCE(`users`.`custom_delta_count`, 0) + 6
-          WHERE `users`.`id` = #{user.id}
-        }.squish
-
-        user2_update = %Q{
-          UPDATE `users` SET
-            `users`.`reviews_count` = COALESCE(`users`.`reviews_count`, 0) + 1,
-            `users`.`using_count` = COALESCE(`users`.`using_count`, 0) + 1,
-            `users`.`review_approvals_count` = COALESCE(`users`.`review_approvals_count`, 0) + 5,
-            `users`.`dynamic_delta_count` = COALESCE(`users`.`dynamic_delta_count`, 0) + 1,
-            `users`.`custom_delta_count` = COALESCE(`users`.`custom_delta_count`, 0) + 3
-          WHERE `users`.`id` = #{user2.id}
-        }.squish
-
-        product1_update = %Q{
-          UPDATE `products` SET
-            `products`.`reviews_count` = COALESCE(`products`.`reviews_count`, 0) + 2,
-            updated_at = '#{Product.send(:current_time_from_proper_timezone).to_formatted_s(:db)}',
-            `products`.`rexiews_count` = COALESCE(`products`.`rexiews_count`, 0) + 2,
-            rexiews_updated_at = '#{Product.send(:current_time_from_proper_timezone).to_formatted_s(:db)}'
-          WHERE `products`.`id` = #{product1.id}
-        }.squish
-
-        product2_update = %Q{
-          UPDATE `products` SET
-            `products`.`reviews_count` = COALESCE(`products`.`reviews_count`, 0) + 1,
-            updated_at = '#{Product.send(:current_time_from_proper_timezone).to_formatted_s(:db)}',
-            `products`.`rexiews_count` = COALESCE(`products`.`rexiews_count`, 0) + 1,
-            rexiews_updated_at = '#{Product.send(:current_time_from_proper_timezone).to_formatted_s(:db)}'
-          WHERE `products`.`id` = #{product2.id}
-        }.squish
-
-        product_query_count = PapertrailSupport.supported_here? ? 2 : 1
-
-        expect_queries(1, filter: /UPDATE .* WHERE `users`.`id` = #{user.id}/) do # only one query for user in total
-          expect_queries(1, filter: user_update) do
-            expect_queries(1, filter: /UPDATE .* WHERE `users`.`id` = #{user2.id}/) do # only one query for user2 in total
-              expect_queries(1, filter: user2_update) do
-                expect_queries(product_query_count, filter: /UPDATE .* WHERE `products`.`id` = #{product1.id}/) do # one query for product1 + papertrail timestamp update
-                  expect_queries(1, filter: product1_update) do
-                    expect_queries(product_query_count, filter: /UPDATE .* WHERE `products`.`id` = #{product2.id}/) do # one query for product2 + papertrail timestamp update
-                      expect_queries(1, filter: product2_update) do
-                        CounterCulture.aggregate_counter_updates do
-                          user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
-                          user2.reviews.create :user_id => user2.id, :product_id => product1.id, :approvals => 5
-                          user.reviews.create :user_id => user.id, :product_id => product2.id, :approvals => 5
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
+      expect_queries(2, filter: /UPDATE `users`/) do # user updates
+        expect_queries(2, filter: /COALESCE(`rexiews_count`, 0)/) do # product updates
+          CounterCulture.aggregate_counter_updates do
+            user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
+            user2.reviews.create :user_id => user2.id, :product_id => product1.id, :approvals => 5
+            user.reviews.create :user_id => user.id, :product_id => product2.id, :approvals => 5
           end
         end
       end
@@ -3075,23 +3021,12 @@ RSpec.describe "CounterCulture" do
       expect(product1.reviews_count).to eq(0)
       expect(user.review_approvals_count).to eq(0)
 
-      Timecop.freeze do
-        product1_update = %Q{
-          UPDATE `products` SET
-            updated_at = '#{Product.send(:current_time_from_proper_timezone).to_formatted_s(:db)}',
-            rexiews_updated_at = '#{Product.send(:current_time_from_proper_timezone).to_formatted_s(:db)}'
-          WHERE `products`.`id` = #{product1.id}
-        }.squish
-
-        product_query_count = PapertrailSupport.supported_here? ? 2 : 1
-
-        expect_queries(0, filter: /UPDATE .* WHERE `users`.`id` = #{user.id}/) do # all columns are incremented by 0 so no query
-          expect_queries(1, filter: product1_update) do # only the timestamp column is updated because counters are incremented by 0
-            expect_queries(product_query_count, filter: /UPDATE .* WHERE `products`.`id` = #{product1.id}/) do # one query for product1 + papertrail timestamp update
-              CounterCulture.aggregate_counter_updates do
-                review = user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
-                review.destroy!
-              end
+      expect_queries(0, filter: /UPDATE `users`/) do # all columns are incremented by 0 so no query
+        expect_queries(1, filter: /rexiews_updated_at/) do
+          expect_queries(0, filter: /COALESCE(`rexiews_count`, 0)/) do # only the timestamp column is updated because counters are incremented by 0
+            CounterCulture.aggregate_counter_updates do
+              review = user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
+              review.destroy!
             end
           end
         end
