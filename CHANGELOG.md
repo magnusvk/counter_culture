@@ -1,3 +1,8 @@
+## 3.6.0 (June 18, 2024)
+
+Improvements:
+  - Don't perform a query if the `delta_magnitude` is zero (#394)
+
 ## 3.5.3 (February 16, 2024)
 
 Bugfixes:
