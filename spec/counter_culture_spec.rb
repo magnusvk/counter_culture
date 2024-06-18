@@ -100,6 +100,26 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "skips zero delta_magnitude update on create" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    expect_queries(0, filter: /COALESCE\("review_approvals_count", 0\) \+ 0/) do
+      user.reviews.create :user_id => user.id, :product_id => product.id, :approvals => 0
+    end
+
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(1)
+  end
+
   it "skips increments counter cache on create" do
     user = User.create
     product = Product.create
