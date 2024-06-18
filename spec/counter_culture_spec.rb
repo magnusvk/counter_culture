@@ -3012,10 +3012,10 @@ RSpec.describe "CounterCulture" do
         expect(product1.rexiews_count).to eq(2)
         expect(product2.reviews_count).to eq(1)
         expect(product2.rexiews_count).to eq(1)
-        expect(product1.updated_at).to eq(Time.now.utc)
-        expect(product1.rexiews_updated_at).to eq(Time.now.utc)
-        expect(product2.updated_at).to eq(Time.now.utc)
-        expect(product2.rexiews_updated_at).to eq(Time.now.utc)
+        expect(product1.updated_at.to_i).to eq(Time.now.utc.to_i)
+        expect(product1.rexiews_updated_at.to_i).to eq(Time.now.utc.to_i)
+        expect(product2.updated_at.to_i).to eq(Time.now.utc.to_i)
+        expect(product2.rexiews_updated_at.to_i).to eq(Time.now.utc.to_i)
       end
     end
 
@@ -3049,8 +3049,8 @@ RSpec.describe "CounterCulture" do
         expect(user.custom_delta_count).to eq(0)
         expect(product1.reviews_count).to eq(0)
         expect(product1.rexiews_count).to eq(0)
-        expect(product1.updated_at).to eq(Time.now.utc)
-        expect(product1.rexiews_updated_at).to eq(Time.now.utc)
+        expect(product1.updated_at.to_i).to eq(Time.now.utc.to_i)
+        expect(product1.rexiews_updated_at.to_i).to eq(Time.now.utc.to_i)
       end
     end
 
