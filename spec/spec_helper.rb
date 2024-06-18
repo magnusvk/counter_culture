@@ -110,12 +110,12 @@ def expect_queries(num = 1, filter: "", &block)
     next if payload[:sql].match?(/^SELECT a\.attname/)
     next unless payload[:sql].match?(/^SELECT|UPDATE|INSERT/)
 
-    payload[:sql].gsub!(%Q{\"}, "`") # to remove differences between DB adaptors
+    sql = payload[:sql].gsub(%Q{\"}, "`") # to remove differences between DB adaptors
 
-    matches_filter = filter.is_a?(Regexp) ? payload[:sql].match?(filter) : payload[:sql] == filter
+    matches_filter = filter.is_a?(Regexp) ? sql.match?(filter) : sql == filter
     next unless matches_filter
 
-    queries.push(payload[:sql])
+    queries.push(sql)
   end
 
   ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
