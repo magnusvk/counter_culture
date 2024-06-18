@@ -55,6 +55,8 @@ module CounterCulture
                           else
                             counter_delta_magnitude_for(obj)
                           end
+        return if delta_magnitude.zero?
+
         # increment or decrement?
         operator = options[:increment] ? '+' : '-'
 

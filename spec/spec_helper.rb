@@ -102,6 +102,22 @@ module DbRandom
   end
 end
 
+# Spec for checking the number of queries executed within the block
+def expect_queries(num = 1, filter: "", &block)
+  queries = []
+  callback = lambda do |_name, _start, _finish, _id, payload|
+    if payload[:sql].match?(/^SELECT|UPDATE|INSERT/) &&
+       !payload[:sql].match?(/^SELECT a\.attname/) &&
+       payload[:sql].match?(filter)
+      queries.push(payload[:sql])
+    end
+  end
+
+  ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
+
+  expect(queries.size).to eq(num), "#{queries.size} instead of #{num} queries were executed. #{"\nQueries:\n#{queries.join("\n")}" unless queries.empty?}"
+end
+
 RSpec.configure do |config|
   config.include DbRandom
   config.fail_fast = true unless CI_TEST_RUN
