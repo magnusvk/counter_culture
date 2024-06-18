@@ -2982,35 +2982,41 @@ RSpec.describe "CounterCulture" do
       expect(user.review_approvals_count).to eq(0)
       expect(user2.review_approvals_count).to eq(0)
 
-      expect_queries(2, filter: /UPDATE `users`/) do # user updates
-        expect_queries(2, filter: /COALESCE(`rexiews_count`, 0)/) do # product updates
-          CounterCulture.aggregate_counter_updates do
-            user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
-            user2.reviews.create :user_id => user2.id, :product_id => product1.id, :approvals => 5
-            user.reviews.create :user_id => user.id, :product_id => product2.id, :approvals => 5
+      Timecop.freeze do
+        expect_queries(2, filter: /UPDATE `users`/) do # user updates
+          expect_queries(2, filter: /rexiews_updated_at/) do # product updates
+            CounterCulture.aggregate_counter_updates do
+              user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
+              user2.reviews.create :user_id => user2.id, :product_id => product1.id, :approvals => 5
+              user.reviews.create :user_id => user.id, :product_id => product2.id, :approvals => 5
+            end
           end
         end
+
+        user.reload
+        user2.reload
+        product1.reload
+        product2.reload
+
+        expect(user.reviews_count).to eq(2)
+        expect(user.using_count).to eq(2)
+        expect(user.review_approvals_count).to eq(10)
+        expect(user.dynamic_delta_count).to eq(2)
+        expect(user.custom_delta_count).to eq(6)
+        expect(user2.reviews_count).to eq(1)
+        expect(user2.using_count).to eq(1)
+        expect(user2.review_approvals_count).to eq(5)
+        expect(user2.dynamic_delta_count).to eq(1)
+        expect(user2.custom_delta_count).to eq(3)
+        expect(product1.reviews_count).to eq(2)
+        expect(product1.rexiews_count).to eq(2)
+        expect(product2.reviews_count).to eq(1)
+        expect(product2.rexiews_count).to eq(1)
+        expect(product1.updated_at).to eq(Time.now.utc)
+        expect(product1.rexiews_updated_at).to eq(Time.now.utc)
+        expect(product2.updated_at).to eq(Time.now.utc)
+        expect(product2.rexiews_updated_at).to eq(Time.now.utc)
       end
-
-      user.reload
-      user2.reload
-      product1.reload
-      product2.reload
-
-      expect(user.reviews_count).to eq(2)
-      expect(user.using_count).to eq(2)
-      expect(user.review_approvals_count).to eq(10)
-      expect(user.dynamic_delta_count).to eq(2)
-      expect(user.custom_delta_count).to eq(6)
-      expect(user2.reviews_count).to eq(1)
-      expect(user2.using_count).to eq(1)
-      expect(user2.review_approvals_count).to eq(5)
-      expect(user2.dynamic_delta_count).to eq(1)
-      expect(user2.custom_delta_count).to eq(3)
-      expect(product1.reviews_count).to eq(2)
-      expect(product1.rexiews_count).to eq(2)
-      expect(product2.reviews_count).to eq(1)
-      expect(product2.rexiews_count).to eq(1)
     end
 
     it "skips aggregated counter updates with zero increment" do
@@ -3021,27 +3027,31 @@ RSpec.describe "CounterCulture" do
       expect(product1.reviews_count).to eq(0)
       expect(user.review_approvals_count).to eq(0)
 
-      expect_queries(0, filter: /UPDATE `users`/) do # all columns are incremented by 0 so no query
-        expect_queries(1, filter: /rexiews_updated_at/) do
-          expect_queries(0, filter: /COALESCE(`rexiews_count`, 0)/) do # only the timestamp column is updated because counters are incremented by 0
-            CounterCulture.aggregate_counter_updates do
-              review = user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
-              review.destroy!
+      Timecop.freeze do
+        expect_queries(0, filter: /UPDATE `users`/) do # all columns are incremented by 0 so no query
+          expect_queries(1, filter: /rexiews_updated_at/) do
+            expect_queries(0, filter: /rexiews_count/) do # only the timestamp column is updated because counters are incremented by 0
+              CounterCulture.aggregate_counter_updates do
+                review = user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
+                review.destroy!
+              end
             end
           end
         end
+
+        user.reload
+        product1.reload
+
+        expect(user.reviews_count).to eq(0)
+        expect(user.using_count).to eq(0)
+        expect(user.review_approvals_count).to eq(0)
+        expect(user.dynamic_delta_count).to eq(0)
+        expect(user.custom_delta_count).to eq(0)
+        expect(product1.reviews_count).to eq(0)
+        expect(product1.rexiews_count).to eq(0)
+        expect(product1.updated_at).to eq(Time.now.utc)
+        expect(product1.rexiews_updated_at).to eq(Time.now.utc)
       end
-
-      user.reload
-      product1.reload
-
-      expect(user.reviews_count).to eq(0)
-      expect(user.using_count).to eq(0)
-      expect(user.review_approvals_count).to eq(0)
-      expect(user.dynamic_delta_count).to eq(0)
-      expect(user.custom_delta_count).to eq(0)
-      expect(product1.reviews_count).to eq(0)
-      expect(product1.rexiews_count).to eq(0)
     end
 
     it "updates counter caches" do
