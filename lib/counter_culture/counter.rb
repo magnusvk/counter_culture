@@ -360,33 +360,23 @@ module CounterCulture
     end
 
     def assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
-      update = "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0)"
-
-      if Thread.current[:aggregate_counter_updates]
-        remember_counter_update(
-          klass,
-          id_to_change,
-          "#{update} +",
-          operator == '+' ? delta_magnitude : -delta_magnitude
-        )
-      else
-        "#{update} #{operator} #{delta_magnitude}"
-      end
+      counter_update_snippet(
+        "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0)",
+        klass,
+        id_to_change,
+        operator,
+        delta_magnitude
+      )
     end
 
     def assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
-      update = "#{quoted_column} = COALESCE(#{quoted_column}, 0)"
-
-      if Thread.current[:aggregate_counter_updates]
-        remember_counter_update(
-          klass,
-          id_to_change,
-          "#{update} +",
-          operator == '+' ? delta_magnitude : -delta_magnitude
-        )
-      else
-        "#{update} #{operator} #{delta_magnitude}"
-      end
+      counter_update_snippet(
+        "#{quoted_column} = COALESCE(#{quoted_column}, 0)",
+        klass,
+        id_to_change,
+        operator,
+        delta_magnitude
+      )
     end
 
     def assemble_timestamp_update(klass, id_to_change, timestamp_column, value)
@@ -396,6 +386,19 @@ module CounterCulture
         remember_timestamp_update(klass, id_to_change, update, value)
       else
         "#{update} '#{value.call}'"
+      end
+    end
+
+    def counter_update_snippet(update, klass, id_to_change, operator, delta_magnitude)
+      if Thread.current[:aggregate_counter_updates]
+        remember_counter_update(
+          klass,
+          id_to_change,
+          "#{update} +",
+          operator == '+' ? delta_magnitude : -delta_magnitude
+        )
+      else
+        "#{update} #{operator} #{delta_magnitude}"
       end
     end
 
