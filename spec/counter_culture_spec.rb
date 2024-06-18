@@ -3021,13 +3021,15 @@ RSpec.describe "CounterCulture" do
           WHERE `products`.`id` = #{product2.id}
         }.squish
 
+        product_query_count = PapertrailSupport.supported_here? ? 2 : 1
+
         expect_queries(1, filter: /UPDATE .* WHERE `users`.`id` = #{user.id}/) do # only one query for user in total
           expect_queries(1, filter: user_update) do
             expect_queries(1, filter: /UPDATE .* WHERE `users`.`id` = #{user2.id}/) do # only one query for user2 in total
               expect_queries(1, filter: user2_update) do
-                expect_queries(2, filter: /UPDATE .* WHERE `products`.`id` = #{product1.id}/) do # one query for product1 + papertrail timestamp update
+                expect_queries(product_query_count, filter: /UPDATE .* WHERE `products`.`id` = #{product1.id}/) do # one query for product1 + papertrail timestamp update
                   expect_queries(1, filter: product1_update) do
-                    expect_queries(2, filter: /UPDATE .* WHERE `products`.`id` = #{product2.id}/) do # one query for product2 + papertrail timestamp update
+                    expect_queries(product_query_count, filter: /UPDATE .* WHERE `products`.`id` = #{product2.id}/) do # one query for product2 + papertrail timestamp update
                       expect_queries(1, filter: product2_update) do
                         CounterCulture.aggregate_counter_updates do
                           user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
@@ -3081,9 +3083,11 @@ RSpec.describe "CounterCulture" do
           WHERE `products`.`id` = #{product1.id}
         }.squish
 
+        product_query_count = PapertrailSupport.supported_here? ? 2 : 1
+
         expect_queries(0, filter: /UPDATE .* WHERE `users`.`id` = #{user.id}/) do # all columns are incremented by 0 so no query
           expect_queries(1, filter: product1_update) do # only the timestamp column is updated because counters are incremented by 0
-            expect_queries(2, filter: /UPDATE .* WHERE `products`.`id` = #{product1.id}/) do # one query for product1 + papertrail timestamp update
+            expect_queries(product_query_count, filter: /UPDATE .* WHERE `products`.`id` = #{product1.id}/) do # one query for product1 + papertrail timestamp update
               CounterCulture.aggregate_counter_updates do
                 review = user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
                 review.destroy!
