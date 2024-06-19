@@ -2983,7 +2983,7 @@ RSpec.describe "CounterCulture" do
       expect(user2.review_approvals_count).to eq(0)
 
       Timecop.freeze do
-        expect_queries(2, filter: /UPDATE `users`/) do # user updates
+        expect_queries(2, filter: /UPDATE users/) do # user updates
           expect_queries(2, filter: /rexiews_updated_at/) do # product updates
             CounterCulture.aggregate_counter_updates do
               user.reviews.create :user_id => user.id, :product_id => product1.id, :approvals => 5
@@ -3028,7 +3028,7 @@ RSpec.describe "CounterCulture" do
       expect(user.review_approvals_count).to eq(0)
 
       Timecop.freeze do
-        expect_queries(0, filter: /UPDATE `users`/) do # all columns are incremented by 0 so no query
+        expect_queries(0, filter: /UPDATE users/) do # all columns are incremented by 0 so no query
           expect_queries(1, filter: /rexiews_updated_at/) do
             expect_queries(0, filter: /rexiews_count/) do # only the timestamp column is updated because counters are incremented by 0
               CounterCulture.aggregate_counter_updates do
