@@ -112,7 +112,7 @@ def expect_queries(num = 1, filter: "", &block)
 
     sql = payload[:sql].gsub(%Q{\"}, '').gsub('`', '') # to remove differences between DB adaptors
 
-    matches_filter = sql.match?(filter.gsub(%Q{\"}, '').gsub('`', ''))
+    matches_filter = sql.match?(filter)
     next unless matches_filter
 
     queries.push(sql)
