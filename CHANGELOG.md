@@ -1,3 +1,8 @@
+## 3.7.0 (June 20, 2024)
+
+New features:
+  - Combine multiple updates into a single SQL per target row (#393)
+
 ## 3.6.0 (June 18, 2024)
 
 Improvements:
