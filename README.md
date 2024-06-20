@@ -285,6 +285,108 @@ You can also pass a `Proc` for dynamic control. This is useful for temporarily m
   counter_culture :category, execute_after_commit: proc { !Thread.current[:update_counter_cache_in_transaction] }
 ```
 
+### Aggregating multiple updates into single SQL queries
+
+>  **NOTE**: This does not have an effect on Papertrail callbacks
+
+By default, every create/update/destroy will trigger separate `UPDATE` SQLs for each action and targeted column. For example, if the creation of 1 record needs to increment 3 counter cache columns, a transaction that creates 3 records of this kind will generate 9 `UPDATE` SQL queries adding `+1` to the value of said columns (3 created records x 3 counter cache columns to be incremented by each).
+
+To avoid this, you can wrap the logic that creates/updates/destroys multiple records in `CounterCulture.aggregate_counter_updates`. This will sum all updates for counter cache columns and will take the latest value for timestamp updates. As a result, you will get just one `UPDATE` SQL query per target record that updates all of its columns at once.
+
+#### Execute aggregated SQL queries before transaction `COMMIT`
+```ruby
+ActiveRecord::Base.transaction do
+  CounterCulture.aggregate_counter_updates do
+    # list of updates
+  end # => executes aggregated SQLs
+end
+```
+
+#### Execute aggregated SQL queries after transaction `COMMIT`
+```ruby
+CounterCulture.aggregate_counter_updates do
+  ActiveRecord::Base.transaction do
+    # list of updates
+  end
+end # => executes aggregated SQLs
+```
+
+#### Examples:
+<details><summary>Sums multiple counter updates for single column of a single target record</summary>
+
+```sql
+-- Before
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+
+-- After
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 2 WHERE `authors`.`id` = 1
+```
+
+```sql
+-- Before
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+
+-- After
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + -2 WHERE `authors`.`id` = 1
+```
+
+```sql
+-- Before
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+
+-- After
+No query
+```
+
+</details>
+
+<details><summary>Combines multiple updates for multiple columns of a single target record</summary>
+
+```sql
+-- Before
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1, updated_at = '2024-06-06 01:00:00' WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1, updated_at = '2024-06-06 02:00:00' WHERE `authors`.`id` = 1
+
+-- After
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 2, updated_at = '2024-06-06 02:00:00' WHERE `authors`.`id` = 1
+```
+
+```sql
+-- Before
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`works_count` = COALESCE(`authors`.`works_count`, 0) + 1 WHERE `authors`.`id` = 1
+
+-- After
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1, `authors`.`works_count` = COALESCE(`authors`.`works_count`, 0) + 1 WHERE `authors`.`id` = 1
+```
+
+</details>
+
+</details>
+
+<details><summary>Combines multiple updates of multiple target records</summary>
+
+```sql
+-- Before
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) - 1 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 2
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 2
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 1 WHERE `authors`.`id` = 2
+
+-- After
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + -3 WHERE `authors`.`id` = 1
+UPDATE `authors` SET `authors`.`books_count` = COALESCE(`authors`.`books_count`, 0) + 3 WHERE `authors`.`id` = 2
+```
+
+</details>
+
 ### Manually populating counter cache values
 
 You will sometimes want to populate counter-cache values from primary data. This is required when adding counter-caches to existing data. It is also recommended to run this regularly (at BestVendor, we run it once a week) to catch any incorrect values in the counter caches.

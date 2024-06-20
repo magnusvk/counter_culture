@@ -105,12 +105,17 @@ end
 # Spec for checking the number of queries executed within the block
 def expect_queries(num = 1, filter: "", &block)
   queries = []
+
   callback = lambda do |_name, _start, _finish, _id, payload|
-    if payload[:sql].match?(/^SELECT|UPDATE|INSERT/) &&
-       !payload[:sql].match?(/^SELECT a\.attname/) &&
-       payload[:sql].match?(filter)
-      queries.push(payload[:sql])
-    end
+    next if payload[:sql].match?(/^SELECT a\.attname/)
+    next unless payload[:sql].match?(/^SELECT|UPDATE|INSERT/)
+
+    sql = payload[:sql].gsub(%Q{\"}, '').gsub('`', '') # to remove differences between DB adaptors
+
+    matches_filter = sql.match?(filter)
+    next unless matches_filter
+
+    queries.push(sql)
   end
 
   ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
