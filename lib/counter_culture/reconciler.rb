@@ -1,6 +1,8 @@
 require 'active_support/core_ext/module/delegation'
 require 'active_support/core_ext/module/attribute_accessors'
 
+require_relative './with_connection'
+
 module CounterCulture
   class Reconciler
     ACTIVE_RECORD_VERSION = Gem.loaded_specs["activerecord"].version
@@ -312,7 +314,9 @@ module CounterCulture
       # using Postgres with schema-namespaced tables. But then it's required,
       # and otherwise it's just a no-op, so why not do it?
       def quote_table_name(table_name)
-        relation_class.connection.quote_table_name(table_name)
+        WithConnection.new(relation_class).call do |connection|
+          connection.quote_table_name(table_name)
+        end
       end
 
       def parameterize(string)

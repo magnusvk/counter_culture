@@ -1,3 +1,5 @@
+require_relative './with_connection'
+
 module CounterCulture
   class Counter
     CONFIG_OPTIONS = [ :column_names, :counter_cache_name, :delta_column, :foreign_key_values, :touch, :delta_magnitude, :execute_after_commit ]
@@ -65,11 +67,13 @@ module CounterCulture
         # MySQL throws an ambiguous column error if any joins are present and we don't include the
         # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
         # throws an exception if the table name is present after UPDATE.
-        quoted_column = if klass.connection.adapter_name == 'Mysql2'
-                          "#{klass.quoted_table_name}.#{model.connection.quote_column_name(change_counter_column)}"
-                        else
-                          "#{model.connection.quote_column_name(change_counter_column)}"
-                        end
+        quoted_column = WithConnection.new(klass).call do |connection|
+          if connection.adapter_name == 'Mysql2'
+            "#{klass.quoted_table_name}.#{connection.quote_column_name(change_counter_column)}"
+          else
+            "#{connection.quote_column_name(change_counter_column)}"
+          end
+        end
 
         column_type = klass.type_for_attribute(change_counter_column).type
 
