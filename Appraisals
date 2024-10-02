@@ -4,6 +4,7 @@
   6.1
   7.0
   7.1
+  7.2
 ].each do |rails_version|
   appraise "rails-#{rails_version}" do
     gem 'rails', "~> #{rails_version}.0"
