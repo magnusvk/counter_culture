@@ -1,3 +1,8 @@
+## 3.8.0 (October 4, 2024)
+
+New features:
+  - Prefer using `with_connection` where possible (#398)
+
 ## 3.7.0 (June 20, 2024)
 
 New features:
