@@ -190,6 +190,24 @@ Now, the ```Category``` model will keep the counter cache in ```special_count```
 
 If you would like to use this with `counter_culture_fix_counts`, make sure to also provide [the `column_names` configuration](#handling-dynamic-column-names).
 
+### Conditional counter cache shorthand
+
+You may also use a conditional API identical to [ActiveRecord's Callbacks](https://guides.rubyonrails.org/active_record_callbacks.html#conditional-callbacks) to conditionally count columns:
+
+```ruby
+class Product < ActiveRecord::Base
+  belongs_to :category
+  counter_culture :category, column_name: :special_count, if: :special?
+end
+
+class Category < ActiveRecord::Base
+  has_many :products
+end
+
+Now, the ```Category``` model will keep the counter cache in ```special_count``` up-to-date. Only products where ```special?``` returns true will affect the special_count.
+
+If you would like to use this with `counter_culture_fix_counts`, make sure to also provide [the `column_names` configuration](#handling-dynamic-column-names).
+
 ### Temporarily skipping counter cache updates
 
 If you would like to temporarily pause counter_culture, for example in a backfill script, you can do so as follows:
