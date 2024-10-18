@@ -36,6 +36,8 @@ require 'models/city'
 require 'models/group'
 require 'models/sub_group'
 require 'models/group_item'
+require 'models/article_group'
+require 'models/article'
 
 if ENV['DB'] == 'postgresql'
   require 'models/purchase_order'
@@ -3313,6 +3315,25 @@ RSpec.describe "CounterCulture" do
 
       po.reload
       expect(po.total_amount).to eq(0.0)
+    end
+  end
+
+  describe "skip not exists attribute in saved_changes" do
+    it "works with not exists attribute in saved_changes", :aggregate_failures do
+      article_group = ArticleGroup.create(name: 'group1')
+
+      article = Article.new
+      article.article_group_id = article_group.id
+      article.title = { 'en' => 'test1', 'ja' => 'テスト１' }
+      article.save!
+
+      article_group.reload
+      expect(article_group.articles_count).to eq(1)
+
+      article.title = { 'en' => 'test2', 'ja' => 'テスト１' }
+      article.save!
+      article_group.reload
+      expect(article_group.articles_count).to eq(1)
     end
   end
 end
