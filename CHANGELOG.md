@@ -1,3 +1,8 @@
+## 3.8.1 (October 18, 2024)
+
+Bugfixes:
+  - Fix compatibility with `mobility` gem by skipping attributes that don't exist in the database but show up in `saved_changes` (#401)
+
 ## 3.8.0 (October 4, 2024)
 
 New features:
