@@ -315,7 +315,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer :article_group_id, :null => false
   end
 
-  if ENV['DB'] == 'postgresql' && Gem::Version.new(Rails.version) >= Gem::Version.new('5.0')
+  if ENV['DB'] == 'postgresql' && ActiveRecord.version >= Gem::Version.new('5.0')
     create_table :purchase_orders, :force => true do |t|
       t.money "total_amount", scale: 2, default: "0.0", null: false
     end

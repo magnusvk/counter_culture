@@ -27,8 +27,8 @@ class CounterCultureGenerator < ActiveRecord::Generators::Base
   end
 
   def migration_version
-    if Gem::Version.new(Rails.version) >= Gem::Version.new('5.0.0')
-      "[#{Rails::VERSION::MAJOR}.#{Rails::VERSION::MINOR}]"
+    if ActiveRecord.version >= Gem::Version.new('5.0.0')
+      "[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]"
     end
   end
 

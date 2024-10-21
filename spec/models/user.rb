@@ -20,7 +20,7 @@ class User < ActiveRecord::Base
   default_scope do
     if _default_scope_enabled
       query = joins("LEFT OUTER JOIN companies ON users.company_id = companies.id")
-      Rails.version < "5.0.0" ? query.uniq : query.distinct
+      ActiveRecord.version < Gem::Version.new("5.0.0") ? query.uniq : query.distinct
     else
       all
     end

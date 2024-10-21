@@ -7,7 +7,7 @@
   7.2
 ].each do |rails_version|
   appraise "rails-#{rails_version}" do
-    gem 'rails', "~> #{rails_version}.0"
+    gem 'activerecord', "~> #{rails_version}.0"
     if Gem::Version.new(rails_version) < Gem::Version.new("7.2")
       gem 'sqlite3', "~> 1.4"
     end
