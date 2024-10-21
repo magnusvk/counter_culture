@@ -23,11 +23,11 @@ module CounterCulture
     private
 
     def rails_7_1?
-      Gem::Requirement.new('~> 7.1.0').satisfied_by?(Gem::Version.new(Rails.version))
+      Gem::Requirement.new('~> 7.1.0').satisfied_by?(ActiveRecord.version)
     end
 
     def rails_7_2_or_greater?
-      Gem::Requirement.new('>= 7.2.0').satisfied_by?(Gem::Version.new(Rails.version))
+      Gem::Requirement.new('>= 7.2.0').satisfied_by?(ActiveRecord.version)
     end
   end
 end
