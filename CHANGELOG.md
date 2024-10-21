@@ -1,3 +1,9 @@
+## 3.8.2 (October 21, 2024)
+
+Bugfixes:
+  - Use ActiveRecord version, not Rails version, to make it possible to use `counter_culture_fix_counts` without Rails
+  - Tests no longer require Rails, making sure we do not introduce this regression again
+
 ## 3.8.1 (October 18, 2024)
 
 Bugfixes:
