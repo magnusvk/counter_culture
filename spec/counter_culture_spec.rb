@@ -1581,10 +1581,10 @@ RSpec.describe "CounterCulture" do
   end
 
   it "should log if verbose option is true" do
-    logger = Rails.logger
+    logger = ActiveRecord::Base.logger
     io = StringIO.new
     io_logger = Logger.new(io)
-    Rails.logger = io_logger
+    ActiveRecord::Base.logger = io_logger
 
     # first, clean up
     SimpleDependent.delete_all
@@ -1609,7 +1609,7 @@ RSpec.describe "CounterCulture" do
       "Finished batch #2.")
     expect(io.string).to include(
       "Finished reconciling of SimpleDependent#simple_main.")
-    Rails.logger = logger
+    ActiveRecord::Base.logger = logger
   end
 
   MANY = CI_TEST_RUN ? 1000 : 20

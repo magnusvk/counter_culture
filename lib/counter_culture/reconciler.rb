@@ -181,17 +181,17 @@ module CounterCulture
       def log(message)
         return unless log?
 
-        Rails.logger.info(message)
+        ActiveRecord::Base.logger.info(message)
       end
 
       def log_without_newline(message)
         return unless log?
 
-        Rails.logger << message if Rails.logger.info?
+        ActiveRecord::Base.logger << message if ActiveRecord::Base.logger.info?
       end
 
       def log?
-        options[:verbose] && Rails.logger
+        options[:verbose] && ActiveRecord::Base.logger
       end
 
       # keep track of what we fixed, e.g. for a notification email

@@ -7,7 +7,7 @@ require 'counter_culture'
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-require 'rails/all'
+require 'active_record'
 
 module PapertrailSupport
   def self.supported_here?
@@ -74,7 +74,7 @@ DB_CONFIG = {
   }
 }.with_indifferent_access.freeze
 
-if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
+if ActiveRecord.version < Gem::Version.new('5.0.0')
   ActiveRecord::Base.raise_in_transactional_callbacks = true
 end
 
