@@ -2,6 +2,7 @@ require 'simplecov'
 SimpleCov.start
 
 require 'bundler/setup'
+require "logger"
 require 'counter_culture'
 
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
