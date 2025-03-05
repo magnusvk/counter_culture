@@ -5,6 +5,7 @@
   7.0
   7.1
   7.2
+  8.0
 ].each do |rails_version|
   appraise "rails-#{rails_version}" do
     gem 'activerecord', "~> #{rails_version}.0"
