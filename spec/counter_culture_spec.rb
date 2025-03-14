@@ -3336,4 +3336,45 @@ RSpec.describe "CounterCulture" do
       expect(article_group.articles_count).to eq(1)
     end
   end
+
+  context "with read replica configuration" do
+    let(:company) { Company.create! }
+    
+    before do
+      company.children << Company.create!
+      company.update_column(:children_count, -1)
+    end
+
+    it "uses read replica when enabled" do
+      CounterCulture.configure do |config|
+        config.use_read_replica = true
+      end
+
+      roles_used = []
+      allow(ActiveRecord::Base).to receive(:connected_to).and_wrap_original do |original, **kwargs, &block|
+        roles_used << kwargs[:role]
+        block.call if block
+      end
+
+      Company.counter_culture_fix_counts
+
+      expect(roles_used).to include(:reading)
+    end
+
+    it "does not use read replica when disabled" do
+      CounterCulture.configure do |config|
+        config.use_read_replica = false
+      end
+
+      roles_used = []
+      allow(ActiveRecord::Base).to receive(:connected_to).and_wrap_original do |original, **kwargs, &block|
+        roles_used << kwargs[:role]
+        block.call if block
+      end
+
+      Company.counter_culture_fix_counts
+
+      expect(roles_used).to be_empty
+    end
+  end
 end

@@ -3,6 +3,7 @@ require 'active_support/lazy_load_hooks'
 
 require 'counter_culture/version'
 require 'counter_culture/extensions'
+require 'counter_culture/configuration'
 require 'counter_culture/counter'
 require 'counter_culture/reconciler'
 require 'counter_culture/skip_updates'

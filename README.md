@@ -618,6 +618,39 @@ Image.counter_culture_fix_counts(polymorphic_classes: Product)
 Image.counter_culture_fix_counts(polymorphic_classes: [Product, Employee])
 ```
 
+## Using Read Replicas
+
+When using `counter_culture_fix_counts`, you can configure Counter Culture to use read replicas for counting operations, which can help reduce load on your primary database. Write operations will still use the primary database.
+
+### Global Configuration
+
+You can enable read replica support globally:
+
+```ruby
+# config/initializers/counter_culture.rb
+CounterCulture.configure do |config|
+  config.use_read_replica = true
+end
+```
+
+### Per-Call Configuration
+
+You can also specify read replica usage per call (this takes precedence over global configuration):
+
+```ruby
+Model.counter_culture_fix_counts(
+  db_connection_builder: proc { |reading, block|
+    if reading
+      ApplicationRecord.connected_to(role: :reading, &block)
+    else
+      ApplicationRecord.connected_to(role: :writing, &block)
+    end
+  }
+)
+```
+
+Note: This feature requires Rails 7.1 or higher for full read replica support. On older versions, it will fall back to using the primary database.
+
 ## Contributing to counter_culture
 
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.

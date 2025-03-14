@@ -331,7 +331,9 @@ module CounterCulture
         if builder = options[:db_connection_builder]
           builder.call(true, block)
         else
-          yield
+          WithConnection.new(relation_class).call(reading: true) do |_conn|
+            yield
+          end
         end
       end
 
@@ -339,7 +341,9 @@ module CounterCulture
         if builder = options[:db_connection_builder]
           builder.call(false, block)
         else
-          yield
+          WithConnection.new(relation_class).call(reading: false) do |_conn|
+            yield
+          end
         end
       end
     end
