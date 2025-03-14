@@ -66,6 +66,7 @@ module CounterCulture
         @counter, @options, = counter, options
         @relation_class = relation_class
         @changes_holder = changes_holder
+        @connection_handler = WithConnection.new(relation_class)
       end
 
       def perform
@@ -314,7 +315,7 @@ module CounterCulture
       # using Postgres with schema-namespaced tables. But then it's required,
       # and otherwise it's just a no-op, so why not do it?
       def quote_table_name(table_name)
-        WithConnection.new(relation_class).call do |connection|
+        @connection_handler.call do |connection|
           connection.quote_table_name(table_name)
         end
       end
@@ -331,7 +332,7 @@ module CounterCulture
         if builder = options[:db_connection_builder]
           builder.call(true, block)
         else
-          WithConnection.new(relation_class).call(reading: true) do |_conn|
+          @connection_handler.call(reading: true) do |_conn|
             yield
           end
         end
@@ -341,7 +342,7 @@ module CounterCulture
         if builder = options[:db_connection_builder]
           builder.call(false, block)
         else
-          WithConnection.new(relation_class).call(reading: false) do |_conn|
+          @connection_handler.call(reading: false) do |_conn|
             yield
           end
         end

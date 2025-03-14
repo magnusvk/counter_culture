@@ -7,22 +7,10 @@ module CounterCulture
     attr_reader :recipient
 
     def call(reading: false)
-      if CounterCulture.configuration.use_read_replica && reading
-        # Use read replica for reading operations
-        if rails_7_2_or_greater?
-          recipient.connected_to(role: :reading) do
-            yield_with_connection { |conn| yield conn }
-          end
-        elsif rails_7_1?
-          recipient.connection_handler.while_preventing_writes(true) do
-            yield_with_connection { |conn| yield conn }
-          end
-        else
-          # For older Rails versions, fallback to normal connection
-          yield_with_connection { |conn| yield conn }
-        end
-      else
-        # Use primary for everything else
+      use_read_replica = CounterCulture.configuration.use_read_replica && reading
+      role = use_read_replica ? :reading : :writing
+
+      ActiveRecord::Base.connected_to(role: role) do
         yield_with_connection { |conn| yield conn }
       end
     end

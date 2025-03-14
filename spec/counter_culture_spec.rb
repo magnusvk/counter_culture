@@ -3359,6 +3359,7 @@ RSpec.describe "CounterCulture" do
       Company.counter_culture_fix_counts
 
       expect(roles_used).to include(:reading)
+      expect(roles_used - [:reading]).to all(eq(:writing))
     end
 
     it "does not use read replica when disabled" do
@@ -3374,7 +3375,7 @@ RSpec.describe "CounterCulture" do
 
       Company.counter_culture_fix_counts
 
-      expect(roles_used).to be_empty
+      expect(roles_used).to include(:writing)
     end
   end
 end
