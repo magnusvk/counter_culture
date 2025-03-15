@@ -7,10 +7,15 @@ module CounterCulture
     attr_reader :recipient
 
     def call(reading: false)
-      use_read_replica = CounterCulture.configuration.use_read_replica && reading
-      role = use_read_replica ? :reading : :writing
+      if rails_7_1_or_greater?
+        use_read_replica = CounterCulture.configuration.use_read_replica && reading
+        role = use_read_replica ? :reading : :writing
 
-      ActiveRecord::Base.connected_to(role: role) do
+        ActiveRecord::Base.connected_to(role: role) do
+          yield_with_connection { |conn| yield conn }
+        end
+      else
+        # For older Rails versions, just use normal connection
         yield_with_connection { |conn| yield conn }
       end
     end
@@ -27,12 +32,16 @@ module CounterCulture
       end
     end
 
-    def rails_7_1?
-      Gem::Requirement.new('~> 7.1.0').satisfied_by?(ActiveRecord.version)
+    def rails_7_1_or_greater?
+      Gem::Requirement.new('>= 7.1.0').satisfied_by?(ActiveRecord.version)
     end
 
     def rails_7_2_or_greater?
       Gem::Requirement.new('>= 7.2.0').satisfied_by?(ActiveRecord.version)
+    end
+
+    def rails_7_1?
+      Gem::Requirement.new('~> 7.1.0').satisfied_by?(ActiveRecord.version)
     end
   end
 end
