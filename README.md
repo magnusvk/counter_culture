@@ -620,7 +620,7 @@ Image.counter_culture_fix_counts(polymorphic_classes: [Product, Employee])
 
 ## Using Read Replicas
 
-When using `counter_culture_fix_counts`, you can configure Counter Culture to use read replicas for counting operations, which can help reduce load on your primary database. Write operations will still use the primary database.
+When using `counter_culture_fix_counts`, you can configure counter_culture to use read replicas for counting operations, which can help reduce load on your primary database. Write operations will still use the primary database.
 
 ### Global Configuration
 
