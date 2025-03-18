@@ -12,10 +12,25 @@ module CounterCulture
   end
 
   class Configuration
-    attr_accessor :use_read_replica
+    attr_reader :use_read_replica
 
     def initialize
       @use_read_replica = false
+    end
+
+    def use_read_replica=(value)
+      if value && !rails_supports_read_replica?
+        raise "Counter Culture's read replica support requires Rails 6.1 or higher"
+      end
+      @use_read_replica = value
+    end
+
+    private
+
+    def rails_supports_read_replica?
+      Rails::VERSION::STRING.to_f >= 6.1
+    rescue NameError
+      false
     end
   end
 end

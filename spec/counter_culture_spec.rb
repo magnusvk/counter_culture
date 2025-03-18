@@ -3350,6 +3350,9 @@ RSpec.describe "CounterCulture" do
         allow_any_instance_of(CounterCulture::WithConnection)
           .to receive(:rails_7_1_or_greater?)
           .and_return(true)
+        allow_any_instance_of(CounterCulture::Configuration)
+          .to receive(:rails_supports_read_replica?)
+          .and_return(true)
       end
 
       it "uses read replica when enabled" do
@@ -3391,12 +3394,18 @@ RSpec.describe "CounterCulture" do
         allow_any_instance_of(CounterCulture::WithConnection)
           .to receive(:rails_7_1_or_greater?)
           .and_return(false)
+        allow_any_instance_of(CounterCulture::Configuration)
+          .to receive(:rails_supports_read_replica?)
+          .and_return(false)
       end
 
       it "works without read replica support" do
-        CounterCulture.configure do |config|
-          config.use_read_replica = true  # Should be ignored for older Rails
-        end
+        # Should raise error when trying to enable read replica
+        expect {
+          CounterCulture.configure do |config|
+            config.use_read_replica = true
+          end
+        }.to raise_error("Counter Culture's read replica support requires Rails 6.1 or higher")
 
         # Should not use connected_to at all
         expect(ActiveRecord::Base).not_to receive(:connected_to)
