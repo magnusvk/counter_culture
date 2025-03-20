@@ -28,9 +28,7 @@ module CounterCulture
     private
 
     def rails_supports_read_replica?
-      Rails::VERSION::STRING.to_f >= 6.1
-    rescue NameError
-      false
+      Gem::Requirement.new('>= 7.1.0').satisfied_by?(ActiveRecord.version)
     end
   end
 end
