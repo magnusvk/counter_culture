@@ -3405,11 +3405,11 @@ RSpec.describe "CounterCulture" do
           CounterCulture.configure do |config|
             config.use_read_replica = true
           end
-        }.to raise_error("Counter Culture's read replica support requires Rails 6.1 or higher")
+        }.to raise_error("Counter Culture's read replica support requires Rails 7.1 or higher")
 
         # Should not use connected_to at all
         expect(ActiveRecord::Base).not_to receive(:connected_to)
-  
+
         Company.counter_culture_fix_counts
         expect(company.reload.children_count).to eq(1)
       end

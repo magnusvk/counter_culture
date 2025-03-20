@@ -20,7 +20,7 @@ module CounterCulture
 
     def use_read_replica=(value)
       if value && !rails_supports_read_replica?
-        raise "Counter Culture's read replica support requires Rails 6.1 or higher"
+        raise "Counter Culture's read replica support requires Rails 7.1 or higher"
       end
       @use_read_replica = value
     end
