@@ -1,3 +1,8 @@
+## 3.9.0 (March 20, 2025)
+
+New features:
+  - Add global configuration for using a read replica (#405)
+
 ## 3.8.2 (October 21, 2024)
 
 Bugfixes:
