@@ -138,6 +138,7 @@ module CounterCulture
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
             klass.where(primary_key => id_to_change).update_all updates.join(', ')
+            assign_to_associated_object(obj, relation, change_counter_column, operator)
           end
         end
       end
@@ -363,6 +364,18 @@ module CounterCulture
           "_was"
         end
       obj.public_send("#{attr}#{changes_method}")
+    end
+
+    # update associated object counter attribute
+    def assign_to_associated_object(obj, relation, change_counter_column, operator)
+      association_name = relation_reflect(relation).name
+      if obj.association(association_name).loaded?
+        association_object = obj.public_send(association_name)
+        association_object.assign_attributes(change_counter_column =>
+                                               association_object.public_send(change_counter_column)
+                                                                 .public_send(operator, 1))
+        association_object.public_send(:"clear_#{change_counter_column}_change")
+      end
     end
 
     def assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
