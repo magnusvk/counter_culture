@@ -369,8 +369,8 @@ module CounterCulture
     # update associated object counter attribute
     def assign_to_associated_object(obj, relation, change_counter_column, operator)
       association_name = relation_reflect(relation).name
-      if obj.association(association_name).loaded?
-        association_object = obj.public_send(association_name)
+
+      if obj.association(association_name).loaded? && (association_object = obj.public_send(association_name)).present?
         association_object.assign_attributes(change_counter_column =>
                                                association_object.public_send(change_counter_column)
                                                                  .public_send(operator, 1))
