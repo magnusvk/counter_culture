@@ -376,7 +376,11 @@ module CounterCulture
         association_object.assign_attributes(change_counter_column =>
                                                (association_object.public_send(change_counter_column) || 0)
                                                                   .public_send(operator, delta_magnitude))
-        association_object.public_send(:"clear_#{change_counter_column}_change")
+        if ACTIVE_RECORD_VERSION >= Gem::Version.new("6.1.0")
+          association_object.public_send(:"clear_#{change_counter_column}_change")
+        else
+          association_object.public_send(:clear_attribute_change, change_counter_column)
+        end
       end
     end
 
