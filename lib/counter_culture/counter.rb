@@ -138,7 +138,7 @@ module CounterCulture
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
             klass.where(primary_key => id_to_change).update_all updates.join(', ')
-            assign_to_associated_object(obj, relation, change_counter_column, operator)
+            assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
           end
         end
       end
@@ -367,13 +367,15 @@ module CounterCulture
     end
 
     # update associated object counter attribute
-    def assign_to_associated_object(obj, relation, change_counter_column, operator)
+    def assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
       association_name = relation_reflect(relation).name
+
+      return unless obj.respond_to?(association_name)
 
       if obj.association(association_name).loaded? && (association_object = obj.public_send(association_name)).present?
         association_object.assign_attributes(change_counter_column =>
-                                               association_object.public_send(change_counter_column)
-                                                                 .public_send(operator, 1))
+                                               (association_object.public_send(change_counter_column) || 0)
+                                                                  .public_send(operator, delta_magnitude))
         association_object.public_send(:"clear_#{change_counter_column}_change")
       end
     end
