@@ -373,15 +373,24 @@ module CounterCulture
       return unless obj.respond_to?(association_name)
 
       if obj.association(association_name).loaded? && (association_object = obj.public_send(association_name)).present?
-        association_object.assign_attributes(change_counter_column =>
-                                               (association_object.public_send(change_counter_column) || 0)
-                                                                  .public_send(operator, delta_magnitude))
-        if ACTIVE_RECORD_VERSION >= Gem::Version.new("6.1.0")
-          association_object.public_send(:"clear_#{change_counter_column}_change")
-        else
-          association_object.send(:clear_attribute_change, change_counter_column)
-        end
+        association_object.assign_attributes(
+          change_counter_column =>
+            association_object_new_counter(association_object, change_counter_column, operator, delta_magnitude)
+        )
+        association_object_clear_change(association_object, change_counter_column)
       end
+    end
+
+    def association_object_clear_change(association_object, change_counter_column)
+      if ACTIVE_RECORD_VERSION >= Gem::Version.new("6.1.0")
+        association_object.public_send(:"clear_#{change_counter_column}_change")
+      else
+        association_object.send(:clear_attribute_change, change_counter_column)
+      end
+    end
+
+    def association_object_new_counter(association_object, change_counter_column, operator, delta_magnitude)
+      (association_object.public_send(change_counter_column) || 0).public_send(operator, delta_magnitude)
     end
 
     def assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
