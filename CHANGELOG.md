@@ -1,3 +1,8 @@
+## 3.10.0 (April 15, 2025)
+
+New features:
+  - Update counter cache values without requiring a reload (#407)
+
 ## 3.9.0 (March 20, 2025)
 
 New features:
