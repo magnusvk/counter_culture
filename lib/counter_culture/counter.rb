@@ -138,6 +138,7 @@ module CounterCulture
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
             klass.where(primary_key => id_to_change).update_all updates.join(', ')
+            assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
           end
         end
       end
@@ -363,6 +364,33 @@ module CounterCulture
           "_was"
         end
       obj.public_send("#{attr}#{changes_method}")
+    end
+
+    # update associated object counter attribute
+    def assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
+      association_name = relation_reflect(relation).name
+
+      return unless obj.respond_to?(association_name)
+
+      if obj.association(association_name).loaded? && (association_object = obj.public_send(association_name)).present?
+        association_object.assign_attributes(
+          change_counter_column =>
+            association_object_new_counter(association_object, change_counter_column, operator, delta_magnitude)
+        )
+        association_object_clear_change(association_object, change_counter_column)
+      end
+    end
+
+    def association_object_clear_change(association_object, change_counter_column)
+      if ACTIVE_RECORD_VERSION >= Gem::Version.new("6.1.0")
+        association_object.public_send(:"clear_#{change_counter_column}_change")
+      else
+        association_object.send(:clear_attribute_change, change_counter_column)
+      end
+    end
+
+    def association_object_new_counter(association_object, change_counter_column, operator, delta_magnitude)
+      (association_object.public_send(change_counter_column) || 0).public_send(operator, delta_magnitude)
     end
 
     def assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)

@@ -102,6 +102,29 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "increments counter cache on create without reload" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    user.reviews.create :user => user, :product => product, :approvals => 13
+
+    expect(user.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+    expect(product.reviews_count).to eq(1)
+
+    # NOTE: check if counters from the DB equal to the cached
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(13)
+    expect(product.reviews_count).to eq(1)
+  end
+
   it "skips zero delta_magnitude update on create" do
     user = User.create
     product = Product.create
@@ -269,6 +292,42 @@ RSpec.describe "CounterCulture" do
     # this does not decrement counter cache
     review.destroy
 
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+  end
+
+  it "decrements counter cache on destroy without reload" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    review = Review.create :user => user, :product => product, :approvals => 69
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(69)
+
+    review.destroy
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+
+    # this does not decrement counter cache
+    review.destroy
+
+    expect(user.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+
+    # NOTE: check if counters from the DB equal to the cached
     user.reload
     product.reload
 
