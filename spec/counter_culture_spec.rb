@@ -310,9 +310,6 @@ RSpec.describe "CounterCulture" do
 
     review = Review.create :user => user, :product => product, :approvals => 69
 
-    # user.reload
-    # product.reload
-
     expect(user.reviews_count).to eq(1)
     expect(product.reviews_count).to eq(1)
     expect(user.review_approvals_count).to eq(69)
