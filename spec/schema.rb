@@ -92,6 +92,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "dynamic_delta_count",         :default => 0, :null => false
     t.integer  "custom_delta_count",         :default => 0, :null => false
     t.integer  "review_approvals_count",      :default => 0, :null => false
+    t.integer  "cities_count",      :default => 0, :null => false
     t.string   "has_string_id_id"
     t.integer  "has_non_pk_id_id"
     t.float    "review_value_sum",    :default => 0.0, :null => false
@@ -290,6 +291,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string :name
     t.integer :prefecture_id, null: false
     t.integer :population, null: false
+    t.integer :user_id, null: true
   end
 
   create_table "groups", :force => true do |t|
