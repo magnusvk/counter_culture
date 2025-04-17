@@ -15,6 +15,8 @@ class City < ActiveRecord::Base
     column_names: -> { { City.small => :small_cities_count } }
   )
 
+  counter_culture :user
+
   def big?
     population > 100000
   end
