@@ -370,15 +370,26 @@ module CounterCulture
     def assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
       association_name = relation_reflect(relation).name
 
-      return unless obj.respond_to?(association_name)
+      association_object = association_object_for_assign(obj, association_name)
+      return if association_object.blank?
 
-      if obj.association(association_name).loaded? && (association_object = obj.public_send(association_name)).present?
-        association_object.assign_attributes(
-          change_counter_column =>
-            association_object_new_counter(association_object, change_counter_column, operator, delta_magnitude)
-        )
-        association_object_clear_change(association_object, change_counter_column)
+      association_object.assign_attributes(
+        change_counter_column =>
+          association_object_new_counter(association_object, change_counter_column, operator, delta_magnitude)
+      )
+      association_object_clear_change(association_object, change_counter_column)
+    end
+
+    def association_object_for_assign(obj, association_name)
+      unless obj.class
+            .reflect_on_all_associations
+            .detect { |assoc| assoc.name.to_sym == association_name.to_sym }
+            .present? &&
+         obj.association(association_name).loaded?
+        return
       end
+
+      obj.public_send(association_name)
     end
 
     def association_object_clear_change(association_object, change_counter_column)
