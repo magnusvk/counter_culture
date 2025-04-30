@@ -1,3 +1,8 @@
+## 3.10.1 (April 30, 2025)
+
+Bigfixes:
+  - Fix issue when using `delegate` instead of `has_many :through` (#411)
+
 ## 3.10.0 (April 15, 2025)
 
 New features:
