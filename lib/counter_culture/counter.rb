@@ -381,11 +381,16 @@ module CounterCulture
     end
 
     def association_object_for_assign(obj, association_name)
-      unless obj.class
-            .reflect_on_all_associations
-            .detect { |assoc| assoc.name.to_sym == association_name.to_sym }
-            .present? &&
-         obj.association(association_name).loaded?
+      if obj.class.reflect_on_all_associations.
+          find { |assoc| assoc.name.to_sym == association_name.to_sym }.
+          blank?
+        # This means that this isn't defined as an association; either it
+        # doesn't exist at all, or it uses delegate. In either case, we can't
+        # update the count this way.
+        return
+      end
+      if !obj.association(association_name).loaded?
+        # If the association isn't loaded, no need to update the count
         return
       end
 
