@@ -315,6 +315,22 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer :article_group_id, :null => false
   end
 
+  create_table "composite_groups", :force => true do |t|
+    t.integer :secondary_id, :null => false
+    t.integer :composite_users_count, :default => 0, :null => false
+    t.integer :composite_users_pt_count, :default => 0, :null => false
+  end
+
+  create_table "composite_group_users", :force => true do |t|
+    t.integer :composite_user_id, :null => false
+    t.integer :composite_group_id, :null => false
+    t.integer :secondary_id, :null => false
+  end
+
+  create_table "composite_users", :force => true do |t|
+    t.integer :composite_groups_count, :default => 0, :null => false
+  end
+
   if ENV['DB'] == 'postgresql' && ActiveRecord.version >= Gem::Version.new('5.0')
     create_table :purchase_orders, :force => true do |t|
       t.money "total_amount", scale: 2, default: "0.0", null: false

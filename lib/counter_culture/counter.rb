@@ -113,7 +113,13 @@ module CounterCulture
         end
 
         if @with_papertrail
-          instance = klass.where(primary_key => id_to_change).first
+          instance = if primary_key.is_a?(Array)
+            conditions = composite_primary_key_conditions(primary_key, id_to_change)
+            klass.where(conditions).first
+          else
+            klass.where(primary_key => id_to_change).first
+          end
+
           if instance
             if instance.paper_trail.respond_to?(:save_with_version)
               # touch_with_version is deprecated starting in PaperTrail 9.0.0
@@ -137,7 +143,14 @@ module CounterCulture
 
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
-            klass.where(primary_key => id_to_change).update_all updates.join(', ')
+            if primary_key.is_a?(Array)
+              # handle composite primary keys
+              conditions = composite_primary_key_conditions(primary_key, id_to_change)
+              klass.where(conditions).update_all updates.join(', ')
+            else
+              klass.where(primary_key => id_to_change).update_all updates.join(', ')
+            end
+
             assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
           end
         end
@@ -172,7 +185,12 @@ module CounterCulture
 
     # the string to pass to order() in order to sort by primary key
     def full_primary_key(klass)
-      "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
+      primary_key = klass.primary_key
+      if primary_key.is_a?(Array)
+        primary_key.map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
+      else
+        "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
+      end
     end
 
     # gets the value of the foreign key on the given relation
@@ -186,23 +204,35 @@ module CounterCulture
       original_relation = relation
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
 
-      if was
+      value = if was
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
         klass = relation_klass(first, source: obj, was: was)
         if foreign_key_value
-          value = klass.where(
-            "#{klass.table_name}.#{relation_primary_key(first, source: obj, was: was)} = ?",
-            foreign_key_value).first
+          primary_key = relation_primary_key(first, source: obj, was: was)
+          if primary_key.is_a?(Array)
+            conditions = composite_primary_key_conditions(primary_key, foreign_key_value)
+            klass.where(conditions).first
+          else
+            klass.where(
+              "#{klass.table_name}.#{primary_key} = ?",
+              foreign_key_value).first
+          end
         end
       else
-        value = obj
+        obj
       end
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
 
-      return value.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym))
+      primary_key = relation_primary_key(original_relation, source: obj, was: was)
+      if primary_key.is_a?(Array)
+        # handle composite primary keys
+        return value ? primary_key.map { |key| value.public_send(key) } : nil
+      else
+        return value.try(primary_key.try(:to_sym))
+      end
     end
 
     # gets the reflect object on the given relation
@@ -308,6 +338,12 @@ module CounterCulture
         return reflect.options[:primary_key] if reflect.options.key?(:primary_key)
         return relation_klass(relation, source: source, was: was).try(:primary_key)
       end
+
+      # handle composite primary keys
+      if reflect.options[:primary_key].is_a?(Array)
+        return reflect.options[:primary_key]
+      end
+
       reflect.association_primary_key(klass)
     end
 
@@ -437,6 +473,12 @@ module CounterCulture
       else
         "#{update} '#{value.call}'"
       end
+    end
+
+    def composite_primary_key_conditions(primary_keys, fk_value)
+      primary_keys.each_with_index.map do |key, index|
+        [key, fk_value[index]]
+      end.to_h
     end
 
     def counter_update_snippet(update, klass, id_to_change, operator, delta_magnitude)

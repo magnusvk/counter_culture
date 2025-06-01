@@ -61,6 +61,7 @@ module CounterCulture
 
       delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
       delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
+      delegate :primary_key, :to => :relation_class
 
       def initialize(counter, changes_holder, options, relation_class)
         @counter, @options, = counter, options
@@ -111,8 +112,8 @@ module CounterCulture
 
           # select join column and count (from above) as well as cache column ('column_name') for later comparison
           counts_query = scope.select(
-            "#{relation_class_table_name}.#{relation_class.primary_key}, " \
-            "#{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, " \
+            "#{primary_key_select}, " \
+            "#{association_primary_key_select}, " \
             "#{count_select} AS count, " \
             "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
           )
@@ -173,7 +174,15 @@ module CounterCulture
             end
 
             with_writing_db_connection do
-              relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+              if primary_key.is_a?(Array)
+                conditions = {}
+                primary_key.each do |key|
+                  conditions[key] = record.send(key)
+                end
+                relation_class.where(conditions).update_all(updates.join(', '))
+              else
+                relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+              end
             end
           end
         end
@@ -199,11 +208,12 @@ module CounterCulture
       def track_change(record, column_name, count)
         @changes_holder << {
           :entity => relation_class.name,
-          relation_class.primary_key.to_sym => record.send(relation_class.primary_key),
           :what => column_name,
           :wrong => record.send(column_name),
           :right => count
-        }
+        }.tap do |h|
+          Array.wrap(primary_key).each { |pk| h[pk.to_sym] = record.send(pk) }
+        end
       end
 
       def count_select
@@ -217,7 +227,33 @@ module CounterCulture
             @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column}, 0))"
           end
         else
-          @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
+          primary_key = model.primary_key
+          if primary_key.is_a?(Array)
+            # for composite primary keys, use the first key for counting
+            count_column = "#{self_table_name}.#{primary_key.first}"
+          else
+            count_column = "#{self_table_name}.#{primary_key}"
+          end
+          @count_select = "COUNT(#{count_column})*#{delta_magnitude}"
+        end
+      end
+
+      def primary_key_select
+        relation_class_table_name = quote_table_name(relation_class.table_name)
+        if primary_key.is_a?(Array)
+          primary_key.map { |pk| "#{relation_class_table_name}.#{pk}" }.join(', ')
+        else
+          "#{relation_class_table_name}.#{primary_key}"
+        end
+      end
+
+      def association_primary_key_select
+        relation_class_table_name = quote_table_name(relation_class.table_name)
+        association_primary_key = relation_reflect(relation).association_primary_key(relation_class)
+        if association_primary_key.is_a?(Array)
+          association_primary_key.map { |apk| "#{relation_class_table_name}.#{apk}" }.join(', ')
+        else
+          "#{relation_class_table_name}.#{association_primary_key}"
         end
       end
 
@@ -271,8 +307,18 @@ module CounterCulture
               [target_table_key, source_table_key]
           end
 
-          joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
-            "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
+          if source_table_key.is_a?(Array) && target_table_key.is_a?(Array)
+            # handle composite primary keys
+            join_conditions = source_table_key.zip(target_table_key).map do |source_key, target_key|
+              "#{source_table}.#{source_key} = #{target_table_alias}.#{target_key}"
+            end
+            joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
+              "ON #{join_conditions.join(' AND ')}"
+          else
+            joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
+              "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
+          end
+
           # adds 'type' condition to JOIN clause if the current model is a
           # child in a Single Table Inheritance
           if reflect.active_record.column_names.include?('type') &&
@@ -289,7 +335,14 @@ module CounterCulture
             # conditions must be applied to the join on which we are counting
             if where
               if where.respond_to?(:to_sql)
-                joins_sql += " AND #{target_table_alias}.#{model.primary_key} IN (#{where.select(model.primary_key).to_sql})"
+                model_primary_key = model.primary_key
+                if model_primary_key.is_a?(Array)
+                  # handle composite primary keys
+                  where_select = model_primary_key.map { |pk| "#{model.table_name}.#{pk}" }.join(', ')
+                  joins_sql += " AND (#{target_table_alias}.#{model_primary_key.first}) IN (#{where.select(where_select).to_sql})"
+                else
+                  joins_sql += " AND #{target_table_alias}.#{model_primary_key} IN (#{where.select(model_primary_key).to_sql})"
+                end
               else
                 joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
               end
