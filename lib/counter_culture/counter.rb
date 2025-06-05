@@ -185,12 +185,7 @@ module CounterCulture
 
     # the string to pass to order() in order to sort by primary key
     def full_primary_key(klass)
-      primary_key = klass.primary_key
-      if primary_key.is_a?(Array)
-        primary_key.map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
-      else
-        "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
-      end
+      Array.wrap(primary_key).map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
     end
 
     # gets the value of the foreign key on the given relation
