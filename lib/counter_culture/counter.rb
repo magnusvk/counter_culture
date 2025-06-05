@@ -314,11 +314,6 @@ module CounterCulture
         return relation_klass(relation, source: source, was: was).try(:primary_key)
       end
 
-      # handle composite primary keys
-      if reflect.options[:primary_key].is_a?(Array)
-        return reflect.options[:primary_key]
-      end
-
       reflect.association_primary_key(klass)
     end
 

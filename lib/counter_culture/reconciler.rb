@@ -287,17 +287,16 @@ module CounterCulture
               [target_table_key, source_table_key]
           end
 
-          if source_table_key.is_a?(Array) && target_table_key.is_a?(Array)
-            # handle composite primary keys
-            join_conditions = source_table_key.zip(target_table_key).map do |source_key, target_key|
-              "#{source_table}.#{source_key} = #{target_table_alias}.#{target_key}"
-            end
-            joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
-              "ON #{join_conditions.join(' AND ')}"
-          else
-            joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
-              "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
-          end
+          source_table_key = Array.wrap(source_table_key)
+          target_table_key = Array.wrap(target_table_key)
+
+          join_conditions =
+            source_table_key
+              .zip(target_table_key).map do |source_key, target_key|
+                "#{source_table}.#{source_key} = #{target_table_alias}.#{target_key}"
+              end.join(' AND ')
+          joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
+            "ON #{join_conditions}"
 
           # adds 'type' condition to JOIN clause if the current model is a
           # child in a Single Table Inheritance
