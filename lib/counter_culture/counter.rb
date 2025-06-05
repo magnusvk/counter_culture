@@ -207,7 +207,7 @@ module CounterCulture
       end
 
       primary_key = relation_primary_key(original_relation, source: obj, was: was)
-      Array.wrap(primary_key).filter_map { |pk| value.try(pk&.to_sym) }.presence
+      Array.wrap(primary_key).map { |pk| value.try(pk&.to_sym) }.compact.presence
     end
 
     # gets the reflect object on the given relation
