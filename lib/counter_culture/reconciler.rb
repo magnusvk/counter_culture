@@ -174,15 +174,8 @@ module CounterCulture
             end
 
             with_writing_db_connection do
-              if primary_key.is_a?(Array)
-                conditions = {}
-                primary_key.each do |key|
-                  conditions[key] = record.send(key)
-                end
-                relation_class.where(conditions).update_all(updates.join(', '))
-              else
-                relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
-              end
+              conditions = Array.wrap(primary_key).map { |key| [key, record.send(key)] }.to_h
+              relation_class.where(conditions).update_all(updates.join(', '))
             end
           end
         end
@@ -227,34 +220,21 @@ module CounterCulture
             @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column}, 0))"
           end
         else
-          primary_key = model.primary_key
-          if primary_key.is_a?(Array)
-            # for composite primary keys, use the first key for counting
-            count_column = "#{self_table_name}.#{primary_key.first}"
-          else
-            count_column = "#{self_table_name}.#{primary_key}"
-          end
+          primary_key = Array.wrap(model.primary_key).first
+          count_column = "#{self_table_name}.#{primary_key}"
           @count_select = "COUNT(#{count_column})*#{delta_magnitude}"
         end
       end
 
       def primary_key_select
         relation_class_table_name = quote_table_name(relation_class.table_name)
-        if primary_key.is_a?(Array)
-          primary_key.map { |pk| "#{relation_class_table_name}.#{pk}" }.join(', ')
-        else
-          "#{relation_class_table_name}.#{primary_key}"
-        end
+        Array.wrap(primary_key).map { |pk| "#{relation_class_table_name}.#{pk}" }.join(', ')
       end
 
       def association_primary_key_select
         relation_class_table_name = quote_table_name(relation_class.table_name)
         association_primary_key = relation_reflect(relation).association_primary_key(relation_class)
-        if association_primary_key.is_a?(Array)
-          association_primary_key.map { |apk| "#{relation_class_table_name}.#{apk}" }.join(', ')
-        else
-          "#{relation_class_table_name}.#{association_primary_key}"
-        end
+        Array.wrap(association_primary_key).map { |apk| "#{relation_class_table_name}.#{apk}" }.join(', ')
       end
 
       def self_table_name
@@ -335,14 +315,9 @@ module CounterCulture
             # conditions must be applied to the join on which we are counting
             if where
               if where.respond_to?(:to_sql)
-                model_primary_key = model.primary_key
-                if model_primary_key.is_a?(Array)
-                  # handle composite primary keys
-                  where_select = model_primary_key.map { |pk| "#{model.table_name}.#{pk}" }.join(', ')
-                  joins_sql += " AND (#{target_table_alias}.#{model_primary_key.first}) IN (#{where.select(where_select).to_sql})"
-                else
-                  joins_sql += " AND #{target_table_alias}.#{model_primary_key} IN (#{where.select(model_primary_key).to_sql})"
-                end
+                model_primary_key = Array.wrap(model.primary_key)
+                where_select = model_primary_key.map { |pk| "#{model.table_name}.#{pk}" }.join(', ')
+                joins_sql += " AND (#{target_table_alias}.#{model_primary_key.first}) IN (#{where.select(where_select).to_sql})"
               else
                 joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
               end

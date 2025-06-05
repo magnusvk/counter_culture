@@ -113,12 +113,8 @@ module CounterCulture
         end
 
         if @with_papertrail
-          instance = if primary_key.is_a?(Array)
-            conditions = composite_primary_key_conditions(primary_key, id_to_change)
-            klass.where(conditions).first
-          else
-            klass.where(primary_key => id_to_change).first
-          end
+          conditions = primary_key_conditions(primary_key, id_to_change)
+          instance = klass.where(conditions).first
 
           if instance
             if instance.paper_trail.respond_to?(:save_with_version)
@@ -143,13 +139,8 @@ module CounterCulture
 
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
-            if primary_key.is_a?(Array)
-              # handle composite primary keys
-              conditions = composite_primary_key_conditions(primary_key, id_to_change)
-              klass.where(conditions).update_all updates.join(', ')
-            else
-              klass.where(primary_key => id_to_change).update_all updates.join(', ')
-            end
+            conditions = primary_key_conditions(primary_key, id_to_change)
+            klass.where(conditions).update_all updates.join(', ')
 
             assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
           end
@@ -185,7 +176,7 @@ module CounterCulture
 
     # the string to pass to order() in order to sort by primary key
     def full_primary_key(klass)
-      Array.wrap(primary_key).map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
+      Array.wrap(klass.primary_key).map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
     end
 
     # gets the value of the foreign key on the given relation
@@ -205,14 +196,8 @@ module CounterCulture
         klass = relation_klass(first, source: obj, was: was)
         if foreign_key_value
           primary_key = relation_primary_key(first, source: obj, was: was)
-          if primary_key.is_a?(Array)
-            conditions = composite_primary_key_conditions(primary_key, foreign_key_value)
-            klass.where(conditions).first
-          else
-            klass.where(
-              "#{klass.table_name}.#{primary_key} = ?",
-              foreign_key_value).first
-          end
+          conditions = primary_key_conditions(primary_key, foreign_key_value)
+          klass.where(conditions).first
         end
       else
         obj
@@ -222,12 +207,7 @@ module CounterCulture
       end
 
       primary_key = relation_primary_key(original_relation, source: obj, was: was)
-      if primary_key.is_a?(Array)
-        # handle composite primary keys
-        return value ? primary_key.map { |key| value.public_send(key) } : nil
-      else
-        return value.try(primary_key.try(:to_sym))
-      end
+      Array.wrap(primary_key).filter_map { |pk| value.try(pk&.to_sym) }.presence
     end
 
     # gets the reflect object on the given relation
@@ -470,10 +450,10 @@ module CounterCulture
       end
     end
 
-    def composite_primary_key_conditions(primary_keys, fk_value)
-      primary_keys.each_with_index.map do |key, index|
-        [key, fk_value[index]]
-      end.to_h
+    def primary_key_conditions(primary_key, fk_value)
+      Array.wrap(primary_key)
+          .zip(Array.wrap(fk_value))
+          .to_h
     end
 
     def counter_update_snippet(update, klass, id_to_change, operator, delta_magnitude)
