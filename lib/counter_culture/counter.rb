@@ -176,7 +176,7 @@ module CounterCulture
 
     # the string to pass to order() in order to sort by primary key
     def full_primary_key(klass)
-      Array.wrap(klass.primary_key).map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
+      Array.wrap(klass.quoted_primary_key).map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
     end
 
     # gets the value of the foreign key on the given relation
