@@ -61,7 +61,6 @@ module CounterCulture
 
       delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
       delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
-      delegate :primary_key, :to => :relation_class
 
       def initialize(counter, changes_holder, options, relation_class)
         @counter, @options, = counter, options
@@ -174,7 +173,7 @@ module CounterCulture
             end
 
             with_writing_db_connection do
-              conditions = Array.wrap(primary_key).map { |key| [key, record.send(key)] }.to_h
+              conditions = Array.wrap(relation_class.primary_key).map { |key| [key, record.send(key)] }.to_h
               relation_class.where(conditions).update_all(updates.join(', '))
             end
           end
@@ -205,7 +204,7 @@ module CounterCulture
           :wrong => record.send(column_name),
           :right => count
         }.tap do |h|
-          Array.wrap(primary_key).each { |pk| h[pk.to_sym] = record.send(pk) }
+          Array.wrap(relation_class.primary_key).each { |pk| h[pk.to_sym] = record.send(pk) }
         end
       end
 
@@ -228,7 +227,7 @@ module CounterCulture
 
       def primary_key_select
         relation_class_table_name = quote_table_name(relation_class.table_name)
-        Array.wrap(primary_key).map { |pk| "#{relation_class_table_name}.#{pk}" }.join(', ')
+        Array.wrap(relation_class.primary_key).map { |pk| "#{relation_class_table_name}.#{pk}" }.join(', ')
       end
 
       def association_primary_key_select
