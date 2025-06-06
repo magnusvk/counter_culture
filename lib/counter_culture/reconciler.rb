@@ -111,8 +111,8 @@ module CounterCulture
 
           # select join column and count (from above) as well as cache column ('column_name') for later comparison
           counts_query = scope.select(
-            "#{relation_class_table_name}.#{relation_class.primary_key}, " \
-            "#{relation_class_table_name}.#{relation_reflect(relation).association_primary_key(relation_class)}, " \
+            "#{primary_key_select}, " \
+            "#{association_primary_key_select}, " \
             "#{count_select} AS count, " \
             "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
           )
@@ -173,7 +173,8 @@ module CounterCulture
             end
 
             with_writing_db_connection do
-              relation_class.where(relation_class.primary_key => record.send(relation_class.primary_key)).update_all(updates.join(', '))
+              conditions = Array.wrap(relation_class.primary_key).map { |key| [key, record.send(key)] }.to_h
+              relation_class.where(conditions).update_all(updates.join(', '))
             end
           end
         end
@@ -199,11 +200,12 @@ module CounterCulture
       def track_change(record, column_name, count)
         @changes_holder << {
           :entity => relation_class.name,
-          relation_class.primary_key.to_sym => record.send(relation_class.primary_key),
           :what => column_name,
           :wrong => record.send(column_name),
           :right => count
-        }
+        }.tap do |h|
+          Array.wrap(relation_class.primary_key).each { |pk| h[pk.to_sym] = record.send(pk) }
+        end
       end
 
       def count_select
@@ -217,8 +219,21 @@ module CounterCulture
             @count_select = "SUM(COALESCE(#{self_table_name}.#{delta_column}, 0))"
           end
         else
-          @count_select = "COUNT(#{self_table_name}.#{model.primary_key})*#{delta_magnitude}"
+          primary_key = Array.wrap(model.primary_key).first
+          count_column = "#{self_table_name}.#{primary_key}"
+          @count_select = "COUNT(#{count_column})*#{delta_magnitude}"
         end
+      end
+
+      def primary_key_select
+        relation_class_table_name = quote_table_name(relation_class.table_name)
+        Array.wrap(relation_class.primary_key).map { |pk| "#{relation_class_table_name}.#{pk}" }.join(', ')
+      end
+
+      def association_primary_key_select
+        relation_class_table_name = quote_table_name(relation_class.table_name)
+        association_primary_key = relation_reflect(relation).association_primary_key(relation_class)
+        Array.wrap(association_primary_key).map { |apk| "#{relation_class_table_name}.#{apk}" }.join(', ')
       end
 
       def self_table_name
@@ -271,8 +286,17 @@ module CounterCulture
               [target_table_key, source_table_key]
           end
 
+          source_table_key = Array.wrap(source_table_key)
+          target_table_key = Array.wrap(target_table_key)
+
+          join_conditions =
+            source_table_key
+              .zip(target_table_key).map do |source_key, target_key|
+                "#{source_table}.#{source_key} = #{target_table_alias}.#{target_key}"
+              end.join(' AND ')
           joins_sql = "LEFT JOIN #{target_table} AS #{target_table_alias} "\
-            "ON #{source_table}.#{source_table_key} = #{target_table_alias}.#{target_table_key}"
+            "ON #{join_conditions}"
+
           # adds 'type' condition to JOIN clause if the current model is a
           # child in a Single Table Inheritance
           if reflect.active_record.column_names.include?('type') &&
@@ -289,7 +313,9 @@ module CounterCulture
             # conditions must be applied to the join on which we are counting
             if where
               if where.respond_to?(:to_sql)
-                joins_sql += " AND #{target_table_alias}.#{model.primary_key} IN (#{where.select(model.primary_key).to_sql})"
+                model_primary_key = Array.wrap(model.primary_key)
+                where_select = model_primary_key.map { |pk| "#{model.table_name}.#{pk}" }.join(', ')
+                joins_sql += " AND (#{target_table_alias}.#{model_primary_key.first}) IN (#{where.select(where_select).to_sql})"
               else
                 joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
               end

@@ -35,9 +35,14 @@ module CounterCulture
         end.compact
 
         if update_snippets.any?
-          klass
-            .where(Thread.current[:primary_key_map][klass] => rec_id)
-            .update_all(update_snippets.join(', '))
+          primary_key = Thread.current[:primary_key_map][klass]
+
+          conditions =
+            Array.wrap(primary_key)
+                .zip(Array.wrap(rec_id))
+                .to_h
+
+          klass.where(conditions).update_all(update_snippets.join(', '))
         end
       end
     end

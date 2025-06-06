@@ -11,6 +11,10 @@ module CounterCulture
     @configuration = Configuration.new
   end
 
+  def self.supports_composite_keys?
+    Gem::Requirement.new('>= 7.2.0').satisfied_by?(ActiveRecord.version)
+  end
+
   class Configuration
     attr_reader :use_read_replica
 
