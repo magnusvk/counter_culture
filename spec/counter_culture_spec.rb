@@ -132,6 +132,25 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "updates counter caches on change belongs_to association" do
+    simple_main1 = SimpleMain.create
+    simple_main2 = SimpleMain.create
+    simple_dependent = SimpleDependent.create :simple_main_id => simple_main1.id
+
+    simple_dependent.simple_main = simple_main2
+    simple_dependent.save!
+
+    expect(simple_main1.simple_dependents_count).to eq(0)
+    expect(simple_main2.simple_dependents_count).to eq(1)
+
+    # NOTE: check if counters from the DB equal to the cached
+    simple_main1.reload
+    simple_main2.reload
+
+    expect(simple_main1.simple_dependents_count).to eq(0)
+    expect(simple_main2.simple_dependents_count).to eq(1)
+  end
+
   it "skips zero delta_magnitude update on create" do
     user = User.create
     product = Product.create

@@ -141,8 +141,9 @@ module CounterCulture
           execute_now_or_after_commit(obj) do
             conditions = primary_key_conditions(primary_key, id_to_change)
             klass.where(conditions).update_all updates.join(', ')
-
-            assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
+            unless options[:was]
+              assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
+            end
           end
         end
       end

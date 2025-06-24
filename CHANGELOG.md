@@ -1,6 +1,11 @@
+## 3.10.2 (June 24, 2025)
+
+Bugfixes:
+  - Fix incorrect in-memory counter updates on `belongs_to` association (#415)
+
 ## 3.10.1 (April 30, 2025)
 
-Bigfixes:
+Bugfixes:
   - Fix issue when using `delegate` instead of `has_many :through` (#411)
 
 ## 3.10.0 (April 15, 2025)
