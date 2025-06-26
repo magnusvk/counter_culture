@@ -1,3 +1,8 @@
+## 3.11.0 (June 26, 2025)
+
+New features:
+  - Support for composite primary keys in Rails v7.2+ (#413)
+
 ## 3.10.2 (June 24, 2025)
 
 Bugfixes:
