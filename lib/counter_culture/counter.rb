@@ -113,7 +113,9 @@ module CounterCulture
         end
 
         if @with_papertrail
-          instance = klass.where(primary_key => id_to_change).first
+          conditions = primary_key_conditions(primary_key, id_to_change)
+          instance = klass.where(conditions).first
+
           if instance
             if instance.paper_trail.respond_to?(:save_with_version)
               # touch_with_version is deprecated starting in PaperTrail 9.0.0
@@ -137,7 +139,8 @@ module CounterCulture
 
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
-            klass.where(primary_key => id_to_change).update_all updates.join(', ')
+            conditions = primary_key_conditions(primary_key, id_to_change)
+            klass.where(conditions).update_all updates.join(', ')
             unless options[:was]
               assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
             end
@@ -174,7 +177,7 @@ module CounterCulture
 
     # the string to pass to order() in order to sort by primary key
     def full_primary_key(klass)
-      "#{klass.quoted_table_name}.#{klass.quoted_primary_key}"
+      Array.wrap(klass.quoted_primary_key).map { |pk| "#{klass.quoted_table_name}.#{pk}" }.join(', ')
     end
 
     # gets the value of the foreign key on the given relation
@@ -188,23 +191,24 @@ module CounterCulture
       original_relation = relation
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
 
-      if was
+      value = if was
         first = relation.shift
         foreign_key_value = attribute_was(obj, relation_foreign_key(first))
         klass = relation_klass(first, source: obj, was: was)
         if foreign_key_value
-          value = klass.where(
-            "#{klass.table_name}.#{relation_primary_key(first, source: obj, was: was)} = ?",
-            foreign_key_value).first
+          primary_key = relation_primary_key(first, source: obj, was: was)
+          conditions = primary_key_conditions(primary_key, foreign_key_value)
+          klass.where(conditions).first
         end
       else
-        value = obj
+        obj
       end
       while !value.nil? && relation.size > 0
         value = value.send(relation.shift)
       end
 
-      return value.try(relation_primary_key(original_relation, source: obj, was: was).try(:to_sym))
+      primary_key = relation_primary_key(original_relation, source: obj, was: was)
+      Array.wrap(primary_key).map { |pk| value.try(pk&.to_sym) }.compact.presence
     end
 
     # gets the reflect object on the given relation
@@ -310,6 +314,7 @@ module CounterCulture
         return reflect.options[:primary_key] if reflect.options.key?(:primary_key)
         return relation_klass(relation, source: source, was: was).try(:primary_key)
       end
+
       reflect.association_primary_key(klass)
     end
 
@@ -439,6 +444,12 @@ module CounterCulture
       else
         "#{update} '#{value.call}'"
       end
+    end
+
+    def primary_key_conditions(primary_key, fk_value)
+      Array.wrap(primary_key)
+          .zip(Array.wrap(fk_value))
+          .to_h
     end
 
     def counter_update_snippet(update, klass, id_to_change, operator, delta_magnitude)

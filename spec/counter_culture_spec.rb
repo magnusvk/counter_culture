@@ -39,6 +39,13 @@ require 'models/group_item'
 require 'models/article_group'
 require 'models/article'
 
+if CounterCulture.supports_composite_keys?
+  require 'models/composite_group'
+  require 'models/composite_group_user'
+  require 'models/composite_user'
+end
+
+
 if ENV['DB'] == 'postgresql'
   require 'models/purchase_order'
   require 'models/purchase_order_item'
@@ -2826,6 +2833,33 @@ RSpec.describe "CounterCulture" do
       expect(user.reviews_count).to eq(1)
       expect(user.versions.count).to eq(1)
     end
+
+    context "with composite primary keys" do
+      before do
+        unless PapertrailSupport.supported_here?
+          skip("Unsupported in this combination of Ruby and Rails")
+        end
+
+        unless CounterCulture.supports_composite_keys?
+          skip("composite primary keys are not supported in this version of Rails")
+        end
+      end
+
+      it "increments / decrements counter caches correctly" do
+        group = CompositeGroup.create!(secondary_id: 123)
+
+        expect(group.composite_users_count).to eq(0)
+        expect(group.composite_users.count).to eq(0)
+        group.composite_users << CompositeUser.create!
+
+        expect(group.composite_users.count).to eq(1)
+        expect(group.composite_users_count).to eq(1)
+        group.composite_users.first.destroy
+
+        group.reload
+        expect(group.composite_users_count).to eq(0)
+      end
+    end
   end
 
   describe "with a module for the model" do
@@ -3045,6 +3079,51 @@ RSpec.describe "CounterCulture" do
     post = Post.create!
     Timecop.travel(2.second.from_now) do
       expect { PostLike.create!(post: post) }.to change { post.reload.updated_at }
+    end
+  end
+
+  context "with composite primary keys" do
+    before do
+      unless CounterCulture.supports_composite_keys?
+        skip("composite primary keys not supported in this version of Rails")
+      end
+    end
+
+    it "should increment / decrement the counter" do
+      group = CompositeGroup.create!(secondary_id: 123)
+
+      expect(group.composite_users.count).to eq(0)
+      expect(group.composite_users_count).to eq(0)
+      group.composite_users << CompositeUser.create!
+
+      expect(group.composite_users.count).to eq(1)
+      expect(group.composite_users_count).to eq(1)
+      group.composite_users.first.destroy
+
+      group.reload
+      expect(group.composite_users_count).to eq(0)
+    end
+
+    it "should fix the counter caches" do
+      group = CompositeGroup.create!(secondary_id: 123)
+      user1 = CompositeUser.create!
+      user2 = CompositeUser.create!
+
+      group.composite_users << user1
+      group.composite_users << user2
+
+      expect(group.composite_users_count).to eq(2)
+
+      # mess up the count
+      group.update_column(:composite_users_count, -1)
+      user1.update_column(:composite_groups_count, -1)
+
+      CompositeGroupUser.counter_culture_fix_counts
+
+      group.reload
+      user1.reload
+      expect(group.composite_users_count).to eq(2)
+      expect(user1.composite_groups_count).to eq(1)
     end
   end
 
@@ -3393,6 +3472,88 @@ RSpec.describe "CounterCulture" do
 
       po.reload
       expect(po.total_amount).to eq(0.0)
+    end
+
+    context "with composite primary keys" do
+      before do
+      unless CounterCulture.supports_composite_keys?
+          skip("composite primary keys not supported in this version of Rails")
+        end
+      end
+
+      it "increments / decrements the counter cache" do
+        group = CompositeGroup.create!(secondary_id: 123)
+        user1 = CompositeUser.create!
+        user2 = CompositeUser.create!
+
+        expect(group.composite_users_count).to eq(0)
+
+        group_user1 = CounterCulture.aggregate_counter_updates do
+          CompositeGroupUser.create!(
+            composite_group_id: group.id,
+            secondary_id: group.secondary_id,
+            composite_user_id: user1.id
+          )
+        end
+
+        group.reload
+        expect(group.composite_users_count).to eq(1)
+
+        group_user2 = CounterCulture.aggregate_counter_updates do
+          CompositeGroupUser.create!(
+            composite_group_id: group.id,
+            secondary_id: group.secondary_id,
+            composite_user_id: user2.id
+          )
+        end
+
+        group.reload
+        expect(group.composite_users_count).to eq(2)
+
+        CounterCulture.aggregate_counter_updates do
+          group_user1.destroy!
+        end
+
+        group.reload
+        expect(group.composite_users_count).to eq(1)
+
+        CounterCulture.aggregate_counter_updates do
+          group_user2.destroy!
+        end
+
+        group.reload
+        expect(group.composite_users_count).to eq(0)
+      end
+
+      it "optimizes SQL queries when aggregating updates" do
+        group = CompositeGroup.create!(secondary_id: 123)
+        user1 = CompositeUser.create!
+        user2 = CompositeUser.create!
+        user3 = CompositeUser.create!
+
+        expect(group.composite_users_count).to eq(0)
+
+        # with aggregation, this should generate only 1 UPDATE query for the group
+        expect_queries(1, filter: /UPDATE composite_groups/) do
+          CounterCulture.aggregate_counter_updates do
+            CompositeGroupUser.create!(
+              composite_group_id: group.id,
+              secondary_id: group.secondary_id,
+              composite_user_id: user1.id
+            )
+            CompositeGroupUser.create!(
+              composite_group_id: group.id,
+              secondary_id: group.secondary_id,
+              composite_user_id: user2.id
+            )
+            CompositeGroupUser.create!(
+              composite_group_id: group.id,
+              secondary_id: group.secondary_id,
+              composite_user_id: user3.id
+            )
+          end
+        end
+      end
     end
   end
 
