@@ -1,3 +1,8 @@
+## 3.11.1 (June 27, 2025)
+
+Bugfixes:
+  - Don't attempt to modify frozen association object (#416)
+
 ## 3.11.0 (June 26, 2025)
 
 New features:
