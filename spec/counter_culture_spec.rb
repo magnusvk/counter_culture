@@ -326,6 +326,44 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(0)
   end
 
+  it "if associated object is frozen, the counter cache attribute of the associated object will not be decremented without a reload" do
+    user = User.create
+    product = Product.create
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+
+    review = Review.create :user => user, :product => product, :approvals => 69
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(69)
+
+    user.freeze
+    product.freeze
+    review.destroy
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(69)
+
+    # this does not decrement counter cache
+    review.destroy
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(user.review_approvals_count).to eq(69)
+
+    # NOTE: check if counters from the DB equal to the cached
+    user.reload
+    product.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(user.review_approvals_count).to eq(0)
+  end
+
   it "decrements counter cache on destroy without reload" do
     user = User.create
     product = Product.create
