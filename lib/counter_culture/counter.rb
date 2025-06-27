@@ -378,7 +378,7 @@ module CounterCulture
       association_name = relation_reflect(relation).name
 
       association_object = association_object_for_assign(obj, association_name)
-      return if association_object.blank?
+      return if association_object.blank? || association_object.frozen?
 
       association_object.assign_attributes(
         change_counter_column =>
