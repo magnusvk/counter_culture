@@ -1232,34 +1232,34 @@ RSpec.describe "CounterCulture" do
   end
 
   it "should overwrite foreign-key values on create" do
-    3.times { Category.create }
-    Category.all {|category| expect(category.products_count).to eq(0) }
+    categories = 3.times.map { Category.create }
+    categories.each {|category| expect(category.products_count).to eq(0) }
 
     product = Product.create :category_id => Category.first.id
-    Category.all {|category| expect(category.products_count).to eq(1) }
+    categories.each {|category| expect(category.reload.products_count).to eq(1) }
   end
 
   it "should overwrite foreign-key values on destroy" do
-    3.times { Category.create }
-    Category.all {|category| expect(category.products_count).to eq(0) }
+    categories = 3.times.map { Category.create }
+    categories.each {|category| expect(category.products_count).to eq(0) }
 
     product = Product.create :category_id => Category.first.id
-    Category.all {|category| expect(category.products_count).to eq(1) }
+    categories.each {|category| expect(category.reload.products_count).to eq(1) }
 
     product.destroy
-    Category.all {|category| expect(category.products_count).to eq(0) }
+    categories.each {|category| expect(category.reload.products_count).to eq(0) }
   end
 
   it "should overwrite foreign-key values on destroy" do
-    3.times { Category.create }
-    Category.all {|category| expect(category.products_count).to eq(0) }
+    categories = 3.times.map { Category.create }
+    categories.each {|category| expect(category.products_count).to eq(0) }
 
     product = Product.create :category_id => Category.first.id
-    Category.all {|category| expect(category.products_count).to eq(1) }
+    categories.each {|category| expect(category.reload.products_count).to eq(1) }
 
     product.category = nil
     product.save!
-    Category.all {|category| expect(category.products_count).to eq(0) }
+    categories.each {|category| expect(category.reload.products_count).to eq(0) }
   end
 
   it "should not report correct counts when fix_counts is called" do

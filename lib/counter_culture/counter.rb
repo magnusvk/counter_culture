@@ -108,6 +108,15 @@ module CounterCulture
 
         primary_key = relation_primary_key(relation, source: obj, was: options[:was])
 
+        if foreign_key_values && id_to_change.is_a?(Enumerable) && id_to_change.count > 1 &&
+            Array.wrap(primary_key).count == 1
+          # To keep this feature backwards compatible, we need to accommodate a case where
+          # `foreign_key_values` returns an array, but we're _not_ using composite primary
+          # keys. In that case, we need to wrap the `id_to_change` in one more array to keep
+          # it compatible with the `.zip` call in `primary_key_conditions`.
+          id_to_change = [id_to_change]
+        end
+
         if Thread.current[:aggregate_counter_updates]
           Thread.current[:primary_key_map][klass] ||= primary_key
         end
