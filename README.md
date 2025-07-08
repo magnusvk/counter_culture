@@ -232,7 +232,7 @@ The ```:delta_column``` option supports all numeric column types, not just ```:i
 class Product < ActiveRecord::Base
   belongs_to :category
   counter_culture :category, foreign_key_values:
-      proc {|category_id| [category_id, Category.find_by_id(category_id).try(:parent_category).try(:id)] }
+      proc {|category_id| [category_id, Category.find_by(id: category_id)&.parent_category&.id] }
 end
 
 class Category < ActiveRecord::Base
