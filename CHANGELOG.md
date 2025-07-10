@@ -1,3 +1,8 @@
+## 3.11.2 (July 10, 2025)
+
+Bugfixes:
+  - Fix regression for foreign_key_values by adding support for composite primary keys (#417)
+
 ## 3.11.1 (June 27, 2025)
 
 Bugfixes:
