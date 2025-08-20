@@ -38,6 +38,7 @@ require 'models/sub_group'
 require 'models/group_item'
 require 'models/article_group'
 require 'models/article'
+require 'models/moderated_review'
 
 if CounterCulture.supports_composite_keys?
   require 'models/composite_group'
@@ -254,6 +255,18 @@ RSpec.describe "CounterCulture" do
     user.reload
 
     expect(user.review_approvals_count).to eq(26)
+  end
+
+  context 'when state changes in update callback update' do
+    it 'should increments counter cache once' do
+      user = User.create
+      moderate_review = ModeratedReview.create :user_id => user.id
+      moderate_review.update(up: true)
+      user.reload
+      moderate_review.reload
+
+      expect(user.approved_positive_reviews_count).to eq(1)
+    end
   end
 
   it "skips increments counter cache on destroy" do
