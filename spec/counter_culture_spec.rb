@@ -132,6 +132,23 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "should correctly increment and decrement counters of associated objects" do
+    conditional_main = ConditionalMain.create
+    conditional_dependent = conditional_main.conditional_dependents.create(condition: false)
+
+    expect(conditional_main.conditional_dependents_count).to eq(0)
+
+    conditional_dependent.update(condition: true)
+
+    # works correctly, value is correct without reload
+    expect(conditional_main.conditional_dependents_count).to eq(1)
+
+    conditional_dependent.update(condition: false)
+
+    # doesn't work, value is incorrect without reload
+    expect(conditional_main.conditional_dependents_count).to eq(0)
+  end
+
   it "updates counter caches on change belongs_to association" do
     simple_main1 = SimpleMain.create
     simple_main2 = SimpleMain.create
