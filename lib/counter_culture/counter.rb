@@ -150,9 +150,7 @@ module CounterCulture
           execute_now_or_after_commit(obj) do
             conditions = primary_key_conditions(primary_key, id_to_change)
             klass.where(conditions).update_all updates.join(', ')
-            unless options[:was]
-              assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
-            else
+            if options[:was]
               # When updating the old counter (was: true), we need to carefully determine whether to
               # update the in-memory counter on the associated object. There are two distinct scenarios:
               # 1) The belongs_to relation changed (e.g., moving a child from parent A to parent B):
@@ -170,6 +168,8 @@ module CounterCulture
               if current_fk == previous_fk && current_fk.present?
                 assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
               end
+            else
+              assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
             end
           end
         end
