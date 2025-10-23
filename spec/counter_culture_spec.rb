@@ -140,7 +140,6 @@ RSpec.describe "CounterCulture" do
 
     conditional_dependent.update(condition: true)
 
-    # works correctly, value is correct without reload
     expect(conditional_main.conditional_dependents_count).to eq(1)
 
     conditional_dependent.update(condition: false)
