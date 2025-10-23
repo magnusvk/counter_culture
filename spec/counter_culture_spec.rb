@@ -132,7 +132,7 @@ RSpec.describe "CounterCulture" do
     expect(product.reviews_count).to eq(1)
   end
 
-  it "should correctly increment and decrement counters of associated objects" do
+  it "should correctly increment and decrement conditional counters of associated objects" do
     conditional_main = ConditionalMain.create
     conditional_dependent = conditional_main.conditional_dependents.create(condition: false)
 
