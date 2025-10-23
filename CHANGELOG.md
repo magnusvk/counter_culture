@@ -1,3 +1,8 @@
+## 3.11.3 (October 22, 2025)
+
+Bugfixes:
+  - Fix in-memory counter updates for conditional counters when condition changes (#420)
+
 ## 3.11.2 (July 10, 2025)
 
 Bugfixes:

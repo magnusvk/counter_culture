@@ -150,7 +150,27 @@ module CounterCulture
           execute_now_or_after_commit(obj) do
             conditions = primary_key_conditions(primary_key, id_to_change)
             klass.where(conditions).update_all updates.join(', ')
-            unless options[:was]
+            # Determine if we should update the in-memory counter on the associated object.
+            # When updating the old counter (was: true), we need to carefully consider two scenarios:
+            # 1) The belongs_to relation changed (e.g., moving a child from parent A to parent B):
+            #    In this case, obj.association now points to parent B, but we're decrementing parent A's
+            #    counter. We should NOT update the in-memory counter because it would incorrectly
+            #    modify parent B's cached value.
+            # 2) A conditional counter's condition changed (e.g., condition: true → false):
+            #    In this case, obj.association still points to the same parent, but the counter column
+            #    name changed (e.g., from 'conditional_count' to nil). We SHOULD update the in-memory
+            #    counter so the parent object reflects the decremented value without requiring a reload.
+            # We distinguish these cases by comparing foreign keys: if the current and previous foreign
+            # keys are identical, we're in scenario 2 and should update the in-memory counter.
+            should_update_counter = if options[:was]
+              current_fk = foreign_key_value(obj, relation, false)
+              previous_fk = foreign_key_value(obj, relation, true)
+              current_fk == previous_fk && current_fk.present?
+            else
+              true
+            end
+
+            if should_update_counter
               assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
             end
           end
