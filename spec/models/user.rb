@@ -13,6 +13,8 @@ class User < ActiveRecord::Base
   has_many :reviews
   accepts_nested_attributes_for :reviews, :allow_destroy => true
 
+  has_many :moderated_reviews
+
   if PapertrailSupport.supported_here?
     has_paper_trail
   end
