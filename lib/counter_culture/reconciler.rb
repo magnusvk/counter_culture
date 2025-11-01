@@ -59,7 +59,7 @@ module CounterCulture
     class Reconciliation
       attr_reader :counter, :options, :relation_class
 
-      delegate :model, :relation, :full_primary_key, :relation_reflect, :polymorphic?, :to => :counter
+      delegate :model, :relation, :full_primary_key, :relation_reflect_and_model, :relation_reflect, :polymorphic?, :to => :counter
       delegate *CounterCulture::Counter::CONFIG_OPTIONS, :to => :counter
 
       def initialize(counter, changes_holder, options, relation_class)
@@ -257,11 +257,11 @@ module CounterCulture
         # store joins in an array so that we can later apply column-specific
         # conditions
         join_clauses = reverse_relation.each_with_index.map do |cur_relation, index|
-          reflect = relation_reflect(cur_relation)
+          reflect, model = relation_reflect_and_model(cur_relation)
 
-          target_table = quote_table_name(reflect.active_record.table_name)
+          target_table = quote_table_name(model.table_name)
           target_table_alias = parameterize(target_table)
-          if relation_class.table_name == reflect.active_record.table_name
+          if relation_class.table_name == model.table_name
             # join with alias to avoid ambiguous table name in
             # self-referential models
             target_table_alias += "_#{target_table_alias}"
@@ -299,8 +299,8 @@ module CounterCulture
 
           # adds 'type' condition to JOIN clause if the current model is a
           # child in a Single Table Inheritance
-          if reflect.active_record.column_names.include?('type') &&
-              !model.descends_from_active_record?
+          if model.column_names.include?('type') &&
+             !model.descends_from_active_record?
             joins_sql += " AND #{target_table_alias}.type IN ('#{model.name}')"
           end
           if polymorphic?

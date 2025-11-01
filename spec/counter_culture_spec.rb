@@ -8,6 +8,7 @@ require 'models/review'
 require 'models/simple_review'
 require 'models/twitter_review'
 require 'models/user'
+require 'models/admin_user'
 require 'models/category'
 require 'models/has_string_id'
 require 'models/has_non_pk_id'
@@ -1428,6 +1429,30 @@ RSpec.describe "CounterCulture" do
 
     expect(company.twitter_reviews_count).to eq(1)
     expect(product.twitter_reviews_count).to eq(1)
+  end
+
+  it "should fix counter cache with multiple STI models in association chain correctly" do
+    company = Company.create
+    user = User.create :manages_company_id => company.id
+    admin = AdminUser.create :manages_company_id => company.id
+
+    expect(company.admin_reviews_count).to eq(0)
+
+    TwitterReview.create :user_id => user.id
+    TwitterReview.create :admin_user_id => admin.id
+
+    company.reload
+
+    expect(company.admin_reviews_count).to eq(1)
+
+    company.admin_reviews_count = 2
+    company.save!
+
+    TwitterReview.counter_culture_fix_counts :skip_unsupported => true
+
+    company.reload
+
+    expect(company.admin_reviews_count).to eq(1)
   end
 
   it "handles an inherited STI counter cache correctly" do

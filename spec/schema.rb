@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "name"
     t.integer  "industry_id"
     t.integer  "reviews_count",       :default => 0, :null => false
+    t.integer  "admin_reviews_count",       :default => 0, :null => false
     t.integer  "twitter_reviews_count",       :default => 0, :null => false
     t.integer  "using_count",         :default => 0, :null => false
     t.integer  "tried_count",         :default => 0, :null => false
@@ -73,6 +74,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.string   "some_text"
     t.string   "read_only_text"
     t.integer  "user_id"
+    t.integer  "admin_user_id"
     t.integer  "product_id"
     t.integer  "approvals"
     t.float    "value"
@@ -83,6 +85,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
   end
 
   create_table "users", :force => true do |t|
+    t.string   "type"
     t.string   "name"
     t.integer  "company_id"
     t.integer  "manages_company_id"
