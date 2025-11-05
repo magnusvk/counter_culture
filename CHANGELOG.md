@@ -1,3 +1,8 @@
+## 3.11.4 (November 5, 2025)
+
+Bugfixes:
+  - Fix counter cache not using the correct type with multiple STI models in the association chain (#421)
+
 ## 3.11.3 (October 22, 2025)
 
 Bugfixes:
