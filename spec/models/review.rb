@@ -1,6 +1,7 @@
 class Review < ActiveRecord::Base
-  belongs_to :user
-  belongs_to :product
+  belongs_to :user, optional: true
+  belongs_to :admin_user, optional: true
+  belongs_to :product, optional: true
 
   counter_culture :product, :touch => true, :with_papertrail => PapertrailSupport.supported_here?
   counter_culture :product, :column_name => 'rexiews_count', touch: :rexiews_updated_at

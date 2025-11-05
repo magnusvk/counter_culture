@@ -240,11 +240,11 @@ module CounterCulture
       Array.wrap(primary_key).map { |pk| value.try(pk&.to_sym) }.compact.presence
     end
 
-    # gets the reflect object on the given relation
+    # gets the reflect object on the given relation and the model that defines this reflect
     #
     # relation: a symbol or array of symbols; specifies the relation
     #   that has the counter cache column
-    def relation_reflect(relation)
+    def relation_reflect_and_model(relation)
       relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
 
       # go from one relation to the next until we hit the last reflect object
@@ -262,7 +262,16 @@ module CounterCulture
         end
       end
 
-      return reflect
+      return [reflect, klass]
+    end
+
+
+    # gets the reflect object on the given relation
+    #
+    # relation: a symbol or array of symbols; specifies the relation
+    #   that has the counter cache column
+    def relation_reflect(relation)
+      relation_reflect_and_model(relation).first
     end
 
     # gets the class of the given relation
