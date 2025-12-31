@@ -344,4 +344,15 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
       t.money "amount", scale: 2, default: "0.0", null: false
     end
   end
+
+  # STI table where both parent and child share the same table and have counter_culture
+  # This tests the Rails 8.1+ UPDATE...FROM alias issue with PostgreSQL
+  create_table "sti_contracts", :force => true do |t|
+    t.string   "type"
+    t.string   "name"
+    t.integer  "agreement_id"
+    t.integer  "contracts_count", :default => 0, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 end
