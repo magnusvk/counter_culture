@@ -1,3 +1,9 @@
+## X.X.X (Unreleased)
+
+Changes:
+  - Dropped support for Ruby 2.6, 2.7 and Rails 5.2 (all EOL)
+  - Added support for Ruby 4.0 and Rails 8.1
+
 ## 3.11.4 (November 5, 2025)
 
 Bugfixes:
