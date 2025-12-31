@@ -26,15 +26,26 @@ module CounterCulture
 
     result = yield
 
-    # aggregate the updates for each target record and execute SQL queries
+    # aggregate the updates for each target record and execute SQL queries using Arel
     Thread.current[:aggregated_updates].each do |klass, attrs|
       attrs.each do |rec_id, updates|
-        update_snippets = updates.map do |operation, value|
-          value = value.call if value.is_a?(Proc)
-          %Q{#{operation} #{value.is_a?(String) ? "'#{value}'" : value}} unless value == 0
-        end.compact
+        arel_updates = {}
 
-        if update_snippets.any?
+        # Build counter updates
+        updates[:counters].each do |column, info|
+          next if info[:delta] == 0
+          arel_updates[column] = Counter.build_arel_counter_expr(klass, column, info[:delta], info[:type])
+        end
+
+        # Build timestamp updates (compute timestamp at execution time)
+        if updates[:timestamps].any?
+          current_time = klass.send(:current_time_from_proper_timezone)
+          updates[:timestamps].each do |column|
+            arel_updates[column] = current_time
+          end
+        end
+
+        if arel_updates.any?
           primary_key = Thread.current[:primary_key_map][klass]
 
           conditions =
@@ -42,7 +53,7 @@ module CounterCulture
                 .zip(Array.wrap(rec_id))
                 .to_h
 
-          klass.where(conditions).update_all(update_snippets.join(', '))
+          klass.where(conditions).update_all(arel_updates)
         end
       end
     end
