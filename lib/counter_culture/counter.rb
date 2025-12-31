@@ -149,7 +149,10 @@ module CounterCulture
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
             conditions = primary_key_conditions(primary_key, id_to_change)
-            klass.where(conditions).update_all updates.join(', ')
+            # Use unscoped to avoid default scope joins that could cause ambiguous column errors
+            # in Rails 8.1+ UPDATE...FROM syntax. We're updating by primary key so we don't need
+            # default scope conditions.
+            klass.unscoped.where(conditions).update_all updates.join(', ')
             # Determine if we should update the in-memory counter on the associated object.
             # When updating the old counter (was: true), we need to carefully consider two scenarios:
             # 1) The belongs_to relation changed (e.g., moving a child from parent A to parent B):

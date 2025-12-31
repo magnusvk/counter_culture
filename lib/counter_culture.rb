@@ -42,7 +42,10 @@ module CounterCulture
                 .zip(Array.wrap(rec_id))
                 .to_h
 
-          klass.where(conditions).update_all(update_snippets.join(', '))
+          # Use unscoped to avoid default scope joins that could cause ambiguous column errors
+          # in Rails 8.1+ UPDATE...FROM syntax. We're updating by primary key so we don't need
+          # default scope conditions.
+          klass.unscoped.where(conditions).update_all(update_snippets.join(', '))
         end
       end
     end
