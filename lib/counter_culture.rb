@@ -53,7 +53,7 @@ module CounterCulture
                 .zip(Array.wrap(rec_id))
                 .to_h
 
-          klass.where(conditions).update_all(arel_updates)
+          klass.where(conditions).distinct(false).update_all(arel_updates)
         end
       end
     end

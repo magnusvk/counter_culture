@@ -174,7 +174,7 @@ module CounterCulture
 
             with_writing_db_connection do
               conditions = Array.wrap(relation_class.primary_key).map { |key| [key, record.send(key)] }.to_h
-              relation_class.where(conditions).update_all(updates.join(', '))
+              relation_class.where(conditions).distinct(false).update_all(updates.join(', '))
             end
           end
         end

@@ -138,7 +138,7 @@ module CounterCulture
             conditions = primary_key_conditions(primary_key, id_to_change)
             # Use Arel-based updates which let Rails handle column qualification properly,
             # avoiding ambiguous column errors in Rails 8.1+ UPDATE...FROM syntax.
-            klass.where(conditions).update_all(arel_updates)
+            klass.where(conditions).distinct(false).update_all(arel_updates)
             # Determine if we should update the in-memory counter on the associated object.
             # When updating the old counter (was: true), we need to carefully consider two scenarios:
             # 1) The belongs_to relation changed (e.g., moving a child from parent A to parent B):
