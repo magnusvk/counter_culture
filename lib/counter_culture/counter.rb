@@ -59,32 +59,20 @@ module CounterCulture
                           end
         return if delta_magnitude.zero?
 
-        # increment or decrement?
-        operator = options[:increment] ? '+' : '-'
-
         klass = relation_klass(relation, source: obj, was: options[:was])
-
-        # MySQL throws an ambiguous column error if any joins are present and we don't include the
-        # table name. We isolate this change to MySQL because sqlite has the opposite behavior and
-        # throws an exception if the table name is present after UPDATE.
-        quoted_column = WithConnection.new(klass).call do |connection|
-          if connection.adapter_name == 'Mysql2'
-            "#{klass.quoted_table_name}.#{connection.quote_column_name(change_counter_column)}"
-          else
-            "#{connection.quote_column_name(change_counter_column)}"
-          end
-        end
 
         column_type = klass.type_for_attribute(change_counter_column).type
 
-        # we don't use Rails' update_counters because we support changing the timestamp
-        updates = []
+        # Calculate signed delta for both paths
+        signed_delta = options[:increment] ? delta_magnitude : -delta_magnitude
 
-        # this will update the actual counter
-        updates << if column_type == :money
-          assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
+        if Thread.current[:aggregate_counter_updates]
+          # Store structured data for later Arel assembly
+          remember_counter_update(klass, id_to_change, change_counter_column, signed_delta, column_type)
         else
-          assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
+          # Build Arel expression for non-aggregate case
+          counter_expr = Counter.build_arel_counter_expr(klass, change_counter_column, signed_delta, column_type)
+          arel_updates = { change_counter_column => counter_expr }
         end
 
         # and this will update the timestamp, if so desired
@@ -97,12 +85,11 @@ module CounterCulture
             timestamp_columns << touch
           end
           timestamp_columns.each do |timestamp_column|
-            updates << assemble_timestamp_update(
-              klass,
-              id_to_change,
-              timestamp_column,
-              -> { klass.send(:current_time_from_proper_timezone).to_formatted_s(:db) }
-            )
+            if Thread.current[:aggregate_counter_updates]
+              remember_timestamp_update(klass, id_to_change, timestamp_column)
+            else
+              arel_updates[timestamp_column] = current_time
+            end
           end
         end
 
@@ -149,7 +136,9 @@ module CounterCulture
         unless Thread.current[:aggregate_counter_updates]
           execute_now_or_after_commit(obj) do
             conditions = primary_key_conditions(primary_key, id_to_change)
-            klass.where(conditions).update_all updates.join(', ')
+            # Use Arel-based updates which let Rails handle column qualification properly,
+            # avoiding ambiguous column errors in Rails 8.1+ UPDATE...FROM syntax.
+            klass.where(conditions).distinct(false).update_all(arel_updates)
             # Determine if we should update the in-memory counter on the associated object.
             # When updating the old counter (was: true), we need to carefully consider two scenarios:
             # 1) The belongs_to relation changed (e.g., moving a child from parent A to parent B):
@@ -171,6 +160,7 @@ module CounterCulture
             end
 
             if should_update_counter
+              operator = options[:increment] ? '+' : '-'
               assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
             end
           end
@@ -454,68 +444,47 @@ module CounterCulture
       (association_object.public_send(change_counter_column) || 0).public_send(operator, delta_magnitude)
     end
 
-    def assemble_money_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
-      counter_update_snippet(
-        "#{quoted_column} = COALESCE(CAST(#{quoted_column} as NUMERIC), 0)",
-        klass,
-        id_to_change,
-        operator,
-        delta_magnitude
-      )
-    end
-
-    def assemble_counter_update(klass, id_to_change, quoted_column, operator, delta_magnitude)
-      counter_update_snippet(
-        "#{quoted_column} = COALESCE(#{quoted_column}, 0)",
-        klass,
-        id_to_change,
-        operator,
-        delta_magnitude
-      )
-    end
-
-    def assemble_timestamp_update(klass, id_to_change, timestamp_column, value)
-      update = "#{timestamp_column} ="
-
-      if Thread.current[:aggregate_counter_updates]
-        remember_timestamp_update(klass, id_to_change, update, value)
-      else
-        "#{update} '#{value.call}'"
-      end
-    end
-
     def primary_key_conditions(primary_key, fk_value)
       Array.wrap(primary_key)
           .zip(Array.wrap(fk_value))
           .to_h
     end
 
-    def counter_update_snippet(update, klass, id_to_change, operator, delta_magnitude)
-      if Thread.current[:aggregate_counter_updates]
-        remember_counter_update(
-          klass,
-          id_to_change,
-          "#{update} +",
-          operator == '+' ? delta_magnitude : -delta_magnitude
+    # Builds an Arel expression for counter updates: COALESCE(col, 0) +/- delta
+    # This is a class method so it can be called from CounterCulture.aggregate_counter_updates
+    def self.build_arel_counter_expr(klass, column, delta, column_type)
+      arel_column = klass.arel_table[column]
+      arel_delta = Arel::Nodes.build_quoted(delta.abs)
+
+      coalesce = if column_type == :money
+        Arel::Nodes::NamedFunction.new(
+          'COALESCE',
+          [Arel::Nodes::NamedFunction.new('CAST', [arel_column.as('NUMERIC')]), 0]
         )
       else
-        "#{update} #{operator} #{delta_magnitude}"
+        Arel::Nodes::NamedFunction.new('COALESCE', [arel_column, 0])
+      end
+
+      if delta > 0
+        Arel::Nodes::Addition.new(coalesce, arel_delta)
+      else
+        Arel::Nodes::Subtraction.new(coalesce, arel_delta)
       end
     end
 
-    def remember_counter_update(klass, id, operation, value)
+    def remember_counter_update(klass, id, column, delta, column_type)
       Thread.current[:aggregated_updates][klass] ||= {}
-      Thread.current[:aggregated_updates][klass][id] ||= {}
-      Thread.current[:aggregated_updates][klass][id][operation] ||= 0
+      Thread.current[:aggregated_updates][klass][id] ||= { counters: {}, timestamps: [] }
+      Thread.current[:aggregated_updates][klass][id][:counters][column] ||= { delta: 0, type: column_type }
 
-      Thread.current[:aggregated_updates][klass][id][operation] += value
+      Thread.current[:aggregated_updates][klass][id][:counters][column][:delta] += delta
     end
 
-    def remember_timestamp_update(klass, id, operation, value)
+    def remember_timestamp_update(klass, id, column)
       Thread.current[:aggregated_updates][klass] ||= {}
-      Thread.current[:aggregated_updates][klass][id] ||= {}
+      Thread.current[:aggregated_updates][klass][id] ||= { counters: {}, timestamps: [] }
 
-      Thread.current[:aggregated_updates][klass][id][operation] = value
+      Thread.current[:aggregated_updates][klass][id][:timestamps] << column
     end
   end
 end

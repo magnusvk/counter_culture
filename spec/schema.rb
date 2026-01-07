@@ -344,4 +344,13 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
       t.money "amount", scale: 2, default: "0.0", null: false
     end
   end
+
+  create_table "sti_contracts", :force => true do |t|
+    t.string   "type"
+    t.string   "name"
+    t.integer  "agreement_id"
+    t.integer  "contracts_count", :default => 0, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 end
