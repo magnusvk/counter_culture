@@ -345,8 +345,6 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     end
   end
 
-  # STI table where both parent and child share the same table and have counter_culture
-  # This tests the Rails 8.1+ UPDATE...FROM alias issue with PostgreSQL
   create_table "sti_contracts", :force => true do |t|
     t.string   "type"
     t.string   "name"

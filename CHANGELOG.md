@@ -1,11 +1,10 @@
-## X.X.X (Unreleased)
+## 3.12.1 (January 6, 2026)
 
 Bugfixes:
   - Fix Rails 8.1+ compatibility by using Arel-based updates to avoid ambiguous column errors with UPDATE...FROM syntax (#425)
 
 Changes:
   - Dropped support for Ruby 2.6, 2.7 and Rails 5.2 (all EOL)
-    - There are no known incompatibilities with these versions, but we no longer test against them because of a limitation to the size of the build matrix in CircleCI.
   - Added support and testing for Ruby 4.0 and Rails 8.1 (#425)
 
 ## 3.11.4 (November 5, 2025)
