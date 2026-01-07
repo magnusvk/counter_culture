@@ -3736,7 +3736,7 @@ RSpec.describe "CounterCulture" do
   end
 
   # Test for Rails 8.1+ UPDATE...FROM alias issue with STI models sharing a table
-  # See: https://github.com/magnusvk/counter_culture/issues/XXX
+  # See: https://github.com/magnusvk/counter_culture/issues/422
   describe "STI models sharing a table" do
     it "increments counter cache on create" do
       agreement = StiContract::Agreement.create!
