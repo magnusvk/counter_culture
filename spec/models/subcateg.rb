@@ -1,4 +1,6 @@
 class Subcateg < ActiveRecord::Base
+  include Discard::Model if defined?(Discard::Model)
+
   SUBCAT_1 = 0
   SUBCAT_2 = 1
 

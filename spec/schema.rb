@@ -164,6 +164,7 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "posts_count",       :default => 0, :null => false
     t.integer  "posts_after_commit_count",       :default => 0, :null => false
     t.integer  "posts_dynamic_commit_count",       :default => 0, :null => false
+    t.timestamp "discarded_at"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
