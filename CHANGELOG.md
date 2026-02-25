@@ -1,3 +1,8 @@
+## 3.12.2 (February 25, 2026)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` not checking discarded/soft-deleted intermediate models in multi-level counter caches (#426)
+
 ## 3.12.1 (January 6, 2026)
 
 Bugfixes:

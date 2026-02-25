@@ -1,3 +1,3 @@
 module CounterCulture
-  VERSION = '3.12.1'.freeze
+  VERSION = '3.12.2'.freeze
 end
