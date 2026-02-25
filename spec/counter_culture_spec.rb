@@ -21,12 +21,12 @@ require 'models/post_comment'
 require 'models/post_like'
 require 'models/categ'
 require 'models/soft_delete_discard'
+require 'models/soft_delete_paranoia'
 require 'models/subcateg'
 require 'models/another_post'
 require 'models/another_post_comment'
 require 'models/person'
 require 'models/transaction'
-require 'models/soft_delete_paranoia'
 require 'models/conversation'
 require 'models/candidate_profile'
 require 'models/candidate'
@@ -2558,6 +2558,24 @@ RSpec.describe "CounterCulture" do
           expect(company.reload.soft_delete_paranoia_values_sum).to eq(10)
         end
       end
+    end
+
+    it "fix_counts excludes soft-deleted parents in multi-level counter cache" do
+      skip "Paranoia not loaded" unless Subcateg.respond_to?(:acts_as_paranoid)
+
+      categ = Categ.create!
+      subcateg = Subcateg.create!
+      subcateg.update(fk_cat_id: categ.cat_id)
+      Post.create!(subcateg: subcateg)
+
+      expect(categ.reload.posts_count).to eq(1)
+
+      subcateg.destroy
+      expect(subcateg.deleted_at).to be_present
+
+      categ.update_column(:posts_count, 999)
+      Post.counter_culture_fix_counts(only: [[:subcateg, :categ]])
+      expect(categ.reload.posts_count).to eq(0)
     end
   end
 

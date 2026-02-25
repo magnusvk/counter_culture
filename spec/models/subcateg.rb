@@ -1,5 +1,6 @@
 class Subcateg < ActiveRecord::Base
   include Discard::Model if defined?(Discard::Model)
+  acts_as_paranoid if respond_to?(:acts_as_paranoid)
 
   SUBCAT_1 = 0
   SUBCAT_2 = 1
