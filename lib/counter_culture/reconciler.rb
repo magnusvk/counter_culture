@@ -309,6 +309,19 @@ module CounterCulture
             # NB only works for one-level relations
             joins_sql += " AND #{target_table_alias}.#{reflect.foreign_type} = '#{relation_class.name}'"
           end
+
+          # respect the deleted_at column if it exists
+          if model.column_names.include?('deleted_at')
+            joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
+          end
+
+          # respect the discard column if it exists
+          if defined?(Discard::Model) &&
+             model.include?(Discard::Model) &&
+             model.column_names.include?(model.discard_column.to_s)
+
+            joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
+          end
           if index == reverse_relation.size - 1
             # conditions must be applied to the join on which we are counting
             if where
@@ -319,18 +332,6 @@ module CounterCulture
               else
                 joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
               end
-            end
-            # respect the deleted_at column if it exists
-            if model.column_names.include?('deleted_at')
-              joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
-            end
-
-            # respect the discard column if it exists
-            if defined?(Discard::Model) &&
-               model.include?(Discard::Model) &&
-               model.column_names.include?(model.discard_column.to_s)
-
-              joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
             end
           end
           joins_sql
