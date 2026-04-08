@@ -2507,6 +2507,23 @@ RSpec.describe "CounterCulture" do
         expect(company.reload.soft_delete_discard_include_soft_deleted_count).to eq(2)
         expect(company.reload.soft_delete_discards_count).to eq(1)
       end
+
+      it "updates counter when discarded record changes association" do
+        company_a = Company.create!
+        company_b = Company.create!
+        sd = SoftDeleteDiscard.create!(company_id: company_a.id)
+        expect(company_a.reload.soft_delete_discard_include_soft_deleted_count).to eq(1)
+
+        sd.discard
+        expect(company_a.reload.soft_delete_discard_include_soft_deleted_count).to eq(1)
+
+        sd.update!(company_id: company_b.id)
+        expect(company_a.reload.soft_delete_discard_include_soft_deleted_count).to eq(0)
+        expect(company_b.reload.soft_delete_discard_include_soft_deleted_count).to eq(1)
+
+        sd.destroy
+        expect(company_b.reload.soft_delete_discard_include_soft_deleted_count).to eq(0)
+      end
     end
   end
 
@@ -2695,6 +2712,23 @@ RSpec.describe "CounterCulture" do
 
         sd.destroy
         expect(company.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(1)
+      end
+
+      it "updates counter when soft-deleted record changes association" do
+        company_a = Company.create!
+        company_b = Company.create!
+        sd = SoftDeleteParanoia.create!(company_id: company_a.id)
+        expect(company_a.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(1)
+
+        sd.destroy
+        expect(company_a.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(1)
+
+        sd.update!(company_id: company_b.id)
+        expect(company_a.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(0)
+        expect(company_b.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(1)
+
+        sd.really_destroy!
+        expect(company_b.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(0)
       end
     end
   end

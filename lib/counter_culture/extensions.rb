@@ -157,10 +157,11 @@ module CounterCulture
     end
 
     def _update_counts_after_update
-      # Don't update counters for soft-deleted records
-      return if destroyed_for_counter_culture?
-
       self.class.after_commit_counter_cache.each do |counter|
+        # Don't update regular counters for soft-deleted records, but
+        # include_soft_deleted counters must still track association changes
+        next if destroyed_for_counter_culture? && !counter.include_soft_deleted
+
         counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
         counter_cache_name = counter.counter_cache_name_for(self)
 
