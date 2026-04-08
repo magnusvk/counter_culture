@@ -169,7 +169,9 @@ module CounterCulture
             (counter.delta_column && counter.attribute_changed?(self, counter.delta_column)) ||
             counter_cache_name != counter_cache_name_was
 
+          # increment the counter cache of the new value
           counter.change_counter_cache(self, :increment => true, :counter_column => counter_cache_name)
+          # decrement the counter cache of the old value
           counter.change_counter_cache(self, :increment => false, :was => true, :counter_column => counter_cache_name_was)
         end
       end
