@@ -2524,6 +2524,27 @@ RSpec.describe "CounterCulture" do
         sd.destroy
         expect(company_b.reload.soft_delete_discard_include_soft_deleted_count).to eq(0)
       end
+
+      it "fix_counts includes records with discarded parents in multi-level counter cache" do
+        skip "Discard not loaded" unless defined?(Discard::Model) && Subcateg.include?(Discard::Model)
+
+        categ = Categ.create!
+        subcateg = Subcateg.create!
+        subcateg.update(fk_cat_id: categ.cat_id)
+        Post.create!(subcateg: subcateg)
+
+        expect(categ.reload.posts_include_soft_deleted_count).to eq(1)
+
+        subcateg.discard
+        expect(subcateg).to be_discarded
+
+        categ.update_column(:posts_include_soft_deleted_count, 0)
+        Post.counter_culture_fix_counts(only: [[:subcateg, :categ]])
+        # Regular counter excludes posts under discarded parents
+        expect(categ.reload.posts_count).to eq(0)
+        # include_soft_deleted counter still counts them
+        expect(categ.reload.posts_include_soft_deleted_count).to eq(1)
+      end
     end
   end
 
@@ -2729,6 +2750,27 @@ RSpec.describe "CounterCulture" do
 
         sd.really_destroy!
         expect(company_b.reload.soft_delete_paranoia_include_soft_deleted_count).to eq(0)
+      end
+
+      it "fix_counts includes records with soft-deleted parents in multi-level counter cache" do
+        skip "Paranoia not loaded" unless Subcateg.respond_to?(:acts_as_paranoid)
+
+        categ = Categ.create!
+        subcateg = Subcateg.create!
+        subcateg.update(fk_cat_id: categ.cat_id)
+        Post.create!(subcateg: subcateg)
+
+        expect(categ.reload.posts_include_soft_deleted_count).to eq(1)
+
+        subcateg.destroy
+        expect(subcateg.deleted_at).to be_present
+
+        categ.update_column(:posts_include_soft_deleted_count, 0)
+        Post.counter_culture_fix_counts(only: [[:subcateg, :categ]])
+        # Regular counter excludes posts under soft-deleted parents
+        expect(categ.reload.posts_count).to eq(0)
+        # include_soft_deleted counter still counts them
+        expect(categ.reload.posts_include_soft_deleted_count).to eq(1)
       end
     end
   end
