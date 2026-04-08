@@ -2545,6 +2545,50 @@ RSpec.describe "CounterCulture" do
         # include_soft_deleted counter still counts them
         expect(categ.reload.posts_include_soft_deleted_count).to eq(1)
       end
+
+      describe "with dynamic column_name depending on soft-delete state" do
+        it "increments deleted counter on discard" do
+          company = Company.create!
+          sd = SoftDeleteDiscard.create!(company_id: company.id)
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(0)
+
+          sd.discard
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(1)
+        end
+
+        it "decrements deleted counter on undiscard" do
+          company = Company.create!
+          sd = SoftDeleteDiscard.create!(company_id: company.id)
+          sd.discard
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(1)
+
+          sd.undiscard
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(0)
+        end
+
+        it "decrements deleted counter on hard-destroy of discarded record" do
+          company = Company.create!
+          sd = SoftDeleteDiscard.create!(company_id: company.id)
+          sd.discard
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(1)
+
+          sd.destroy
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(0)
+        end
+
+        it "fix_counts correctly reconciles deleted counter" do
+          company = Company.create!
+          SoftDeleteDiscard.create!(company_id: company.id)
+          sd2 = SoftDeleteDiscard.create!(company_id: company.id)
+          sd2.discard
+
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(1)
+
+          company.update_column(:soft_delete_discard_deleted_count, 0)
+          SoftDeleteDiscard.counter_culture_fix_counts
+          expect(company.reload.soft_delete_discard_deleted_count).to eq(1)
+        end
+      end
     end
   end
 
@@ -2771,6 +2815,50 @@ RSpec.describe "CounterCulture" do
         expect(categ.reload.posts_count).to eq(0)
         # include_soft_deleted counter still counts them
         expect(categ.reload.posts_include_soft_deleted_count).to eq(1)
+      end
+
+      describe "with dynamic column_name depending on soft-delete state" do
+        it "increments deleted counter on soft-delete" do
+          company = Company.create!
+          sd = SoftDeleteParanoia.create!(company_id: company.id)
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(0)
+
+          sd.destroy
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(1)
+        end
+
+        it "decrements deleted counter on restore" do
+          company = Company.create!
+          sd = SoftDeleteParanoia.create!(company_id: company.id)
+          sd.destroy
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(1)
+
+          sd.restore
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(0)
+        end
+
+        it "decrements deleted counter on really_destroy! of soft-deleted record" do
+          company = Company.create!
+          sd = SoftDeleteParanoia.create!(company_id: company.id)
+          sd.destroy
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(1)
+
+          sd.really_destroy!
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(0)
+        end
+
+        it "fix_counts correctly reconciles deleted counter" do
+          company = Company.create!
+          SoftDeleteParanoia.create!(company_id: company.id)
+          sd2 = SoftDeleteParanoia.create!(company_id: company.id)
+          sd2.destroy
+
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(1)
+
+          company.update_column(:soft_delete_paranoia_deleted_count, 0)
+          SoftDeleteParanoia.counter_culture_fix_counts
+          expect(company.reload.soft_delete_paranoia_deleted_count).to eq(1)
+        end
       end
     end
   end

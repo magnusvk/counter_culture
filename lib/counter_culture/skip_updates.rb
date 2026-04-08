@@ -10,6 +10,7 @@ module CounterCulture
       _update_counts_before_restore
       _update_counts_before_discard
       _update_counts_before_undiscard
+      _handle_include_soft_deleted_column_transition
     ].each do |method_name|
       define_method(method_name) do
         unless Array(Thread.current[:skip_counter_culture_updates]).include?(self.class)
