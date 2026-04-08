@@ -17,21 +17,21 @@ module CounterCulture
         unless @after_commit_counter_cache
           # initialize callbacks only once
           after_create :_update_counts_after_create
-          before_destroy :_update_counts_after_destroy
+          before_destroy :_update_counts_before_destroy
           after_update :_update_counts_after_update
 
           if respond_to?(:before_real_destroy) &&
               instance_methods.include?(:paranoia_destroyed?)
-            before_real_destroy :_update_counts_after_real_destroy
+            before_real_destroy :_update_counts_before_real_destroy
           end
 
           if respond_to?(:before_restore)
-            before_restore :_update_counts_after_restore
+            before_restore :_update_counts_before_restore
           end
 
           if defined?(Discard::Model) && include?(Discard::Model)
-            before_discard :_update_counts_after_discard
-            before_undiscard :_update_counts_after_undiscard
+            before_discard :_update_counts_before_discard
+            before_undiscard :_update_counts_before_undiscard
           end
 
           # we keep a list of all counter caches we must maintain
@@ -106,11 +106,13 @@ module CounterCulture
 
     # before_destroy: For Paranoia models this is a soft-delete; for all others
     # (including Discard) it is a hard-destroy.
-    def _update_counts_after_destroy
+    def _update_counts_before_destroy
+      # If destroy is called again on an already-destroyed record, don't double-decrement
       return if destroyed?
 
       if respond_to?(:paranoia_destroyed?)
         # Paranoia: destroy = soft-delete
+        # If already soft-deleted, this is a redundant destroy call — don't decrement again
         return if paranoia_destroyed?
         _decrement_counters(skip_include_soft_deleted: true)
       elsif destroyed_for_counter_culture?
@@ -123,7 +125,7 @@ module CounterCulture
     end
 
     # before_real_destroy (Paranoia only)
-    def _update_counts_after_real_destroy
+    def _update_counts_before_real_destroy
       if paranoia_destroyed?
         # Was already soft-deleted: only include_soft_deleted counters remain
         _decrement_counters(only_include_soft_deleted: true)
@@ -134,24 +136,28 @@ module CounterCulture
     end
 
     # before_restore (Paranoia only)
-    def _update_counts_after_restore
+    def _update_counts_before_restore
+      # Only increment if the record is currently soft-deleted (idempotency guard)
       return unless deleted?
       _increment_counters(skip_include_soft_deleted: true)
     end
 
     # before_discard (Discard only)
-    def _update_counts_after_discard
+    def _update_counts_before_discard
+      # Only decrement if not already discarded (idempotency guard)
       return if discarded?
       _decrement_counters(skip_include_soft_deleted: true)
     end
 
     # before_undiscard (Discard only)
-    def _update_counts_after_undiscard
+    def _update_counts_before_undiscard
+      # Only increment if currently discarded (idempotency guard)
       return unless discarded?
       _increment_counters(skip_include_soft_deleted: true)
     end
 
     def _update_counts_after_update
+      # Don't update counters for soft-deleted records
       return if destroyed_for_counter_culture?
 
       self.class.after_commit_counter_cache.each do |counter|
