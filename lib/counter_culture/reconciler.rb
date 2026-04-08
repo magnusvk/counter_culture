@@ -312,7 +312,9 @@ module CounterCulture
 
           # respect the deleted_at column if it exists
           if model.column_names.include?('deleted_at')
-            joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
+            unless include_soft_deleted && index == reverse_relation.size - 1
+              joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
+            end
           end
 
           # respect the discard column if it exists
@@ -320,7 +322,9 @@ module CounterCulture
              model.include?(Discard::Model) &&
              model.column_names.include?(model.discard_column.to_s)
 
-            joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
+            unless include_soft_deleted && index == reverse_relation.size - 1
+              joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
+            end
           end
           if index == reverse_relation.size - 1
             # conditions must be applied to the join on which we are counting

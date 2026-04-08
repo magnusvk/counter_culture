@@ -18,27 +18,35 @@ module CounterCulture
           # initialize callbacks only once
           after_create :_update_counts_after_create
 
-          before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
-
           if respond_to?(:before_real_destroy) &&
               instance_methods.include?(:paranoia_destroyed?)
+            # Paranoia: destroy is soft-delete, really_destroy! is hard-destroy
+            before_destroy :_update_counts_after_soft_delete, unless: :destroyed_for_counter_culture?
             before_real_destroy :_update_counts_after_destroy,
               if: -> (model) { !model.paranoia_destroyed? }
+            before_real_destroy :_update_counts_after_hard_destroy,
+              if: -> (model) { model.paranoia_destroyed? }
+          else
+            # Non-Paranoia: destroy is hard-destroy
+            before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
           end
 
           after_update :_update_counts_after_update, unless: :destroyed_for_counter_culture?
 
           if respond_to?(:before_restore)
-            before_restore :_update_counts_after_create,
+            before_restore :_update_counts_after_soft_restore,
               if: -> (model) { model.deleted? }
           end
 
           if defined?(Discard::Model) && include?(Discard::Model)
-            before_discard :_update_counts_after_destroy,
+            before_discard :_update_counts_after_soft_delete,
               if: ->(model) { !model.discarded? }
 
-            before_undiscard :_update_counts_after_create,
+            before_undiscard :_update_counts_after_soft_restore,
               if: ->(model) { model.discarded? }
+
+            before_destroy :_update_counts_after_hard_destroy,
+              if: :destroyed_for_counter_culture?
           end
 
           # we keep a list of all counter caches we must maintain
@@ -119,6 +127,35 @@ module CounterCulture
           # decrement counter cache
           counter.change_counter_cache(self, :increment => false)
         end
+      end
+    end
+
+    # called on soft-delete (Paranoia destroy / Discard discard)
+    # skips include_soft_deleted counters since soft-deleted records should still be counted
+    def _update_counts_after_soft_delete
+      self.class.after_commit_counter_cache.each do |counter|
+        next if counter.include_soft_deleted
+        unless destroyed?
+          counter.change_counter_cache(self, :increment => false)
+        end
+      end
+    end
+
+    # called on restore (Paranoia restore / Discard undiscard)
+    # skips include_soft_deleted counters since the record was already counted while soft-deleted
+    def _update_counts_after_soft_restore
+      self.class.after_commit_counter_cache.each do |counter|
+        next if counter.include_soft_deleted
+        counter.change_counter_cache(self, :increment => true)
+      end
+    end
+
+    # called on hard-destroy of already-soft-deleted records
+    # only decrements include_soft_deleted counters (regular counters were already decremented on soft-delete)
+    def _update_counts_after_hard_destroy
+      self.class.after_commit_counter_cache.each do |counter|
+        next unless counter.include_soft_deleted
+        counter.change_counter_cache(self, :increment => false)
       end
     end
 

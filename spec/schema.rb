@@ -27,8 +27,10 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "children_count",      :default => 0, :null => false
     t.integer  "soft_delete_paranoia_count",  :default => 0, :null => false
     t.integer  "soft_delete_paranoia_values_sum", :default => 0, :null => false
+    t.integer  "soft_delete_paranoia_include_soft_deleted_count", :default => 0, :null => false
     t.integer  "soft_delete_discards_count",  :default => 0, :null => false
     t.integer  "soft_delete_discard_values_sum", :default => 0, :null => false
+    t.integer  "soft_delete_discard_include_soft_deleted_count", :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -40,8 +42,10 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.integer  "comments_count",      :default => 0, :null => false
     t.integer  "soft_delete_paranoia_count",  :default => 0, :null => false
     t.integer  "soft_delete_paranoia_values_sum", :default => 0, :null => false
+    t.integer  "soft_delete_paranoia_include_soft_deleted_count", :default => 0, :null => false
     t.integer  "soft_delete_discards_count",  :default => 0, :null => false
     t.integer  "soft_delete_discard_values_sum", :default => 0, :null => false
+    t.integer  "soft_delete_discard_include_soft_deleted_count", :default => 0, :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
   end

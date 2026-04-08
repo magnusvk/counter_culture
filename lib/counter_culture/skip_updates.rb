@@ -22,5 +22,26 @@ module CounterCulture
         super
       end
     end
+
+    # called on soft-delete
+    def _update_counts_after_soft_delete
+      unless Array(Thread.current[:skip_counter_culture_updates]).include?(self.class)
+        super
+      end
+    end
+
+    # called on restore
+    def _update_counts_after_soft_restore
+      unless Array(Thread.current[:skip_counter_culture_updates]).include?(self.class)
+        super
+      end
+    end
+
+    # called on hard-destroy of soft-deleted record
+    def _update_counts_after_hard_destroy
+      unless Array(Thread.current[:skip_counter_culture_updates]).include?(self.class)
+        super
+      end
+    end
   end
 end
