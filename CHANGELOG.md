@@ -1,3 +1,8 @@
+## 3.13.0 (April 9, 2026)
+
+New features:
+  - Add `include_soft_deleted` option to keep soft-deleted records in the count (#428)
+
 ## 3.12.2 (February 25, 2026)
 
 Bugfixes:
