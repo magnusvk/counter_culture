@@ -17,28 +17,21 @@ module CounterCulture
         unless @after_commit_counter_cache
           # initialize callbacks only once
           after_create :_update_counts_after_create
-
-          before_destroy :_update_counts_after_destroy, unless: :destroyed_for_counter_culture?
+          before_destroy :_update_counts_before_destroy
+          after_update :_update_counts_after_update
 
           if respond_to?(:before_real_destroy) &&
               instance_methods.include?(:paranoia_destroyed?)
-            before_real_destroy :_update_counts_after_destroy,
-              if: -> (model) { !model.paranoia_destroyed? }
+            before_real_destroy :_update_counts_before_real_destroy
           end
 
-          after_update :_update_counts_after_update, unless: :destroyed_for_counter_culture?
-
           if respond_to?(:before_restore)
-            before_restore :_update_counts_after_create,
-              if: -> (model) { model.deleted? }
+            before_restore :_update_counts_before_restore
           end
 
           if defined?(Discard::Model) && include?(Discard::Model)
-            before_discard :_update_counts_after_destroy,
-              if: ->(model) { !model.discarded? }
-
-            before_undiscard :_update_counts_after_create,
-              if: ->(model) { model.discarded? }
+            before_discard :_update_counts_before_discard
+            before_undiscard :_update_counts_before_undiscard
           end
 
           # we keep a list of all counter caches we must maintain
@@ -104,29 +97,77 @@ module CounterCulture
     end
 
     private
-    # called by after_create callback
+
     def _update_counts_after_create
       self.class.after_commit_counter_cache.each do |counter|
-        # increment counter cache
         counter.change_counter_cache(self, :increment => true)
       end
     end
 
-    # called by after_destroy callback
-    def _update_counts_after_destroy
-      self.class.after_commit_counter_cache.each do |counter|
-        unless destroyed?
-          # decrement counter cache
-          counter.change_counter_cache(self, :increment => false)
-        end
+    # before_destroy: For Paranoia models this is a soft-delete; for all others
+    # (including Discard) it is a hard-destroy.
+    def _update_counts_before_destroy
+      # If destroy is called again on an already-destroyed record, don't double-decrement
+      return if destroyed?
+
+      if respond_to?(:paranoia_destroyed?)
+        # Paranoia: destroy = soft-delete
+        # If already soft-deleted, this is a redundant destroy call — don't decrement again
+        return if paranoia_destroyed?
+        _decrement_counters(skip_include_soft_deleted: true)
+        _handle_include_soft_deleted_column_transition
+      elsif destroyed_for_counter_culture?
+        # Discard: hard-destroy of already-discarded record
+        _decrement_counters(only_include_soft_deleted: true)
+      else
+        # Regular model or undiscarded Discard: hard-destroy
+        _decrement_counters
       end
     end
 
-    # called by after_update callback
+    # before_real_destroy (Paranoia only)
+    def _update_counts_before_real_destroy
+      if paranoia_destroyed?
+        # Was already soft-deleted: only include_soft_deleted counters remain
+        _decrement_counters(only_include_soft_deleted: true)
+      else
+        # Not soft-deleted: decrement all counters
+        _decrement_counters
+      end
+    end
+
+    # before_restore (Paranoia only)
+    def _update_counts_before_restore
+      # Only increment if the record is currently soft-deleted (idempotency guard)
+      return unless deleted?
+      _increment_counters(skip_include_soft_deleted: true)
+      _handle_include_soft_deleted_column_transition
+    end
+
+    # before_discard (Discard only)
+    # Note: Discard's discard/undiscard use update_attribute which triggers
+    # after_update, so include_soft_deleted column transitions are handled
+    # there via the normal column_name change detection — no need to call
+    # _handle_include_soft_deleted_column_transition here.
+    def _update_counts_before_discard
+      # Only decrement if not already discarded (idempotency guard)
+      return if discarded?
+      _decrement_counters(skip_include_soft_deleted: true)
+    end
+
+    # before_undiscard (Discard only)
+    def _update_counts_before_undiscard
+      # Only increment if currently discarded (idempotency guard)
+      return unless discarded?
+      _increment_counters(skip_include_soft_deleted: true)
+    end
+
     def _update_counts_after_update
       self.class.after_commit_counter_cache.each do |counter|
-        # figure out whether the applicable counter cache changed (this can happen
-        # with dynamic column names)
+        # Don't update regular counters for soft-deleted records, but
+        # include_soft_deleted counters must still track association changes
+        next if destroyed_for_counter_culture? && !counter.include_soft_deleted
+
         counter_cache_name_was = counter.counter_cache_name_for(counter.previous_model(self))
         counter_cache_name = counter.counter_cache_name_for(self)
 
@@ -142,7 +183,53 @@ module CounterCulture
       end
     end
 
-    # check if record is soft-deleted
+    def _decrement_counters(skip_include_soft_deleted: false, only_include_soft_deleted: false)
+      self.class.after_commit_counter_cache.each do |counter|
+        next if skip_include_soft_deleted && counter.include_soft_deleted
+        next if only_include_soft_deleted && !counter.include_soft_deleted
+        counter.change_counter_cache(self, :increment => false)
+      end
+    end
+
+    def _increment_counters(skip_include_soft_deleted: false)
+      self.class.after_commit_counter_cache.each do |counter|
+        next if skip_include_soft_deleted && counter.include_soft_deleted
+        counter.change_counter_cache(self, :increment => true)
+      end
+    end
+
+    # For include_soft_deleted counters with dynamic column_name Procs,
+    # evaluate the Proc on both the current state and the projected future
+    # state (after soft-delete/restore completes) to detect column transitions.
+    def _handle_include_soft_deleted_column_transition
+      future = _soft_delete_future_model
+      self.class.after_commit_counter_cache.each do |counter|
+        next unless counter.include_soft_deleted
+        column_was = counter.counter_cache_name_for(self)
+        column_now = counter.counter_cache_name_for(future)
+        next if column_was == column_now
+        counter.change_counter_cache(self, :increment => true, :counter_column => column_now) if column_now
+        counter.change_counter_cache(self, :increment => false, :counter_column => column_was) if column_was
+      end
+    end
+
+    # Creates a dup of the model with the soft-delete column toggled,
+    # so dynamic column_name Procs can be evaluated against the future state.
+    def _soft_delete_future_model
+      future = self.dup
+      if respond_to?(:paranoia_destroyed?)
+        col = 'deleted_at'
+        val = paranoia_destroyed? ? nil : Time.current
+      elsif defined?(Discard::Model) && self.class.include?(Discard::Model)
+        col = self.class.discard_column.to_s
+        val = discarded? ? nil : Time.current
+      else
+        return future
+      end
+      future.instance_variable_get(:@attributes).write_from_user(col, val)
+      future
+    end
+
     def destroyed_for_counter_culture?
       if respond_to?(:paranoia_destroyed?)
         paranoia_destroyed?

@@ -587,6 +587,25 @@ class SoftDelete < ActiveRecord::Base
 end
 ```
 
+#### Counting soft-deleted records
+
+By default, soft-deleted records are excluded from counter caches. If you want a
+counter that includes soft-deleted records, use the `include_soft_deleted` option:
+
+```ruby
+class SoftDelete < ActiveRecord::Base
+  acts_as_paranoid # or: include Discard::Model
+
+  belongs_to :company
+  counter_culture :company, column_name: 'all_records_count', include_soft_deleted: true
+end
+```
+
+With this option, soft-delete and restore operations will not change the counter.
+Only hard-destroying a record (`really_destroy!` for Paranoia, `destroy` for
+Discard) will decrement the counter. `counter_culture_fix_counts` will also
+correctly include soft-deleted records when reconciling.
+
 ### PaperTrail integration
 
 If you are using the [`paper_trail` gem](https://github.com/airblade/paper_trail)

@@ -11,6 +11,7 @@ class Post < ActiveRecord::Base
     :with_papertrail => PapertrailSupport.supported_here?
 
   counter_culture [:subcateg, :categ]
+  counter_culture [:subcateg, :categ], column_name: 'posts_include_soft_deleted_count', include_soft_deleted: true
 
   counter_culture :subcateg, :column_name => :posts_dynamic_commit_count,
     :execute_after_commit => proc { !Thread.current[:update_counter_cache_in_transaction] },
