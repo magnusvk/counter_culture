@@ -364,4 +364,26 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "locking_parents", :force => true do |t|
+    t.string   "name"
+    t.integer  "children_count",      :default => 0, :null => false
+    t.integer  "grandchildren_count", :default => 0, :null => false
+    t.integer  "lock_version",        :default => 0, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "locking_children", :force => true do |t|
+    t.integer  "locking_parent_id"
+    t.integer  "grandchildren_count", :default => 0, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "locking_grandchildren", :force => true do |t|
+    t.integer  "locking_child_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 end

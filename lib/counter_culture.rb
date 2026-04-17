@@ -46,6 +46,13 @@ module CounterCulture
         end
 
         if arel_updates.any?
+          # Prevent Rails 8.1+ from auto-incrementing lock_version
+          # (same rationale as in Counter#change_counter_cache)
+          if klass.locking_enabled?
+            lc = klass.locking_column
+            arel_updates[lc] = klass.arel_table[lc]
+          end
+
           primary_key = Thread.current[:primary_key_map][klass]
 
           conditions =

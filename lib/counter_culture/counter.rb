@@ -74,6 +74,17 @@ module CounterCulture
           # Build Arel expression for non-aggregate case
           counter_expr = Counter.build_arel_counter_expr(klass, change_counter_column, signed_delta, column_type)
           arel_updates = { change_counter_column => counter_expr }
+
+          # Prevent Rails 8.1+ from auto-incrementing lock_version in hash-based
+          # update_all (see ActiveRecord::Relation#update_all). Counter updates are
+          # atomic SQL operations (SET col = col + 1) that don't need optimistic
+          # locking protection. Without this, the DB lock_version gets silently
+          # incremented while in-memory objects retain the old value, causing
+          # StaleObjectError on subsequent touch/save operations.
+          if klass.locking_enabled?
+            lc = klass.locking_column
+            arel_updates[lc] = klass.arel_table[lc]
+          end
         end
 
         # and this will update the timestamp, if so desired
