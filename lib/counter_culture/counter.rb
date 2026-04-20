@@ -74,6 +74,12 @@ module CounterCulture
           # Build Arel expression for non-aggregate case
           counter_expr = Counter.build_arel_counter_expr(klass, change_counter_column, signed_delta, column_type)
           arel_updates = { change_counter_column => counter_expr }
+
+          # Set lock_version = lock_version (no-op) to skip Rails auto-increment
+          if klass.locking_enabled?
+            lc = klass.locking_column
+            arel_updates[lc] = klass.arel_table[lc]
+          end
         end
 
         # and this will update the timestamp, if so desired

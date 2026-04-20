@@ -46,6 +46,12 @@ module CounterCulture
         end
 
         if arel_updates.any?
+          # Set lock_version = lock_version (no-op) to skip Rails auto-increment
+          if klass.locking_enabled?
+            lc = klass.locking_column
+            arel_updates[lc] = klass.arel_table[lc]
+          end
+
           primary_key = Thread.current[:primary_key_map][klass]
 
           conditions =
