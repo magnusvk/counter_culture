@@ -1,3 +1,8 @@
+## 3.13.1 (April 20, 2026)
+
+Bugfixes:
+  - Fix `StaleObjectError` when counter target model has optimistic locking enabled (#429)
+
 ## 3.13.0 (April 9, 2026)
 
 New features:
