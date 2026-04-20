@@ -46,8 +46,7 @@ module CounterCulture
         end
 
         if arel_updates.any?
-          # Prevent Rails 8.1+ from auto-incrementing lock_version
-          # (same rationale as in Counter#change_counter_cache)
+          # Set lock_version = lock_version (no-op) to skip Rails auto-increment
           if klass.locking_enabled?
             lc = klass.locking_column
             arel_updates[lc] = klass.arel_table[lc]
