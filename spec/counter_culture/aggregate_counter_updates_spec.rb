@@ -306,47 +306,6 @@ RSpec.describe "CounterCulture with aggregate_counter_updates" do
     expect(product1.reload.poly_images_count).to eq(0)
   end
 
-  it "works with pg money type" do
-    if ENV['DB'] != 'postgresql'
-      skip("money type only supported in PostgreSQL")
-    end
-
-    item = nil
-    po = PurchaseOrder.create
-
-    expect(po.total_amount).to eq(0.0)
-
-    CounterCulture.aggregate_counter_updates do
-      item = po.purchase_order_items.build(amount: 100.00)
-      item.save
-    end
-
-    po.reload
-    expect(po.total_amount).to eq(100.0)
-
-    CounterCulture.aggregate_counter_updates do
-      item = po.purchase_order_items.build(amount: 100.00)
-      item.save
-    end
-
-    po.reload
-    expect(po.total_amount).to eq(200.0)
-
-    CounterCulture.aggregate_counter_updates do
-      item.destroy
-    end
-
-    po.reload
-    expect(po.total_amount).to eq(100.0)
-
-    CounterCulture.aggregate_counter_updates do
-      po.purchase_order_items.destroy_all
-    end
-
-    po.reload
-    expect(po.total_amount).to eq(0.0)
-  end
-
   context "with composite primary keys" do
     before do
     unless CounterCulture.supports_composite_keys?

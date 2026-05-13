@@ -24,4 +24,69 @@ RSpec.describe "CounterCulture when relation is an array but has different prima
 
     expect(group.reload.group_items_count).to eq(1)
   end
+
+  it "should use relation primary_key correctly" do
+    subcateg = Subcateg.create!
+    subcateg.update(subcat_id: Subcateg::SUBCAT_1)
+
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+
+    subcateg.reload
+    expect(subcateg.posts_count).to eq(1)
+  end
+
+  it "should use relation primary key on counter destination table correctly when fixing counts" do
+    subcateg = Subcateg.create!
+    subcateg.update(subcat_id: Subcateg::SUBCAT_1)
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+
+    subcateg.posts_count = -1
+    subcateg.save!
+
+    fixed = Post.counter_culture_fix_counts :only => :subcateg
+
+    expect(fixed.length).to eq(1)
+    expect(subcateg.reload.posts_count).to eq(1)
+  end
+
+  it "should use primary key on counted records table correctly when fixing counts" do
+    subcateg = Subcateg.create!
+    subcateg.update(subcat_id: Subcateg::SUBCAT_1)
+    post = Post.new
+    post.subcateg = subcateg
+    post.save!
+
+    post_comment = PostComment.create!(:post_id => post.id)
+
+    post.comments_count = -1
+    post.save!
+
+    fixed = PostComment.counter_culture_fix_counts
+    expect(fixed.length).to eq(1)
+    expect(post.reload.comments_count).to eq(1)
+  end
+
+  it "should use multi-level relation primary key on counter destination table correctly when fixing counts" do
+    categ = Categ.create!
+    categ.update(cat_id: Categ::CAT_1)
+
+    subcateg = Subcateg.create!
+    subcateg.update(
+      subcat_id: Subcateg::SUBCAT_1,
+      categ: categ
+    )
+
+    Post.create!(subcateg: subcateg)
+
+    categ.update(posts_count: -1)
+
+    fixed = Post.counter_culture_fix_counts :only => [[:subcateg, :categ]]
+
+    expect(fixed.length).to eq(1)
+    expect(categ.reload.posts_count).to eq(1)
+  end
 end

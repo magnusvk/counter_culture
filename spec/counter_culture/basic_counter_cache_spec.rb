@@ -672,4 +672,104 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(user2.using_count).to eq(0)
     expect(user2.tried_count).to eq(0)
   end
+
+  it "should update counts correctly when creating using nested attributes" do
+    user = User.create(:reviews_attributes => [{:some_text => 'abc'}, {:some_text => 'xyz'}])
+    user.reload
+    expect(user.reviews_count).to eq(2)
+  end
+
+  it "works with after_commit" do
+    subcateg1 = Subcateg.create!
+    subcateg2 = Subcateg.create!
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+
+    post = Post.create!(subcateg: subcateg1)
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(1)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(1)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+
+    Post.transaction do
+      post.update(subcateg: subcateg2)
+
+      subcateg1.reload
+      subcateg2.reload
+
+      expect(subcateg1.posts_after_commit_count).to eq(1)
+      expect(subcateg1.posts_dynamic_commit_count).to eq(1)
+      expect(subcateg1.posts_count).to eq(0)
+      expect(subcateg2.posts_after_commit_count).to eq(0)
+      expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+      expect(subcateg2.posts_count).to eq(1)
+    end
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(1)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(1)
+
+    post.destroy!
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+  end
+
+  it "works with dynamic after_commit" do
+    subcateg1 = Subcateg.create!
+    subcateg2 = Subcateg.create!
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+
+    post = Post.create!(subcateg: subcateg1)
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(1)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(1)
+    expect(subcateg2.posts_after_commit_count).to eq(0)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(0)
+
+    Post.transaction do
+      DynamicAfterCommit.update_counter_cache_in_transaction do
+        post.update(subcateg: subcateg2)
+      end
+
+      subcateg1.reload
+      subcateg2.reload
+
+      expect(subcateg1.posts_after_commit_count).to eq(1)
+      expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+      expect(subcateg1.posts_count).to eq(0)
+      expect(subcateg2.posts_after_commit_count).to eq(0)
+      expect(subcateg2.posts_dynamic_commit_count).to eq(1)
+      expect(subcateg2.posts_count).to eq(1)
+    end
+
+    subcateg1.reload
+    subcateg2.reload
+
+    expect(subcateg1.posts_after_commit_count).to eq(0)
+    expect(subcateg1.posts_dynamic_commit_count).to eq(0)
+    expect(subcateg2.posts_after_commit_count).to eq(1)
+    expect(subcateg2.posts_dynamic_commit_count).to eq(1)
+  end
 end

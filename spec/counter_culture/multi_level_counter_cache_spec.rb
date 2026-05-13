@@ -423,4 +423,42 @@ RSpec.describe "CounterCulture multi-level and dynamic counter caches" do
     expect(industry2.using_count).to eq(1)
     expect(industry2.tried_count).to eq(1)
   end
+
+  it "works correctly with a has_one association in the middle" do
+    candidate_profile1 = CandidateProfile.create(candidate: Candidate.create)
+    candidate1 = candidate_profile1.candidate
+    candidate_profile2 = CandidateProfile.create(candidate: Candidate.create)
+    candidate2 = candidate_profile2.candidate
+
+    expect(candidate_profile1.conversations_count).to eq(0)
+    expect(candidate_profile2.conversations_count).to eq(0)
+
+    conversation1 = Conversation.create(candidate: candidate1)
+    expect(candidate_profile1.reload.conversations_count).to eq(1)
+
+    conversation2 = Conversation.create(candidate: candidate2)
+    expect(candidate_profile2.reload.conversations_count).to eq(1)
+
+    conversation2.candidate = candidate1
+    conversation2.save!
+
+    expect(candidate_profile1.reload.conversations_count).to eq(2)
+    expect(candidate_profile2.reload.conversations_count).to eq(0)
+
+    candidate_profile1.update_column(:conversations_count, 99)
+    candidate_profile2.update_column(:conversations_count, 99)
+
+    Conversation.counter_culture_fix_counts
+
+    expect(candidate_profile1.reload.conversations_count).to eq(2)
+    expect(candidate_profile2.reload.conversations_count).to eq(0)
+
+    conversation2.destroy
+    expect(candidate_profile1.reload.conversations_count).to eq(1)
+    expect(candidate_profile2.reload.conversations_count).to eq(0)
+
+    conversation1.destroy
+    expect(candidate_profile1.reload.conversations_count).to eq(0)
+    expect(candidate_profile2.reload.conversations_count).to eq(0)
+  end
 end
