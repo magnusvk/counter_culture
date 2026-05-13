@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 RSpec.describe "CounterCulture with read replica configuration" do
+  after(:each) do
+    CounterCulture.reset_configuration
+  end
+
   let(:company) { Company.create! }
 
   before do
