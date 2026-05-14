@@ -228,7 +228,6 @@ RSpec.describe "CounterCulture with aggregate_counter_updates" do
     expect(user.reviews_count).to eq(2)
   end
 
-
   it "increments self-referential counter cache" do
     company = Company.create!
 

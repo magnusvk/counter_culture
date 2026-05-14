@@ -168,6 +168,7 @@ RSpec.describe "CounterCulture with polymorphic_associations" do
       expect(employee.reload.poly_images_count_dup).to eq(2)
     end
   end
+
   describe "conditional counts" do
     it "increments counter cache on create" do
       expect(employee.special_poly_images_count).to eq(0)

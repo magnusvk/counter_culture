@@ -150,7 +150,6 @@ RSpec.describe "CounterCulture fix_counts and misc behavior" do
     user.reload
 
     expect(user.reviews_count).to eq(0)
-
   end
 
   it "should fix a STI counter cache correctly" do

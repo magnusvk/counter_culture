@@ -22,7 +22,6 @@ RSpec.describe "CounterCulture when using discard for soft deletes" do
   end
 
   it "runs destroy callback only once" do
-
     company = Company.create!
     sd = SoftDeleteDiscard.create!(company_id: company.id)
 
