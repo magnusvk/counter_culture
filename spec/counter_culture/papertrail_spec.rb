@@ -1,11 +1,11 @@
 require 'spec_helper'
 
 RSpec.describe "CounterCulture with papertrail support", versioning: true do
-  it "creates a papertrail version when changed" do
-    unless PapertrailSupport.supported_here?
-      skip("Unsupported in this combination of Ruby and Rails")
-    end
+  before do
+    skip("Unsupported in this combination of Ruby and Rails") unless PapertrailSupport.supported_here?
+  end
 
+  it "creates a papertrail version when changed" do
     user = User.create
     product = Product.create
 
@@ -36,10 +36,6 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
   end
 
   it "works with after_commit" do
-    unless PapertrailSupport.supported_here?
-      skip("Unsupported in this combination of Ruby and Rails")
-    end
-
     subcateg = Subcateg.create!
 
     expect(subcateg.posts_after_commit_count).to eq(0)
@@ -69,10 +65,6 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
   end
 
   it "works with dynamic after_commit" do
-    unless PapertrailSupport.supported_here?
-      skip("Unsupported in this combination of Ruby and Rails")
-    end
-
     subcateg = Subcateg.create!
 
     expect(subcateg.posts_after_commit_count).to eq(0)
@@ -111,10 +103,6 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
     let!(:main_obj) { SimpleMain.create(created_at: 1.day.ago, updated_at: 1.day.ago) }
 
     it "sets updated_at on the parent record" do
-      unless PapertrailSupport.supported_here?
-        skip("Unsupported in this combination of Ruby and Rails")
-      end
-
       the_time = Time.now.utc
       Timecop.freeze(the_time) do
         main_obj.simple_dependents.create!
@@ -123,10 +111,6 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
     end
 
     it "sets created_at on the new version row" do
-      unless PapertrailSupport.supported_here?
-        skip("Unsupported in this combination of Ruby and Rails")
-      end
-
       the_time = Time.now.utc
       Timecop.freeze(the_time) do
         main_obj.simple_dependents.create!
@@ -136,10 +120,6 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
   end
 
   it "does not create a papertrail version when papertrail flag not set" do
-    unless PapertrailSupport.supported_here?
-      skip("Unsupported in this combination of Ruby and Rails")
-    end
-
     user = User.create
     product = Product.create
 
@@ -156,13 +136,7 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
 
   context "with composite primary keys" do
     before do
-      unless PapertrailSupport.supported_here?
-        skip("Unsupported in this combination of Ruby and Rails")
-      end
-
-      unless CounterCulture.supports_composite_keys?
-        skip("composite primary keys are not supported in this version of Rails")
-      end
+      skip("composite primary keys are not supported in this version of Rails") unless CounterCulture.supports_composite_keys?
     end
 
     it "increments / decrements counter caches correctly" do
