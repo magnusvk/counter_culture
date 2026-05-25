@@ -89,4 +89,39 @@ RSpec.describe "CounterCulture when relation is an array but has different prima
     expect(fixed.length).to eq(1)
     expect(categ.reload.posts_count).to eq(1)
   end
+
+  it "should work correctly with string keys" do
+    string_id = HasStringId.create(id: "1")
+    string_id2 = HasStringId.create(id: "abc")
+
+    user = User.create :has_string_id_id => string_id.id
+
+    string_id.reload
+    expect(string_id.users_count).to eq(1)
+
+    user2 = User.create :has_string_id_id => string_id.id
+
+    string_id.reload
+    expect(string_id.users_count).to eq(2)
+
+    user2.has_string_id_id = string_id2.id
+    user2.save!
+
+    string_id.reload
+    string_id2.reload
+    expect(string_id.users_count).to eq(1)
+    expect(string_id2.users_count).to eq(1)
+
+    user2.destroy
+    string_id.reload
+    string_id2.reload
+    expect(string_id.users_count).to eq(1)
+    expect(string_id2.users_count).to eq(0)
+
+    user.destroy
+    string_id.reload
+    string_id2.reload
+    expect(string_id.users_count).to eq(0)
+    expect(string_id2.users_count).to eq(0)
+  end
 end

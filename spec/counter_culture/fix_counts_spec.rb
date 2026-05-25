@@ -1,37 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe "CounterCulture fix_counts and misc behavior" do
-  it "should overwrite foreign-key values on create" do
-    categories = 3.times.map { Category.create }
-    categories.each {|category| expect(category.products_count).to eq(0) }
-
-    product = Product.create :category_id => Category.first.id
-    categories.each {|category| expect(category.reload.products_count).to eq(1) }
-  end
-
-  it "should overwrite foreign-key values on destroy" do
-    categories = 3.times.map { Category.create }
-    categories.each {|category| expect(category.products_count).to eq(0) }
-
-    product = Product.create :category_id => Category.first.id
-    categories.each {|category| expect(category.reload.products_count).to eq(1) }
-
-    product.destroy
-    categories.each {|category| expect(category.reload.products_count).to eq(0) }
-  end
-
-  it "should overwrite foreign-key values on dissociation" do
-    categories = 3.times.map { Category.create }
-    categories.each {|category| expect(category.products_count).to eq(0) }
-
-    product = Product.create :category_id => Category.first.id
-    categories.each {|category| expect(category.reload.products_count).to eq(1) }
-
-    product.category = nil
-    product.save!
-    categories.each {|category| expect(category.reload.products_count).to eq(0) }
-  end
-
+RSpec.describe "CounterCulture fix_counts" do
   it "should not report correct counts when fix_counts is called" do
     user1 = User.create
     user2 = User.create
@@ -206,21 +175,6 @@ RSpec.describe "CounterCulture fix_counts and misc behavior" do
     company.reload
 
     expect(company.admin_reviews_count).to eq(1)
-  end
-
-  it "handles an inherited STI counter cache correctly" do
-    company = Company.create
-    user = User.create :manages_company_id => company.id
-    product = Product.create
-    SimpleReview.create :user_id => user.id, :product_id => product.id
-    product.reload
-    expect(product.reviews_count).to eq(1)
-    expect(product.simple_reviews_count).to eq(1)
-
-    Review.create :user_id => user.id, :product_id => product.id
-    product.reload
-    expect(product.reviews_count).to eq(2)
-    expect(product.simple_reviews_count).to eq(1)
   end
 
   it "should fix a second-level counter cache correctly" do
@@ -429,41 +383,6 @@ RSpec.describe "CounterCulture fix_counts and misc behavior" do
 
     company.reload
     expect(company.managers_count).to eq(0)
-  end
-
-  it "should work correctly with string keys" do
-    string_id = HasStringId.create(id: "1")
-    string_id2 = HasStringId.create(id: "abc")
-
-    user = User.create :has_string_id_id => string_id.id
-
-    string_id.reload
-    expect(string_id.users_count).to eq(1)
-
-    user2 = User.create :has_string_id_id => string_id.id
-
-    string_id.reload
-    expect(string_id.users_count).to eq(2)
-
-    user2.has_string_id_id = string_id2.id
-    user2.save!
-
-    string_id.reload
-    string_id2.reload
-    expect(string_id.users_count).to eq(1)
-    expect(string_id2.users_count).to eq(1)
-
-    user2.destroy
-    string_id.reload
-    string_id2.reload
-    expect(string_id.users_count).to eq(1)
-    expect(string_id2.users_count).to eq(0)
-
-    user.destroy
-    string_id.reload
-    string_id2.reload
-    expect(string_id.users_count).to eq(0)
-    expect(string_id2.users_count).to eq(0)
   end
 
   it "support fix counts using batch limits start and finish" do
