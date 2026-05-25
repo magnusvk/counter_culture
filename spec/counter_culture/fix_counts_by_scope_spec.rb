@@ -66,6 +66,12 @@ RSpec.describe "CounterCulture fix counts by scope" do
     end
 
     context "when the return value is not a hash" do
+      around do |example|
+        original_cache = City.instance_variable_get(:@after_commit_counter_cache).dup
+        example.run
+        City.instance_variable_set(:@after_commit_counter_cache, original_cache)
+      end
+
       it "does not call the proc right away" do
         called = false
         City.counter_culture :prefecture, column_name: :big_cities_count,
