@@ -103,10 +103,14 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
     expect(attrs_from_versions['posts_dynamic_commit_count']).to eq(0)
   end
 
-  context "counter-cache model versioning" do
+  # Regression tests: with_papertrail routes counter updates through
+  # paper_trail.save_with_version instead of an atomic increment, which skips
+  # ActiveRecord's automatic timestamping — counter_culture must set the
+  # timestamps explicitly on that path.
+  context "when with_papertrail saves a new version" do
     let!(:main_obj) { SimpleMain.create(created_at: 1.day.ago, updated_at: 1.day.ago) }
 
-    it "updates the updated_at of the parent variant" do
+    it "sets updated_at on the parent record" do
       unless PapertrailSupport.supported_here?
         skip("Unsupported in this combination of Ruby and Rails")
       end
@@ -118,7 +122,7 @@ RSpec.describe "CounterCulture with papertrail support", versioning: true do
       end
     end
 
-    it "sets the created_at time of the new version row to the current time" do
+    it "sets created_at on the new version row" do
       unless PapertrailSupport.supported_here?
         skip("Unsupported in this combination of Ruby and Rails")
       end
