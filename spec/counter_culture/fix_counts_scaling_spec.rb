@@ -5,10 +5,6 @@ RSpec.describe "CounterCulture fix_counts at scale" do
   A_FEW = CI_TEST_RUN ? 50:  10
   A_BATCH = CI_TEST_RUN ? 100: 10
 
-  it "should raise a good error message when calling fix_counts with no caches defined" do
-    expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
-  end
-
   it "should log if verbose option is true" do
     logger = ActiveRecord::Base.logger
     io = StringIO.new
@@ -54,72 +50,6 @@ RSpec.describe "CounterCulture fix_counts at scale" do
     end
 
     SimpleDependent.counter_culture_fix_counts :batch_size => A_BATCH
-  end
-
-  it "should request a reading and not a writing database connection" do
-    # first, clean up
-    SimpleDependent.delete_all
-    SimpleMain.delete_all
-
-    A_FEW.times do |i|
-      main = SimpleMain.create
-      3.times { main.simple_dependents.create }
-    end
-
-    # Counts are correct at this point so no update should happen
-
-    requested_reading_connection = false
-    requested_writing_connection = false
-    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
-      if reading
-        requested_reading_connection = true
-      else
-        requested_writing_connection = true
-      end
-      block.call
-    }
-    expect(requested_reading_connection).to be(true)
-    expect(requested_writing_connection).to be(false)
-  end
-
-  it "should request a reading and a writing database connection" do
-    # first, clean up
-    SimpleDependent.delete_all
-    SimpleMain.delete_all
-
-    A_FEW.times do |i|
-      main = SimpleMain.create
-      3.times { main.simple_dependents.create }
-    end
-
-    # Damage the counts so an update happens
-    SimpleMain.update_all(simple_dependents_count: -1)
-
-    requested_reading_connection = false
-    requested_writing_connection = false
-    SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
-      if reading
-        requested_reading_connection = true
-      else
-        requested_writing_connection = true
-      end
-      block.call
-    }
-    expect(requested_reading_connection).to be(true)
-    expect(requested_writing_connection).to be(true)
-  end
-
-  it "should correctly fix the counter caches with conditionals" do
-    updated = SimpleMain.create
-    updated.simple_dependents.create
-    not_updated = SimpleMain.create
-    not_updated.simple_dependents.create
-    SimpleMain.all.update_all simple_dependents_count: 3
-
-    SimpleDependent.counter_culture_fix_counts only: :simple_main, where: { simple_mains: { id: updated.id } }
-
-    expect(updated.reload.simple_dependents_count).to eq(1)
-    expect(not_updated.reload.simple_dependents_count).to eq(3)
   end
 
   it "should correctly fix the counter caches with thousands of records" do

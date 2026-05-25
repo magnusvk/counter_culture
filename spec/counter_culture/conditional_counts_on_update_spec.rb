@@ -86,4 +86,19 @@ RSpec.describe "conditional counts on update" do
       expect(user.tried_count).to eq(0)
     end
   end
+
+  it "should correctly increment and decrement conditional counters of associated objects" do
+    conditional_main = ConditionalMain.create
+    conditional_dependent = conditional_main.conditional_dependents.create(condition: false)
+
+    expect(conditional_main.conditional_dependents_count).to eq(0)
+
+    conditional_dependent.update(condition: true)
+
+    expect(conditional_main.conditional_dependents_count).to eq(1)
+
+    conditional_dependent.update(condition: false)
+
+    expect(conditional_main.conditional_dependents_count).to eq(0)
+  end
 end

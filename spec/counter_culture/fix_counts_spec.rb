@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 RSpec.describe "CounterCulture fix_counts" do
+  it "should raise a good error message when calling fix_counts with no caches defined" do
+    expect { Category.counter_culture_fix_counts }.to raise_error "No counter cache defined on Category"
+  end
+
   it "should not report correct counts when fix_counts is called" do
     user1 = User.create
     user2 = User.create
@@ -360,29 +364,17 @@ RSpec.describe "CounterCulture fix_counts" do
     expect(user.custom_delta_count).to eq(3)
   end
 
-  it "should work correctly for relationships with custom names" do
-    company = Company.create
-    user1 = User.create :manages_company_id => company.id
+  it "should correctly fix the counter caches with conditionals" do
+    updated = SimpleMain.create
+    updated.simple_dependents.create
+    not_updated = SimpleMain.create
+    not_updated.simple_dependents.create
+    SimpleMain.all.update_all simple_dependents_count: 3
 
-    company.reload
-    expect(company.managers_count).to eq(1)
+    SimpleDependent.counter_culture_fix_counts only: :simple_main, where: { simple_mains: { id: updated.id } }
 
-    user2 = User.create :manages_company_id => company.id
-
-    company.reload
-    expect(company.managers_count).to eq(2)
-
-    user2.destroy
-
-    company.reload
-    expect(company.managers_count).to eq(1)
-
-    company2 = Company.create
-    user1.manages_company_id = company2.id
-    user1.save!
-
-    company.reload
-    expect(company.managers_count).to eq(0)
+    expect(updated.reload.simple_dependents_count).to eq(1)
+    expect(not_updated.reload.simple_dependents_count).to eq(3)
   end
 
   it "support fix counts using batch limits start and finish" do

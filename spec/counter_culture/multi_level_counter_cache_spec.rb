@@ -343,4 +343,111 @@ RSpec.describe "CounterCulture multi-level and dynamic counter caches" do
     expect(candidate_profile1.reload.conversations_count).to eq(0)
     expect(candidate_profile2.reload.conversations_count).to eq(0)
   end
+
+  it "increments second-level counter cache on create" do
+    company = Company.create
+    user = User.create :manages_company_id => company.id
+    product = Product.create
+
+    expect(company.reviews_count).to eq(0)
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(company.review_approvals_count).to eq(0)
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
+
+    company.reload
+    user.reload
+    product.reload
+
+    expect(company.reviews_count).to eq(1)
+    expect(company.review_approvals_count).to eq(314)
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+  end
+
+  it "decrements second-level counter cache on destroy" do
+    company = Company.create
+    user = User.create :manages_company_id => company.id
+    product = Product.create
+
+    expect(company.reviews_count).to eq(0)
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(company.review_approvals_count).to eq(0)
+
+    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
+
+    user.reload
+    product.reload
+    company.reload
+
+    expect(user.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(company.reviews_count).to eq(1)
+    expect(company.review_approvals_count).to eq(314)
+
+    review.destroy
+
+    user.reload
+    product.reload
+    company.reload
+
+    expect(user.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(company.reviews_count).to eq(0)
+    expect(company.review_approvals_count).to eq(0)
+  end
+
+  it "updates second-level counter cache on update" do
+    company1 = Company.create
+    company2 = Company.create
+    user1 = User.create :manages_company_id => company1.id
+    user2 = User.create :manages_company_id => company2.id
+    product = Product.create
+
+    expect(user1.reviews_count).to eq(0)
+    expect(user2.reviews_count).to eq(0)
+    expect(company1.reviews_count).to eq(0)
+    expect(company2.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(0)
+    expect(company1.review_approvals_count).to eq(0)
+    expect(company2.review_approvals_count).to eq(0)
+
+    review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 69
+
+    user1.reload
+    user2.reload
+    company1.reload
+    company2.reload
+    product.reload
+
+    expect(user1.reviews_count).to eq(1)
+    expect(user2.reviews_count).to eq(0)
+    expect(company1.reviews_count).to eq(1)
+    expect(company2.reviews_count).to eq(0)
+    expect(product.reviews_count).to eq(1)
+    expect(company1.review_approvals_count).to eq(69)
+    expect(company2.review_approvals_count).to eq(0)
+
+    review.user = user2
+    review.save!
+
+    user1.reload
+    user2.reload
+    company1.reload
+    company2.reload
+    product.reload
+
+    expect(user1.reviews_count).to eq(0)
+    expect(user2.reviews_count).to eq(1)
+    expect(company1.reviews_count).to eq(0)
+    expect(company2.reviews_count).to eq(1)
+    expect(product.reviews_count).to eq(1)
+    expect(company1.review_approvals_count).to eq(0)
+    expect(company2.review_approvals_count).to eq(69)
+
+    review.update_attribute(:approvals, 42)
+    expect(company2.reload.review_approvals_count).to eq(42)
+  end
 end

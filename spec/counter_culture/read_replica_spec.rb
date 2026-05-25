@@ -81,4 +81,51 @@ RSpec.describe "CounterCulture with read replica configuration" do
       expect(company.reload.children_count).to eq(1)
     end
   end
+
+  context "with db_connection_builder option" do
+    before do
+      SimpleDependent.delete_all
+      SimpleMain.delete_all
+
+      5.times do
+        main = SimpleMain.create
+        3.times { main.simple_dependents.create }
+      end
+    end
+
+    it "should request a reading and not a writing database connection" do
+      # Counts are correct at this point so no update should happen
+
+      requested_reading_connection = false
+      requested_writing_connection = false
+      SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+        if reading
+          requested_reading_connection = true
+        else
+          requested_writing_connection = true
+        end
+        block.call
+      }
+      expect(requested_reading_connection).to be(true)
+      expect(requested_writing_connection).to be(false)
+    end
+
+    it "should request a reading and a writing database connection" do
+      # Damage the counts so an update happens
+      SimpleMain.update_all(simple_dependents_count: -1)
+
+      requested_reading_connection = false
+      requested_writing_connection = false
+      SimpleDependent.counter_culture_fix_counts db_connection_builder: lambda{|reading, block|
+        if reading
+          requested_reading_connection = true
+        else
+          requested_writing_connection = true
+        end
+        block.call
+      }
+      expect(requested_reading_connection).to be(true)
+      expect(requested_writing_connection).to be(true)
+    end
+  end
 end

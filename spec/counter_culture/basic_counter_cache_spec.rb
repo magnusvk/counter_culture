@@ -70,21 +70,6 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(product.reviews_count).to eq(1)
   end
 
-  it "should correctly increment and decrement conditional counters of associated objects" do
-    conditional_main = ConditionalMain.create
-    conditional_dependent = conditional_main.conditional_dependents.create(condition: false)
-
-    expect(conditional_main.conditional_dependents_count).to eq(0)
-
-    conditional_dependent.update(condition: true)
-
-    expect(conditional_main.conditional_dependents_count).to eq(1)
-
-    conditional_dependent.update(condition: false)
-
-    expect(conditional_main.conditional_dependents_count).to eq(0)
-  end
-
   it "updates counter caches on change belongs_to association" do
     simple_main1 = SimpleMain.create
     simple_main2 = SimpleMain.create
@@ -321,111 +306,29 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(product.reviews_count).to eq(1)
   end
 
-  it "increments second-level counter cache on create" do
+  it "should work correctly for relationships with custom names" do
     company = Company.create
-    user = User.create :manages_company_id => company.id
-    product = Product.create
-
-    expect(company.reviews_count).to eq(0)
-    expect(user.reviews_count).to eq(0)
-    expect(product.reviews_count).to eq(0)
-    expect(company.review_approvals_count).to eq(0)
-
-    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
+    user1 = User.create :manages_company_id => company.id
 
     company.reload
-    user.reload
-    product.reload
+    expect(company.managers_count).to eq(1)
 
-    expect(company.reviews_count).to eq(1)
-    expect(company.review_approvals_count).to eq(314)
-    expect(user.reviews_count).to eq(1)
-    expect(product.reviews_count).to eq(1)
-  end
+    user2 = User.create :manages_company_id => company.id
 
-  it "decrements second-level counter cache on destroy" do
-    company = Company.create
-    user = User.create :manages_company_id => company.id
-    product = Product.create
-
-    expect(company.reviews_count).to eq(0)
-    expect(user.reviews_count).to eq(0)
-    expect(product.reviews_count).to eq(0)
-    expect(company.review_approvals_count).to eq(0)
-
-    review = Review.create :user_id => user.id, :product_id => product.id, :approvals => 314
-
-    user.reload
-    product.reload
     company.reload
+    expect(company.managers_count).to eq(2)
 
-    expect(user.reviews_count).to eq(1)
-    expect(product.reviews_count).to eq(1)
-    expect(company.reviews_count).to eq(1)
-    expect(company.review_approvals_count).to eq(314)
+    user2.destroy
 
-    review.destroy
-
-    user.reload
-    product.reload
     company.reload
+    expect(company.managers_count).to eq(1)
 
-    expect(user.reviews_count).to eq(0)
-    expect(product.reviews_count).to eq(0)
-    expect(company.reviews_count).to eq(0)
-    expect(company.review_approvals_count).to eq(0)
-  end
-
-  it "updates second-level counter cache on update" do
-    company1 = Company.create
     company2 = Company.create
-    user1 = User.create :manages_company_id => company1.id
-    user2 = User.create :manages_company_id => company2.id
-    product = Product.create
+    user1.manages_company_id = company2.id
+    user1.save!
 
-    expect(user1.reviews_count).to eq(0)
-    expect(user2.reviews_count).to eq(0)
-    expect(company1.reviews_count).to eq(0)
-    expect(company2.reviews_count).to eq(0)
-    expect(product.reviews_count).to eq(0)
-    expect(company1.review_approvals_count).to eq(0)
-    expect(company2.review_approvals_count).to eq(0)
-
-    review = Review.create :user_id => user1.id, :product_id => product.id, :approvals => 69
-
-    user1.reload
-    user2.reload
-    company1.reload
-    company2.reload
-    product.reload
-
-    expect(user1.reviews_count).to eq(1)
-    expect(user2.reviews_count).to eq(0)
-    expect(company1.reviews_count).to eq(1)
-    expect(company2.reviews_count).to eq(0)
-    expect(product.reviews_count).to eq(1)
-    expect(company1.review_approvals_count).to eq(69)
-    expect(company2.review_approvals_count).to eq(0)
-
-    review.user = user2
-    review.save!
-
-    user1.reload
-    user2.reload
-    company1.reload
-    company2.reload
-    product.reload
-
-    expect(user1.reviews_count).to eq(0)
-    expect(user2.reviews_count).to eq(1)
-    expect(company1.reviews_count).to eq(0)
-    expect(company2.reviews_count).to eq(1)
-    expect(product.reviews_count).to eq(1)
-    expect(company1.review_approvals_count).to eq(0)
-    expect(company2.review_approvals_count).to eq(69)
-
-    review.update_attribute(:approvals, 42)
-    expect(company2.reload.review_approvals_count).to eq(42)
+    company.reload
+    expect(company.managers_count).to eq(0)
   end
 
   it "increments custom counter cache column on create" do
@@ -484,75 +387,6 @@ RSpec.describe "CounterCulture basic counter cache" do
 
     expect(product1.rexiews_count).to eq(0)
     expect(product2.rexiews_count).to eq(1)
-  end
-
-  it "handles nil column name in custom counter cache on create" do
-    user = User.create
-    product = Product.create
-
-    expect(user.using_count).to eq(0)
-    expect(user.tried_count).to eq(0)
-
-    review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
-
-    user.reload
-
-    expect(user.using_count).to eq(0)
-    expect(user.tried_count).to eq(0)
-  end
-
-  it "handles nil column name in custom counter cache on destroy" do
-    user = User.create
-    product = Product.create
-
-    expect(user.using_count).to eq(0)
-    expect(user.tried_count).to eq(0)
-
-    review = Review.create :user_id => user.id, :product_id => product.id, :review_type => nil
-
-    product.reload
-
-    expect(user.using_count).to eq(0)
-    expect(user.tried_count).to eq(0)
-
-    review.destroy
-
-    product.reload
-
-    expect(user.using_count).to eq(0)
-    expect(user.tried_count).to eq(0)
-  end
-
-  it "handles nil column name in custom counter cache on update" do
-    product = Product.create
-    user1 = User.create
-    user2 = User.create
-
-    expect(user1.using_count).to eq(0)
-    expect(user1.tried_count).to eq(0)
-    expect(user2.using_count).to eq(0)
-    expect(user2.tried_count).to eq(0)
-
-    review = Review.create :user_id => user1.id, :product_id => product.id, :review_type => nil
-
-    user1.reload
-    user2.reload
-
-    expect(user1.using_count).to eq(0)
-    expect(user1.tried_count).to eq(0)
-    expect(user2.using_count).to eq(0)
-    expect(user2.tried_count).to eq(0)
-
-    review.user = user2
-    review.save!
-
-    user1.reload
-    user2.reload
-
-    expect(user1.using_count).to eq(0)
-    expect(user1.tried_count).to eq(0)
-    expect(user2.using_count).to eq(0)
-    expect(user2.tried_count).to eq(0)
   end
 
   it "should update counts correctly when creating using nested attributes" do
