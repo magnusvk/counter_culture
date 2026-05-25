@@ -20,7 +20,7 @@ RSpec.describe "CounterCulture fix_counts and misc behavior" do
     categories.each {|category| expect(category.reload.products_count).to eq(0) }
   end
 
-  it "should overwrite foreign-key values on destroy" do
+  it "should overwrite foreign-key values on dissociation" do
     categories = 3.times.map { Category.create }
     categories.each {|category| expect(category.products_count).to eq(0) }
 
