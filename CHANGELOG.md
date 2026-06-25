@@ -1,3 +1,8 @@
+## 3.13.2 (June 25, 2026)
+
+Bugfixes:
+  - Fix multi-level counter caches not being updated in memory when creating or destroying records (#432)
+
 ## 3.13.1 (April 20, 2026)
 
 Bugfixes:
