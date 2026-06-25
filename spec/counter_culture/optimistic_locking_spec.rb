@@ -179,4 +179,22 @@ RSpec.describe "CounterCulture with optimistic locking" do
       expect(parent.children_count).to eq(1)
     end
   end
+
+  describe "should not increment lock_version on counter_culture_fix_counts" do
+    it "leaves lock_version unchanged when fixing counts" do
+      parent = LockingParent.create!
+      LockingChild.create!(:locking_parent => parent)
+
+      # corrupt the counter so fix_counts has work to do; update_column
+      # bypasses optimistic locking, so lock_version stays put here
+      parent.update_column(:children_count, 99)
+      lock_version_before = parent.reload.lock_version
+
+      LockingChild.counter_culture_fix_counts
+
+      parent.reload
+      expect(parent.children_count).to eq(1)
+      expect(parent.lock_version).to eq(lock_version_before)
+    end
+  end
 end

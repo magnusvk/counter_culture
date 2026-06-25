@@ -162,6 +162,15 @@ module CounterCulture
             # the Arel-based updates used in Counter (see #425). This updates the
             # actual counter.
             updates = { column_name => count }
+
+            # Set lock_version = lock_version (no-op) to skip Rails auto-increment,
+            # just as Counter does (see #429); a Hash update_all would otherwise
+            # bump the optimistic locking column.
+            if relation_class.locking_enabled?
+              lock_column = relation_class.locking_column
+              updates[lock_column] = relation_class.arel_table[lock_column]
+            end
+
             # and here we update the timestamp, if so desired
             if options[:touch]
               current_time = record.send(:current_time_from_proper_timezone)
