@@ -425,6 +425,7 @@ module CounterCulture
 
       while !obj.nil? && relation.size > 0
         cur_relation = relation.shift
+        # This isn't an association (e.g. it uses delegate), so we can't update the count this way
         return nil if obj.class.reflect_on_association(cur_relation).nil?
 
         if !obj.association(cur_relation).loaded?
