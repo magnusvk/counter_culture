@@ -1,4 +1,4 @@
-# counter_culture [![Build Status](https://circleci.com/gh/magnusvk/counter_culture/tree/master.svg?style=svg)](https://circleci.com/gh/magnusvk/counter_culture/tree/master)
+# counter_culture [![Build Status](https://circleci.com/gh/magnusvk/counter_culture/tree/main.svg?style=svg)](https://circleci.com/gh/magnusvk/counter_culture/tree/main)
 
 Turbo-charged counter caches for your Rails app. Huge improvements over the Rails standard counter caches:
 
