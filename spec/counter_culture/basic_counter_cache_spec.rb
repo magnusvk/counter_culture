@@ -70,6 +70,27 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(product.reviews_count).to eq(1)
   end
 
+  it "increments multi-level counter cache on create without reload" do
+    industry = Industry.create
+    company = Company.create industry: industry
+    user = User.create manages_company: company
+
+    expect(company.reviews_count).to eq(0)
+    expect(industry.reviews_count).to eq(0)
+
+    user.reviews.create
+
+    expect(company.reviews_count).to eq(1)
+    expect(industry.reviews_count).to eq(1)
+
+    # NOTE: check if counters from the DB equal to the cached
+    company.reload
+    industry.reload
+
+    expect(company.reviews_count).to eq(1)
+    expect(industry.reviews_count).to eq(1)
+  end
+
   it "updates counter caches on change belongs_to association" do
     simple_main1 = SimpleMain.create
     simple_main2 = SimpleMain.create
@@ -218,6 +239,38 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(user.reviews_count).to eq(0)
     expect(user.review_approvals_count).to eq(0)
     expect(product.reviews_count).to eq(0)
+  end
+
+  it "decrements multi-level counter cache on destroy without reload" do
+    industry = Industry.create
+    company = Company.create industry: industry
+    user = User.create manages_company: company
+
+    expect(company.reviews_count).to eq(0)
+    expect(industry.reviews_count).to eq(0)
+
+    review = user.reviews.create
+
+    expect(company.reviews_count).to eq(1)
+    expect(industry.reviews_count).to eq(1)
+
+    review.destroy
+
+    expect(company.reviews_count).to eq(0)
+    expect(industry.reviews_count).to eq(0)
+
+    # this does not decrement counter cache
+    review.destroy
+
+    expect(company.reviews_count).to eq(0)
+    expect(industry.reviews_count).to eq(0)
+
+    # NOTE: check if counters from the DB equal to the cached
+    company.reload
+    industry.reload
+
+    expect(company.reviews_count).to eq(0)
+    expect(industry.reviews_count).to eq(0)
   end
 
   it "updates counter cache on update" do
