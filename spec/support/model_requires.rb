@@ -43,6 +43,8 @@ require 'models/locking_parent'
 require 'models/locking_child'
 require 'models/locking_touch_child'
 require 'models/locking_grandchild'
+require 'models/reserved_word_parent'
+require 'models/reserved_word_child'
 
 if CounterCulture.supports_composite_keys?
   require 'models/composite_group'

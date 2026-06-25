@@ -108,13 +108,15 @@ module CounterCulture
           next unless column_name
 
           relation_class_table_name = quote_table_name(relation_class.table_name)
+          # quote the cache column so reserved-word/quoting-sensitive names work
+          quoted_column_name = quote_column_name(column_name)
 
           # select join column and count (from above) as well as cache column ('column_name') for later comparison
           counts_query = scope.select(
             "#{primary_key_select}, " \
             "#{association_primary_key_select}, " \
             "#{count_select} AS count, " \
-            "MAX(#{relation_class_table_name}.#{column_name}) AS #{column_name}"
+            "MAX(#{relation_class_table_name}.#{quoted_column_name}) AS #{quoted_column_name}"
           )
 
           # we need to join together tables until we get back to the table this class itself lives in
@@ -155,9 +157,11 @@ module CounterCulture
 
             track_change(record, column_name, count)
 
-            updates = []
-            # this updates the actual counter
-            updates << "#{column_name} = #{count}"
+            # Build a Hash of column => value updates and let Rails (Arel) qualify
+            # and escape the column names and cast/quote the values, consistent with
+            # the Arel-based updates used in Counter (see #425). This updates the
+            # actual counter.
+            updates = { column_name => count }
             # and here we update the timestamp, if so desired
             if options[:touch]
               current_time = record.send(:current_time_from_proper_timezone)
@@ -168,13 +172,13 @@ module CounterCulture
                 timestamp_columns << options[:touch]
               end
               timestamp_columns.each do |timestamp_column|
-                updates << "#{timestamp_column} = '#{current_time.to_formatted_s(:db)}'"
+                updates[timestamp_column] = current_time
               end
             end
 
             with_writing_db_connection do
               conditions = Array.wrap(relation_class.primary_key).map { |key| [key, record.send(key)] }.to_h
-              relation_class.where(conditions).distinct(false).update_all(updates.join(', '))
+              relation_class.where(conditions).distinct(false).update_all(updates)
             end
           end
         end
@@ -348,6 +352,12 @@ module CounterCulture
       def quote_table_name(table_name)
         @connection_handler.call do |connection|
           connection.quote_table_name(table_name)
+        end
+      end
+
+      def quote_column_name(column_name)
+        @connection_handler.call do |connection|
+          connection.quote_column_name(column_name)
         end
       end
 
