@@ -386,4 +386,18 @@ ActiveRecord::Schema.define(:version => 20120522160158) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "reserved_word_parents", :force => true do |t|
+    # `order` is a SQL reserved word in sqlite, mysql and postgres; storing the
+    # counter cache here exercises identifier quoting when fix_counts writes it.
+    t.integer  "order",       :default => 0, :null => false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "reserved_word_children", :force => true do |t|
+    t.integer  "reserved_word_parent_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 end

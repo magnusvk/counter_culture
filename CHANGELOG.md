@@ -1,3 +1,8 @@
+## 3.13.3 (June 25, 2026)
+
+Bugfixes:
+  - Fix `counter_culture_fix_counts` raising a SQL syntax error for counter caches stored in reserved-word columns (e.g. `order`) by quoting identifiers in the reconciler (#434)
+
 ## 3.13.2 (June 25, 2026)
 
 Bugfixes:
