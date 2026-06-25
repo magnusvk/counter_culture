@@ -410,9 +410,7 @@ module CounterCulture
 
     # update associated object counter attribute
     def assign_to_associated_object(obj, relation, change_counter_column, operator, delta_magnitude)
-      association_name = relation_reflect(relation).name
-
-      association_object = association_object_for_assign(obj, association_name)
+      association_object = association_object_for_assign(obj, relation)
       return if association_object.blank? || association_object.frozen?
 
       association_object.assign_attributes(
@@ -422,21 +420,22 @@ module CounterCulture
       association_object_clear_change(association_object, change_counter_column)
     end
 
-    def association_object_for_assign(obj, association_name)
-      if obj.class.reflect_on_all_associations.
-          find { |assoc| assoc.name.to_sym == association_name.to_sym }.
-          blank?
-        # This means that this isn't defined as an association; either it
-        # doesn't exist at all, or it uses delegate. In either case, we can't
-        # update the count this way.
-        return
-      end
-      if !obj.association(association_name).loaded?
-        # If the association isn't loaded, no need to update the count
-        return
+    def association_object_for_assign(obj, relation)
+      relation = relation.is_a?(Enumerable) ? relation.dup : [relation]
+
+      while !obj.nil? && relation.size > 0
+        cur_relation = relation.shift
+        return nil if obj.class.reflect_on_association(cur_relation).nil?
+
+        if !obj.association(cur_relation).loaded?
+          # If the association isn't loaded, no need to update the count
+          return nil
+        end
+
+        obj = obj.public_send(cur_relation)
       end
 
-      obj.public_send(association_name)
+      obj
     end
 
     def association_object_clear_change(association_object, change_counter_column)
