@@ -21,7 +21,10 @@ module CounterCulture
       @execute_after_commit = options.fetch(:execute_after_commit, false)
       @include_soft_deleted = options.fetch(:include_soft_deleted, false)
 
-      if @execute_after_commit
+      # Rails 7.2+ ships `ActiveRecord.after_all_transactions_commit`, which
+      # does everything we need the `after_commit_action` gem for. Only fall
+      # back to the gem on older Rails versions.
+      if @execute_after_commit && !ActiveRecord.respond_to?(:after_all_transactions_commit)
         begin
           require 'after_commit_action'
         rescue LoadError
@@ -390,7 +393,11 @@ module CounterCulture
       execute_after_commit = @execute_after_commit.is_a?(Proc) ? @execute_after_commit.call : @execute_after_commit
 
       if execute_after_commit
-        obj.execute_after_commit(&block)
+        if ActiveRecord.respond_to?(:after_all_transactions_commit)
+          ActiveRecord.after_all_transactions_commit(&block)
+        else
+          obj.execute_after_commit(&block)
+        end
       else
         block.call
       end

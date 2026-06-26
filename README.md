@@ -272,7 +272,7 @@ Another option is to simply defer the update of counter caches to outside of the
 ```ruby
   counter_culture :category, execute_after_commit: true
 ```
-[NOTE] You need to manually specify the `after_commit_action` as dependency in the Gemfile to use this feature
+[NOTE] On Rails 7.2 and newer this uses the built-in `ActiveRecord.after_all_transactions_commit` API and requires no extra dependencies. On older Rails versions you need to manually specify the `after_commit_action` gem as a dependency in your Gemfile to use this feature:
 ```ruby
 ...
 gem "after_commit_action"
