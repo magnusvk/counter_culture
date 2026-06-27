@@ -1,4 +1,4 @@
-## Unreleased
+## 3.14.0 (June 26, 2026)
 
 New features:
   - Use the built-in `ActiveRecord.after_all_transactions_commit` API for `execute_after_commit` on Rails 7.2+, so the `after_commit_action` gem is no longer required on modern Rails. Older Rails versions keep using the gem as before.
