@@ -394,6 +394,13 @@ module CounterCulture
 
       if execute_after_commit
         if CounterCulture.supports_native_after_commit?
+          # NOTE: `after_all_transactions_commit` waits for *every* open
+          # transaction across *all* database connections and skips the block if
+          # any of them roll back, whereas `after_commit_action` tied the block to
+          # this record's own connection only. The two are equivalent for a
+          # single database; they differ only when a record is saved inside
+          # transactions that span multiple databases (which Rails itself
+          # discourages).
           ActiveRecord.after_all_transactions_commit(&block)
         else
           obj.execute_after_commit(&block)
