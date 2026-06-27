@@ -542,8 +542,11 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(subcateg2.posts_dynamic_commit_count).to eq(1)
   end
 
-  context "on Rails 7.2+ (ActiveRecord.after_all_transactions_commit available)",
-    if: ActiveRecord.respond_to?(:after_all_transactions_commit) do
+  context "on Rails 7.2+ (ActiveRecord.after_all_transactions_commit available)" do
+    before do
+      skip("ActiveRecord.after_all_transactions_commit is only available on Rails 7.2+") unless CounterCulture.supports_native_after_commit?
+    end
+
     it "routes deferred updates through ActiveRecord.after_all_transactions_commit" do
       subcateg = Subcateg.create!
 
