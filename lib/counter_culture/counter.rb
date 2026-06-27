@@ -21,7 +21,10 @@ module CounterCulture
       @execute_after_commit = options.fetch(:execute_after_commit, false)
       @include_soft_deleted = options.fetch(:include_soft_deleted, false)
 
-      if @execute_after_commit
+      # Rails 7.2+ ships `ActiveRecord.after_all_transactions_commit`, which
+      # does everything we need the `after_commit_action` gem for. Only fall
+      # back to the gem on older Rails versions.
+      if @execute_after_commit && !CounterCulture.supports_native_after_commit?
         begin
           require 'after_commit_action'
         rescue LoadError
@@ -390,7 +393,18 @@ module CounterCulture
       execute_after_commit = @execute_after_commit.is_a?(Proc) ? @execute_after_commit.call : @execute_after_commit
 
       if execute_after_commit
-        obj.execute_after_commit(&block)
+        if CounterCulture.supports_native_after_commit?
+          # NOTE: `after_all_transactions_commit` waits for *every* open
+          # transaction across *all* database connections and skips the block if
+          # any of them roll back, whereas `after_commit_action` tied the block to
+          # this record's own connection only. The two are equivalent for a
+          # single database; they differ only when a record is saved inside
+          # transactions that span multiple databases (which Rails itself
+          # discourages).
+          ActiveRecord.after_all_transactions_commit(&block)
+        else
+          obj.execute_after_commit(&block)
+        end
       else
         block.call
       end

@@ -1,3 +1,11 @@
+## Unreleased
+
+New features:
+  - Use the built-in `ActiveRecord.after_all_transactions_commit` API for `execute_after_commit` on Rails 7.2+, so the `after_commit_action` gem is no longer required on modern Rails. Older Rails versions keep using the gem as before.
+
+Changes:
+  - On Rails 7.2+, counter_culture no longer mixes the `after_commit_action` gem's `AfterCommitAction` module into models that use `execute_after_commit`. If your own code called the `execute_after_commit` instance method on those models (relying on counter_culture to make it available), add the `after_commit_action` gem and `include AfterCommitAction` yourself.
+
 ## 3.13.3 (June 25, 2026)
 
 Bugfixes:

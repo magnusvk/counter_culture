@@ -541,4 +541,41 @@ RSpec.describe "CounterCulture basic counter cache" do
     expect(subcateg2.posts_after_commit_count).to eq(1)
     expect(subcateg2.posts_dynamic_commit_count).to eq(1)
   end
+
+  context "on Rails 7.2+ (ActiveRecord.after_all_transactions_commit available)" do
+    before do
+      skip("ActiveRecord.after_all_transactions_commit is only available on Rails 7.2+") unless CounterCulture.supports_native_after_commit?
+    end
+
+    it "routes deferred updates through ActiveRecord.after_all_transactions_commit" do
+      subcateg = Subcateg.create!
+
+      # Post defers more than one counter on create, so just assert the native
+      # API is used rather than the after_commit_action gem (the exact dispatch
+      # count varies with papertrail tracking).
+      expect(ActiveRecord).to receive(:after_all_transactions_commit).at_least(:once).and_call_original
+
+      Post.create!(subcateg: subcateg)
+
+      expect(subcateg.reload.posts_after_commit_count).to eq(1)
+    end
+
+    it "defers the update until the surrounding transaction commits" do
+      subcateg = Subcateg.create!
+
+      Post.transaction do
+        Post.create!(subcateg: subcateg)
+
+        # Still inside the transaction: the deferred update must not have run yet.
+        expect(subcateg.reload.posts_after_commit_count).to eq(0)
+      end
+
+      # Once the transaction commits the deferred update runs.
+      expect(subcateg.reload.posts_after_commit_count).to eq(1)
+    end
+
+    it "does not mix the after_commit_action gem into the model" do
+      expect(Post.ancestors.map(&:to_s)).not_to include("AfterCommitAction")
+    end
+  end
 end
