@@ -15,6 +15,13 @@ module CounterCulture
     Gem::Requirement.new('>= 7.2.0').satisfied_by?(ActiveRecord.version)
   end
 
+  # Rails 7.2+ ships `ActiveRecord.after_all_transactions_commit`, which lets
+  # `execute_after_commit` defer counter updates natively instead of relying on
+  # the `after_commit_action` gem.
+  def self.supports_native_after_commit?
+    Gem::Requirement.new('>= 7.2.0').satisfied_by?(ActiveRecord.version)
+  end
+
   class Configuration
     attr_reader :use_read_replica
 

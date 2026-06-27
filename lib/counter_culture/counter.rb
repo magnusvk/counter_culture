@@ -24,7 +24,7 @@ module CounterCulture
       # Rails 7.2+ ships `ActiveRecord.after_all_transactions_commit`, which
       # does everything we need the `after_commit_action` gem for. Only fall
       # back to the gem on older Rails versions.
-      if @execute_after_commit && !ActiveRecord.respond_to?(:after_all_transactions_commit)
+      if @execute_after_commit && !CounterCulture.supports_native_after_commit?
         begin
           require 'after_commit_action'
         rescue LoadError
@@ -393,7 +393,7 @@ module CounterCulture
       execute_after_commit = @execute_after_commit.is_a?(Proc) ? @execute_after_commit.call : @execute_after_commit
 
       if execute_after_commit
-        if ActiveRecord.respond_to?(:after_all_transactions_commit)
+        if CounterCulture.supports_native_after_commit?
           ActiveRecord.after_all_transactions_commit(&block)
         else
           obj.execute_after_commit(&block)
