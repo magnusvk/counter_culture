@@ -49,7 +49,7 @@ module CounterCulture
         @after_commit_counter_cache << Counter.new(self, relation, options)
       end
 
-      # checks all of the declared counter caches on this class for correctnes based
+      # checks all of the declared counter caches on this class for correctness based
       # on original data; if the counter cache is incorrect, sets it to the correct
       # count
       #
