@@ -355,7 +355,7 @@ module CounterCulture
         end
       end
 
-      # This is only needed in relatively unusal cases, for example if you are
+      # This is only needed in relatively unusual cases, for example if you are
       # using Postgres with schema-namespaced tables. But then it's required,
       # and otherwise it's just a no-op, so why not do it?
       def quote_table_name(table_name)
